@@ -1,0 +1,518 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
+  public: {
+    Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          amount: number | null
+          created_at: string
+          details: Json | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          amount?: number | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          amount?: number | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          valid_date: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          valid_date: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          valid_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_tasks: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          earnings: number
+          id: string
+          task_date: string
+          task_number: number
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          earnings?: number
+          id?: string
+          task_date?: string
+          task_number: number
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          earnings?: number
+          id?: string
+          task_date?: string
+          task_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_upgrade_requests: {
+        Row: {
+          created_at: string
+          current_package: Database["public"]["Enums"]["account_type"]
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_package: Database["public"]["Enums"]["account_type"]
+          status: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_package: Database["public"]["Enums"]["account_type"]
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_package: Database["public"]["Enums"]["account_type"]
+          status?: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_package?: Database["public"]["Enums"]["account_type"]
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_package?: Database["public"]["Enums"]["account_type"]
+          status?: Database["public"]["Enums"]["transaction_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_upgrade_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_upgrade_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packages: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          created_at: string
+          daily_earnings: number
+          daily_tasks: number
+          has_daily_wheel: boolean
+          id: string
+          is_active: boolean
+          min_withdrawal: number
+          name: string
+          price: number
+          task_reward: number
+        }
+        Insert: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          created_at?: string
+          daily_earnings: number
+          daily_tasks?: number
+          has_daily_wheel?: boolean
+          id?: string
+          is_active?: boolean
+          min_withdrawal: number
+          name: string
+          price: number
+          task_reward: number
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"]
+          created_at?: string
+          daily_earnings?: number
+          daily_tasks?: number
+          has_daily_wheel?: boolean
+          id?: string
+          is_active?: boolean
+          min_withdrawal?: number
+          name?: string
+          price?: number
+          task_reward?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          balance: number
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          last_wheel_spin: string | null
+          lucky_wheel_used: boolean
+          phone: string | null
+          referral_code: string | null
+          referred_by: string | null
+          team_code: string | null
+          total_earnings: number
+          updated_at: string
+        }
+        Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"]
+          balance?: number
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id: string
+          last_wheel_spin?: string | null
+          lucky_wheel_used?: boolean
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          team_code?: string | null
+          total_earnings?: number
+          updated_at?: string
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"]
+          balance?: number
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          last_wheel_spin?: string | null
+          lucky_wheel_used?: boolean
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          team_code?: string | null
+          total_earnings?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_gateway: Database["public"]["Enums"]["payment_gateway"] | null
+          phone_number: string | null
+          processed_at: string | null
+          processed_by: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_gateway?:
+            | Database["public"]["Enums"]["payment_gateway"]
+            | null
+          phone_number?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_gateway?:
+            | Database["public"]["Enums"]["payment_gateway"]
+            | null
+          phone_number?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      account_type: "beginner" | "vip1" | "vip2" | "vip3"
+      app_role: "admin" | "user"
+      payment_gateway: "vodafone" | "etisalat" | "orange" | "we"
+      transaction_status: "pending" | "approved" | "rejected"
+      transaction_type:
+        | "deposit"
+        | "withdrawal"
+        | "task_earning"
+        | "referral_earning"
+        | "share_earning"
+        | "wheel_earning"
+        | "team_earning"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      account_type: ["beginner", "vip1", "vip2", "vip3"],
+      app_role: ["admin", "user"],
+      payment_gateway: ["vodafone", "etisalat", "orange", "we"],
+      transaction_status: ["pending", "approved", "rejected"],
+      transaction_type: [
+        "deposit",
+        "withdrawal",
+        "task_earning",
+        "referral_earning",
+        "share_earning",
+        "wheel_earning",
+        "team_earning",
+      ],
+    },
+  },
+} as const
