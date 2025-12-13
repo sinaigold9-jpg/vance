@@ -18,14 +18,14 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
   const wheelRef = useRef<HTMLDivElement>(null);
 
   const colors = [
-    "from-red-500 to-red-600",
-    "from-yellow-500 to-yellow-600",
+    "from-gray-900 to-black",
+    "from-red-600 to-red-700",
+    "from-pink-400 to-pink-500",
+    "from-amber-700 to-amber-800",
+    "from-yellow-500 to-amber-500",
+    "from-yellow-400 to-yellow-500",
     "from-green-500 to-green-600",
-    "from-blue-500 to-blue-600",
-    "from-purple-500 to-purple-600",
-    "from-pink-500 to-pink-600",
     "from-orange-500 to-orange-600",
-    "from-teal-500 to-teal-600",
   ];
 
   const handleSpin = () => {
