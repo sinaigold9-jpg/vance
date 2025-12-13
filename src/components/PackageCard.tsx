@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Crown, Check, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Crown, Check, Zap, Info } from "lucide-react";
 
 interface PackageCardProps {
   name: string;
@@ -14,7 +13,6 @@ interface PackageCardProps {
   isVip?: boolean;
   vipLevel?: number;
   isActive?: boolean;
-  onSelect?: () => void;
 }
 
 const vipColors = {
@@ -43,7 +41,6 @@ export const PackageCard = ({
   isVip = false,
   vipLevel = 0,
   isActive = false,
-  onSelect,
 }: PackageCardProps) => {
   return (
     <motion.div
@@ -91,14 +88,15 @@ export const PackageCard = ({
           <FeatureItem icon={<Check className="w-4 h-4" />} text={`عجلة الحظ: ${luckyWheelFrequency}`} />
         </div>
 
-        {/* CTA Button */}
-        <Button
-          onClick={onSelect}
-          className={`w-full h-12 text-lg font-bold rounded-xl bg-gradient-to-l ${vipGradients[vipLevel as keyof typeof vipGradients]} hover:opacity-90 transition-opacity`}
-          disabled={isActive}
-        >
-          {isActive ? "مفعّلة" : "اشحن الآن"}
-        </Button>
+        {/* Info Message */}
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border">
+          <Info className="w-5 h-5 text-primary flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            {isActive 
+              ? "هذه باقتك الحالية" 
+              : "للترقية، تواصل مع خدمة العملاء"}
+          </p>
+        </div>
       </div>
     </motion.div>
   );

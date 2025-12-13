@@ -166,10 +166,6 @@ const Index = () => {
                   key={index}
                   {...pkg}
                   isActive={pkg.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))}
-                  onSelect={() => {
-                    const newType = pkg.vipLevel === 0 ? "beginner" : `vip${pkg.vipLevel}` as AccountType;
-                    setAccountType(newType);
-                  }}
                 />
               ))}
             </div>
