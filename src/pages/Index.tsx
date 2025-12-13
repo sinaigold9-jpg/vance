@@ -1,14 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BalanceCard } from "@/components/BalanceCard";
 import { PackageCard } from "@/components/PackageCard";
 import { DailyTasks } from "@/components/DailyTasks";
 import { LuckyWheel } from "@/components/LuckyWheel";
 import { EarningMethods } from "@/components/EarningMethods";
+import { EarningsInfo } from "@/components/EarningsInfo";
 import { Navigation } from "@/components/Navigation";
 import { WalletSection } from "@/components/WalletSection";
 import { TeamSection } from "@/components/TeamSection";
-import { Sparkles } from "lucide-react";
+import { Sparkles, LogIn, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 
@@ -77,6 +81,9 @@ const Index = () => {
     { id: 2, completed: false, reward: 3 },
     { id: 3, completed: false, reward: 3 },
   ]);
+  
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const currentPackage = packagesData.find(
     (p) => p.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))
@@ -171,6 +178,17 @@ const Index = () => {
             </div>
           </motion.div>
         );
+      case "earnings":
+        return (
+          <motion.div
+            key="earnings"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+          >
+            <EarningsInfo />
+          </motion.div>
+        );
       case "tasks":
         return (
           <motion.div
@@ -246,9 +264,28 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">اربح يومياً</p>
               </div>
             </div>
-            <div className="text-left">
-              <p className="text-xs text-muted-foreground">كود اليوم</p>
-              <p className="text-sm font-bold text-primary">{DAILY_CODE}</p>
+            <div className="flex items-center gap-2">
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={signOut}
+                  className="gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  خروج
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate("/auth")}
+                  className="gap-2 bg-gradient-gold text-primary-foreground"
+                >
+                  <LogIn className="w-4 h-4" />
+                  تسجيل الدخول
+                </Button>
+              )}
             </div>
           </div>
         </div>
