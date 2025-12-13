@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Sparkles, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const signUpSchema = z.object({
-  fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين"),
+  fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
   email: z.string().email("البريد الإلكتروني غير صحيح"),
-  phone: z.string().min(11, "رقم الهاتف يجب أن يكون 11 رقم"),
+  phone: z.string().min(11, "رقم الهاتف يجب أن يكون 11 رقم").max(15, "رقم الهاتف غير صحيح"),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  confirmPassword: z.string(),
+  referralCode: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "كلمات المرور غير متطابقة",
+  path: ["confirmPassword"],
 });
 
 const signInSchema = z.object({
@@ -24,9 +30,12 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +45,21 @@ const Auth = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+  const validateReferralCode = async (code: string): Promise<string | null> => {
+    if (!code.trim()) return null;
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("referral_code", code.trim())
+      .maybeSingle();
+    
+    if (error || !data) {
+      return null;
+    }
+    return data.id;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,14 +86,32 @@ const Auth = () => {
           navigate("/");
         }
       } else {
-        const validation = signUpSchema.safeParse({ fullName, email, phone, password });
+        const validation = signUpSchema.safeParse({ 
+          fullName, 
+          email, 
+          phone, 
+          password, 
+          confirmPassword,
+          referralCode 
+        });
         if (!validation.success) {
           toast.error(validation.error.errors[0].message);
           setIsLoading(false);
           return;
         }
 
-        const { error } = await signUp(email, password, fullName, phone);
+        // Validate referral code if provided
+        let referredBy: string | null = null;
+        if (referralCode.trim()) {
+          referredBy = await validateReferralCode(referralCode);
+          if (!referredBy) {
+            toast.error("كود الإحالة غير صحيح");
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        const { error } = await signUp(email, password, fullName, phone, referredBy);
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("هذا البريد الإلكتروني مسجل بالفعل");
@@ -77,7 +119,7 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          toast.success("تم إنشاء الحساب بنجاح");
+          toast.success("تم إنشاء الحساب بنجاح! رقم عضويتك تم توليده تلقائياً");
           navigate("/");
         }
       }
@@ -140,7 +182,7 @@ const Auth = () => {
                   <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     type="tel"
-                    placeholder="رقم الهاتف"
+                    placeholder="رقم الهاتف المحمول"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="pr-10 text-right"
@@ -183,6 +225,48 @@ const Auth = () => {
                 )}
               </button>
             </div>
+
+            {!isLogin && (
+              <>
+                <div className="relative">
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="تأكيد كلمة المرور"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pr-10 pl-10 text-right"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="كود الإحالة من صديق (اختياري)"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    className="pr-10 text-right"
+                    dir="ltr"
+                  />
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  سيتم توليد رقم عضويتك تلقائياً عند إنشاء الحساب
+                </p>
+              </>
+            )}
 
             <Button
               type="submit"
