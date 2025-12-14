@@ -10,7 +10,7 @@ import { EarningsInfo } from "@/components/EarningsInfo";
 import { Navigation } from "@/components/Navigation";
 import { WalletSection } from "@/components/WalletSection";
 import { TeamSection } from "@/components/TeamSection";
-import { Sparkles, LogIn, LogOut } from "lucide-react";
+import { Sparkles, LogIn, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -82,7 +82,7 @@ const Index = () => {
     { id: 3, completed: false, reward: 3 },
   ]);
   
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const currentPackage = packagesData.find(
@@ -265,6 +265,16 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => navigate("/admin")}
+                  className="rounded-full"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )}
               {user ? (
                 <Button
                   variant="outline"
