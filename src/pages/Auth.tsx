@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Sparkles, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { OTPVerification } from "@/components/OTPVerification";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -26,8 +27,11 @@ const signInSchema = z.object({
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
+type AuthStep = "form" | "verify-email" | "verify-phone" | "complete";
+
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [isLogin, setIsLogin] = useState(searchParams.get("mode") === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,14 +41,15 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [authStep, setAuthStep] = useState<AuthStep>("form");
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (user && authStep === "complete") {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, authStep, navigate]);
 
   const validateReferralCode = async (code: string): Promise<string | null> => {
     if (!code.trim()) return null;
@@ -83,6 +88,7 @@ const Auth = () => {
           }
         } else {
           toast.success("تم تسجيل الدخول بنجاح");
+          setAuthStep("complete");
           navigate("/");
         }
       } else {
@@ -119,8 +125,8 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          toast.success("تم إنشاء الحساب بنجاح! رقم عضويتك تم توليده تلقائياً");
-          navigate("/");
+          toast.success("تم إرسال رمز التحقق إلى بريدك الإلكتروني");
+          setAuthStep("verify-email");
         }
       }
     } catch (error) {
@@ -130,119 +136,133 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow mb-4">
-            <Sparkles className="w-10 h-10 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">كاش تاسك</h1>
-          <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
-        </div>
+  const handleEmailVerified = () => {
+    toast.success("تم التحقق من البريد الإلكتروني");
+    setAuthStep("verify-phone");
+  };
 
-        {/* Auth Form */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={isLogin ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => setIsLogin(true)}
-            >
-              تسجيل الدخول
-            </Button>
-            <Button
-              variant={!isLogin ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => setIsLogin(false)}
-            >
-              حساب جديد
-            </Button>
-          </div>
+  const handlePhoneVerified = () => {
+    toast.success("تم التحقق من رقم الهاتف بنجاح! 🎉");
+    toast.success("تم إنشاء حسابك بنجاح");
+    setAuthStep("complete");
+    navigate("/");
+  };
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <>
+  const handleResendEmailOTP = async () => {
+    // In production, this would resend the OTP
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  };
+
+  const handleResendPhoneOTP = async () => {
+    // In production, this would resend the OTP
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  };
+
+  const renderContent = () => {
+    switch (authStep) {
+      case "verify-email":
+        return (
+          <OTPVerification
+            type="email"
+            target={email}
+            onVerified={handleEmailVerified}
+            onResend={handleResendEmailOTP}
+          />
+        );
+      case "verify-phone":
+        return (
+          <OTPVerification
+            type="phone"
+            target={phone}
+            onVerified={handlePhoneVerified}
+            onResend={handleResendPhoneOTP}
+          />
+        );
+      default:
+        return (
+          <>
+            {/* Logo */}
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow mb-4">
+                <Sparkles className="w-10 h-10 text-primary-foreground" />
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">كاش تاسك</h1>
+              <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
+            </div>
+
+            {/* Auth Form */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
+              <div className="flex gap-2 mb-6">
+                <Button
+                  variant={isLogin ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setIsLogin(true)}
+                >
+                  تسجيل الدخول
+                </Button>
+                <Button
+                  variant={!isLogin ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setIsLogin(false)}
+                >
+                  حساب جديد
+                </Button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {!isLogin && (
+                  <>
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="الاسم الكامل"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pr-10 text-right"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        type="tel"
+                        placeholder="رقم الهاتف المحمول"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="pr-10 text-right"
+                        dir="ltr"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    type="text"
-                    placeholder="الاسم الكامل"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pr-10 text-right"
-                  />
-                </div>
-                <div className="relative">
-                  <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="tel"
-                    placeholder="رقم الهاتف المحمول"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    type="email"
+                    placeholder="البريد الإلكتروني"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pr-10 text-right"
                     dir="ltr"
                   />
                 </div>
-              </>
-            )}
 
-            <div className="relative">
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="البريد الإلكتروني"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pr-10 text-right"
-                dir="ltr"
-              />
-            </div>
-
-            <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="كلمة المرور"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pr-10 pl-10 text-right"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
-                )}
-              </button>
-            </div>
-
-            {!isLogin && (
-              <>
                 <div className="relative">
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="تأكيد كلمة المرور"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="كلمة المرور"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="pr-10 pl-10 text-right"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute left-3 top-1/2 -translate-y-1/2"
                   >
-                    {showConfirmPassword ? (
+                    {showPassword ? (
                       <EyeOff className="w-5 h-5 text-muted-foreground" />
                     ) : (
                       <Eye className="w-5 h-5 text-muted-foreground" />
@@ -250,40 +270,112 @@ const Auth = () => {
                   </button>
                 </div>
 
-                <div className="relative">
-                  <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="كود الإحالة من صديق (اختياري)"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    className="pr-10 text-right"
-                    dir="ltr"
-                  />
-                </div>
+                {!isLogin && (
+                  <>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="تأكيد كلمة المرور"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="pr-10 pl-10 text-right"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
 
-                <p className="text-xs text-muted-foreground text-center">
-                  سيتم توليد رقم عضويتك تلقائياً عند إنشاء الحساب
-                </p>
-              </>
-            )}
+                    <div className="relative">
+                      <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="كود الإحالة من صديق (اختياري)"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                        className="pr-10 text-right"
+                        dir="ltr"
+                      />
+                    </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-gold text-primary-foreground shadow-gold"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="animate-spin">⏳</span>
-              ) : (
-                <>
-                  {isLogin ? "دخول" : "إنشاء حساب"}
-                  <ArrowRight className="w-5 h-5 mr-2" />
-                </>
-              )}
+                    <p className="text-xs text-muted-foreground text-center">
+                      سيتم التحقق من بريدك الإلكتروني ورقم هاتفك برمز OTP
+                    </p>
+                  </>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-gold text-primary-foreground shadow-gold"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="animate-spin">⏳</span>
+                  ) : (
+                    <>
+                      {isLogin ? "دخول" : "إنشاء حساب"}
+                      <ArrowRight className="w-5 h-5 mr-2" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
+          </>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        {/* Back Button */}
+        {authStep !== "form" && (
+          <Button
+            variant="ghost"
+            className="mb-4"
+            onClick={() => setAuthStep("form")}
+          >
+            <ArrowLeft className="w-5 h-5 ml-2" />
+            رجوع
+          </Button>
+        )}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={authStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Back to Landing */}
+        {authStep === "form" && (
+          <div className="text-center mt-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="text-muted-foreground"
+          >
+              <ArrowLeft className="w-4 h-4 ml-2" />
+              العودة للصفحة الرئيسية
             </Button>
-          </form>
-        </div>
+          </div>
+        )}
       </motion.div>
     </div>
   );
