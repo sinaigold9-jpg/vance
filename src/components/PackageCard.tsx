@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Crown, Check, Zap, Info } from "lucide-react";
+import { Crown, Check, Zap, ArrowUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PackageUpgradeDialog } from "./PackageUpgradeDialog";
 
 interface PackageCardProps {
   name: string;
@@ -13,6 +16,7 @@ interface PackageCardProps {
   isVip?: boolean;
   vipLevel?: number;
   isActive?: boolean;
+  accountType?: string;
 }
 
 const vipColors = {
@@ -29,6 +33,8 @@ const vipGradients = {
   3: "from-gold to-gold-dark",
 };
 
+const accountTypes = ["beginner", "vip1", "vip2", "vip3"];
+
 export const PackageCard = ({
   name,
   price,
@@ -41,64 +47,75 @@ export const PackageCard = ({
   isVip = false,
   vipLevel = 0,
   isActive = false,
+  accountType = "beginner",
 }: PackageCardProps) => {
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const targetAccountType = accountTypes[vipLevel];
+
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
-      className={`relative overflow-hidden rounded-2xl border-2 ${vipColors[vipLevel as keyof typeof vipColors]} bg-gradient-card shadow-card transition-all duration-300`}
-    >
-      {isVip && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-transparent via-gold to-transparent" />
-      )}
-      
-      {isActive && (
-        <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-emerald text-primary-foreground text-xs font-bold">
-          باقتك الحالية
-        </div>
-      )}
-
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          {isVip && (
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${vipGradients[vipLevel as keyof typeof vipGradients]} flex items-center justify-center shadow-gold`}>
-              <Crown className="w-6 h-6 text-primary-foreground" />
-            </div>
-          )}
-          <div>
-            <h3 className="text-xl font-bold text-foreground">{name}</h3>
-            <p className="text-muted-foreground text-sm">سعر الشحن</p>
+    <>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.02 }}
+        className={`relative overflow-hidden rounded-2xl border-2 ${vipColors[vipLevel as keyof typeof vipColors]} bg-gradient-card shadow-card transition-all duration-300`}
+      >
+        {isVip && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-transparent via-gold to-transparent" />
+        )}
+        
+        {isActive && (
+          <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-emerald text-primary-foreground text-xs font-bold">
+            باقتك الحالية
           </div>
-        </div>
+        )}
 
-        {/* Price */}
-        <div className="mb-6">
-          <span className="text-3xl font-black text-gradient-gold">{price}</span>
-          <span className="text-muted-foreground mr-2">جنيه</span>
-        </div>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            {isVip && (
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${vipGradients[vipLevel as keyof typeof vipGradients]} flex items-center justify-center shadow-gold`}>
+                <Crown className="w-6 h-6 text-primary-foreground" />
+              </div>
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-foreground">{name}</h3>
+              <p className="text-muted-foreground text-sm">سعر الشحن</p>
+            </div>
+          </div>
 
-        {/* Features */}
-        <div className="space-y-3 mb-6">
-          <FeatureItem icon={<Zap className="w-4 h-4" />} text={`${rewardPerTask} جنيه لكل مهمة`} />
-          <FeatureItem icon={<Check className="w-4 h-4" />} text={`${dailyTasks} مهام يومية`} />
-          <FeatureItem icon={<Check className="w-4 h-4" />} text={`${dailyEarnings} جنيه أرباح يومية`} highlight />
-          <FeatureItem icon={<Check className="w-4 h-4" />} text={`الحد الأدنى للسحب: ${minWithdraw} جنيه`} />
-          <FeatureItem icon={<Check className="w-4 h-4" />} text={`عجلة الحظ: ${luckyWheelFrequency}`} />
-        </div>
+          <div className="mb-6">
+            <span className="text-3xl font-black text-gradient-gold">{price}</span>
+            <span className="text-muted-foreground mr-2">جنيه</span>
+          </div>
 
-        {/* Info Message */}
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border">
-          <Info className="w-5 h-5 text-primary flex-shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            {isActive 
-              ? "هذه باقتك الحالية" 
-              : "للترقية، تواصل مع خدمة العملاء"}
-          </p>
+          <div className="space-y-3 mb-6">
+            <FeatureItem icon={<Zap className="w-4 h-4" />} text={`${rewardPerTask} جنيه لكل مهمة`} />
+            <FeatureItem icon={<Check className="w-4 h-4" />} text={`${dailyTasks} مهام يومية`} />
+            <FeatureItem icon={<Check className="w-4 h-4" />} text={`${dailyEarnings} جنيه أرباح يومية`} highlight />
+            <FeatureItem icon={<Check className="w-4 h-4" />} text={`الحد الأدنى للسحب: ${minWithdraw} جنيه`} />
+            <FeatureItem icon={<Check className="w-4 h-4" />} text={`عجلة الحظ: ${luckyWheelFrequency}`} />
+          </div>
+
+          {!isActive && (
+            <Button
+              onClick={() => setShowUpgradeDialog(true)}
+              className="w-full bg-gradient-gold text-primary-foreground gap-2"
+            >
+              <ArrowUp className="w-4 h-4" />
+              ترقية الباقة
+            </Button>
+          )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      <PackageUpgradeDialog
+        isOpen={showUpgradeDialog}
+        onClose={() => setShowUpgradeDialog(false)}
+        packageName={name}
+        packagePrice={price}
+        targetAccountType={targetAccountType}
+      />
+    </>
   );
 };
 
