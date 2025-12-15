@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, Settings, 
-  ArrowUpDown, Clock, CheckCircle, XCircle,
-  Search, Filter, RefreshCw
+  ArrowUpDown, Clock, RefreshCw, FileUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +16,7 @@ import { AdminTransactionsTab } from "@/components/admin/AdminTransactionsTab";
 import { AdminPackagesTab } from "@/components/admin/AdminPackagesTab";
 import { AdminCodesTab } from "@/components/admin/AdminCodesTab";
 import { AdminActivityTab } from "@/components/admin/AdminActivityTab";
+import { AdminUpgradeRequestsTab } from "@/components/admin/AdminUpgradeRequestsTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -178,30 +177,38 @@ const Admin = () => {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full flex-wrap h-auto gap-2 bg-muted/50 p-2 rounded-xl">
-            <TabsTrigger value="users" className="flex-1 min-w-[100px]">
-              <Users className="w-4 h-4 ml-2" />
+            <TabsTrigger value="users" className="flex-1 min-w-[80px]">
+              <Users className="w-4 h-4 ml-1" />
               المستخدمين
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex-1 min-w-[100px]">
-              <DollarSign className="w-4 h-4 ml-2" />
+            <TabsTrigger value="upgrades" className="flex-1 min-w-[80px]">
+              <FileUp className="w-4 h-4 ml-1" />
+              الترقيات
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="flex-1 min-w-[80px]">
+              <DollarSign className="w-4 h-4 ml-1" />
               المعاملات
             </TabsTrigger>
-            <TabsTrigger value="packages" className="flex-1 min-w-[100px]">
-              <Package className="w-4 h-4 ml-2" />
+            <TabsTrigger value="packages" className="flex-1 min-w-[80px]">
+              <Package className="w-4 h-4 ml-1" />
               الباقات
             </TabsTrigger>
-            <TabsTrigger value="codes" className="flex-1 min-w-[100px]">
-              <Settings className="w-4 h-4 ml-2" />
+            <TabsTrigger value="codes" className="flex-1 min-w-[80px]">
+              <Settings className="w-4 h-4 ml-1" />
               الأكواد
             </TabsTrigger>
-            <TabsTrigger value="activity" className="flex-1 min-w-[100px]">
-              <Clock className="w-4 h-4 ml-2" />
+            <TabsTrigger value="activity" className="flex-1 min-w-[80px]">
+              <Clock className="w-4 h-4 ml-1" />
               النشاطات
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
             <AdminUsersTab />
+          </TabsContent>
+
+          <TabsContent value="upgrades" className="mt-6">
+            <AdminUpgradeRequestsTab />
           </TabsContent>
 
           <TabsContent value="transactions" className="mt-6">
