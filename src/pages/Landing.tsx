@@ -134,13 +134,13 @@ const Landing = () => {
               )}
               
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="lg"
                 onClick={() => navigate("/admin")}
-                className="text-muted-foreground hover:text-foreground"
+                className="w-full border-primary/50 text-primary hover:bg-primary/10"
               >
-                <HeadphonesIcon className="w-4 h-4 ml-2" />
-                دخول خدمة العملاء
+                <HeadphonesIcon className="w-5 h-5 ml-2" />
+                لوحة تحكم خدمة العملاء
               </Button>
             </div>
           </motion.div>
