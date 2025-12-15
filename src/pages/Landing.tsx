@@ -56,7 +56,7 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-background/90">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-gold opacity-5" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-gold opacity-5" />
         <div className="max-w-lg mx-auto px-4 py-8">
           {/* Navigation */}
           <div className="flex items-center justify-between mb-12">
