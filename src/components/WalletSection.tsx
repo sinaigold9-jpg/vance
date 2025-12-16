@@ -19,9 +19,10 @@ interface WalletSectionProps {
   minWithdraw: number;
   transactions: Transaction[];
   onWithdraw: (amount: number) => void;
+  onDeposit?: () => void;
 }
 
-export const WalletSection = ({ balance, minWithdraw, transactions, onWithdraw }: WalletSectionProps) => {
+export const WalletSection = ({ balance, minWithdraw, transactions, onWithdraw, onDeposit }: WalletSectionProps) => {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
 
@@ -115,9 +116,10 @@ export const WalletSection = ({ balance, minWithdraw, transactions, onWithdraw }
           <Button
             variant="outline"
             className="flex-1 h-12 border-primary/30 text-primary hover:bg-primary/10"
+            onClick={onDeposit}
           >
             <ArrowDownCircle className="w-5 h-5 ml-2" />
-            شحن
+            إيداع
           </Button>
         </div>
 
