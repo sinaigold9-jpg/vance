@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface UserProfile {
   id: string;
@@ -36,6 +37,8 @@ export const AdminUsersTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [newAccountType, setNewAccountType] = useState<string>("");
+  const [newBalance, setNewBalance] = useState<string>("");
+  const [newTotalEarnings, setNewTotalEarnings] = useState<string>("");
 
   useEffect(() => {
     fetchUsers();
@@ -64,24 +67,48 @@ export const AdminUsersTab = () => {
       user.phone?.includes(searchQuery)
   );
 
-  const handleUpdatePackage = async () => {
-    if (!selectedUser || !newAccountType) return;
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    const updates: any = {};
+    
+    if (newAccountType && newAccountType !== selectedUser.account_type) {
+      updates.account_type = newAccountType;
+    }
+    
+    if (newBalance !== "" && parseFloat(newBalance) !== selectedUser.balance) {
+      updates.balance = parseFloat(newBalance);
+    }
+    
+    if (newTotalEarnings !== "" && parseFloat(newTotalEarnings) !== selectedUser.total_earnings) {
+      updates.total_earnings = parseFloat(newTotalEarnings);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      toast.info("لم يتم إجراء أي تغييرات");
+      return;
+    }
 
     const { error } = await supabase
       .from("profiles")
-      .update({ account_type: newAccountType as UserProfile["account_type"] })
+      .update(updates)
       .eq("id", selectedUser.id);
 
     if (error) {
-      toast.error("حدث خطأ في تحديث الباقة");
+      toast.error("حدث خطأ في تحديث البيانات");
+      console.error("Error updating user:", error);
     } else {
-      toast.success("تم تحديث الباقة بنجاح");
+      toast.success("تم تحديث البيانات بنجاح");
       
       // Log activity
       await supabase.from("activity_logs").insert({
         user_id: selectedUser.id,
-        action: "تغيير الباقة",
-        details: { from: selectedUser.account_type, to: newAccountType },
+        action: "تعديل بيانات المستخدم من الإدارة",
+        details: { 
+          changes: updates,
+          admin_action: true 
+        },
+        amount: updates.balance || updates.total_earnings || null,
       });
 
       fetchUsers();
@@ -106,6 +133,13 @@ export const AdminUsersTab = () => {
       case "vip3": return "bg-vip-diamond/20 text-vip-diamond";
       default: return "bg-muted text-muted-foreground";
     }
+  };
+
+  const openEditDialog = (user: UserProfile) => {
+    setSelectedUser(user);
+    setNewAccountType(user.account_type);
+    setNewBalance(user.balance.toString());
+    setNewTotalEarnings(user.total_earnings.toString());
   };
 
   if (loading) {
@@ -176,10 +210,7 @@ export const AdminUsersTab = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSelectedUser(user);
-                  setNewAccountType(user.account_type);
-                }}
+                onClick={() => openEditDialog(user)}
               >
                 <Edit className="w-4 h-4 ml-1" />
                 تعديل
@@ -199,7 +230,7 @@ export const AdminUsersTab = () => {
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>تعديل باقة المستخدم</DialogTitle>
+            <DialogTitle>تعديل بيانات المستخدم</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
@@ -211,7 +242,7 @@ export const AdminUsersTab = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">الباقة الجديدة</label>
+                <Label>الباقة</Label>
                 <Select value={newAccountType} onValueChange={setNewAccountType}>
                   <SelectTrigger>
                     <SelectValue />
@@ -225,7 +256,27 @@ export const AdminUsersTab = () => {
                 </Select>
               </div>
 
-              <Button className="w-full" onClick={handleUpdatePackage}>
+              <div className="space-y-2">
+                <Label>الرصيد الحالي (جنيه)</Label>
+                <Input
+                  type="number"
+                  value={newBalance}
+                  onChange={(e) => setNewBalance(e.target.value)}
+                  placeholder="أدخل الرصيد"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>إجمالي الأرباح (جنيه)</Label>
+                <Input
+                  type="number"
+                  value={newTotalEarnings}
+                  onChange={(e) => setNewTotalEarnings(e.target.value)}
+                  placeholder="أدخل إجمالي الأرباح"
+                />
+              </div>
+
+              <Button className="w-full" onClick={handleUpdateUser}>
                 حفظ التغييرات
               </Button>
             </div>

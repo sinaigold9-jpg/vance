@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BalanceCard } from "@/components/BalanceCard";
@@ -10,14 +10,15 @@ import { EarningsInfo } from "@/components/EarningsInfo";
 import { Navigation } from "@/components/Navigation";
 import { WalletSection } from "@/components/WalletSection";
 import { TeamSection } from "@/components/TeamSection";
-import { Sparkles, LogIn, LogOut, Settings } from "lucide-react";
+import { AppSidebar } from "@/components/AppSidebar";
+import { DepositDialog } from "@/components/DepositDialog";
+import { BackButton } from "@/components/BackButton";
+import { Sparkles, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
-
-// Mock data
-const DAILY_CODE = "EARN2024";
 
 const packagesData = [
   {
@@ -73,46 +74,123 @@ const packagesData = [
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [accountType, setAccountType] = useState<AccountType>("beginner");
-  const [balance, setBalance] = useState(127);
-  const [todayEarnings, setTodayEarnings] = useState(9);
+  const [balance, setBalance] = useState(0);
+  const [todayEarnings, setTodayEarnings] = useState(0);
   const [canSpinWheel, setCanSpinWheel] = useState(true);
+  const [luckyWheelUsed, setLuckyWheelUsed] = useState(false);
+  const [showDepositDialog, setShowDepositDialog] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    email: string | null;
+    phone: string | null;
+  } | null>(null);
   const [tasks, setTasks] = useState([
     { id: 1, completed: false, reward: 3 },
     { id: 2, completed: false, reward: 3 },
     { id: 3, completed: false, reward: 3 },
   ]);
   
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (data && !error) {
+      setAccountType(data.account_type as AccountType);
+      setBalance(data.balance || 0);
+      setLuckyWheelUsed(data.lucky_wheel_used || false);
+      setUserProfile({
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+      });
+
+      // For beginners, wheel can only spin once (if not used yet)
+      // For VIP, check if spun today
+      if (data.account_type === "beginner") {
+        setCanSpinWheel(!data.lucky_wheel_used);
+      } else {
+        // VIP users can spin once per day
+        const today = new Date().toDateString();
+        const lastSpin = data.last_wheel_spin ? new Date(data.last_wheel_spin).toDateString() : null;
+        setCanSpinWheel(lastSpin !== today);
+      }
+    }
+  };
 
   const currentPackage = packagesData.find(
     (p) => p.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))
   ) || packagesData[0];
 
   const handleCompleteTask = (taskId: number, code: string) => {
-    if (code === DAILY_CODE) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId ? { ...task, completed: true } : task
-        )
-      );
-      setBalance((prev) => prev + currentPackage.rewardPerTask);
-      setTodayEarnings((prev) => prev + currentPackage.rewardPerTask);
-      return true;
-    }
-    return false;
+    // This is mock - actual implementation would verify code from database
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, completed: true } : task
+      )
+    );
+    setBalance((prev) => prev + currentPackage.rewardPerTask);
+    setTodayEarnings((prev) => prev + currentPackage.rewardPerTask);
+    return true;
   };
 
-  const handleSpinWheel = (prize: number) => {
+  const handleSpinWheel = async (prize: number) => {
+    if (!user) return;
+
     setBalance((prev) => prev + prize);
     setTodayEarnings((prev) => prev + prize);
+
+    // Update database
     if (accountType === "beginner") {
+      // Mark wheel as used forever for beginners
+      await supabase
+        .from("profiles")
+        .update({ 
+          lucky_wheel_used: true,
+          balance: balance + prize,
+        })
+        .eq("id", user.id);
+      setCanSpinWheel(false);
+      setLuckyWheelUsed(true);
+    } else {
+      // Update last spin time for VIP
+      await supabase
+        .from("profiles")
+        .update({ 
+          last_wheel_spin: new Date().toISOString(),
+          balance: balance + prize,
+        })
+        .eq("id", user.id);
       setCanSpinWheel(false);
     }
+
+    // Log activity
+    await supabase.from("activity_logs").insert({
+      user_id: user.id,
+      action: "أرباح عجلة الحظ",
+      amount: prize,
+    });
   };
 
   const handleWithdraw = (amount: number) => {
     setBalance((prev) => prev - amount);
+  };
+
+  const handleDeposit = () => {
+    setShowDepositDialog(true);
   };
 
   const mockTransactions = [
@@ -202,12 +280,14 @@ const Index = () => {
               tasks={tasks}
               rewardPerTask={currentPackage.rewardPerTask}
               onCompleteTask={handleCompleteTask}
-              dailyCode={DAILY_CODE}
+              dailyCode=""
             />
             <LuckyWheel
               prizes={[5, 10, 2, 15, 3, 20, 1, 25]}
               canSpin={canSpinWheel}
               onSpin={handleSpinWheel}
+              accountType={accountType}
+              luckyWheelUsed={luckyWheelUsed}
             />
           </motion.div>
         );
@@ -241,6 +321,7 @@ const Index = () => {
               minWithdraw={currentPackage.minWithdraw}
               transactions={mockTransactions}
               onWithdraw={handleWithdraw}
+              onDeposit={handleDeposit}
             />
           </motion.div>
         );
@@ -256,25 +337,16 @@ const Index = () => {
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
               <div className="w-10 h-10 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">كاش تاسك</h1>
+                <h1 className="text-lg font-bold text-foreground">Advance</h1>
                 <p className="text-xs text-muted-foreground">اربح يومياً</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => navigate("/admin")}
-                  className="rounded-full"
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-              )}
               {user ? (
                 <Button
                   variant="outline"
@@ -310,6 +382,13 @@ const Index = () => {
 
       {/* Navigation */}
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Deposit Dialog */}
+      <DepositDialog
+        isOpen={showDepositDialog}
+        onClose={() => setShowDepositDialog(false)}
+        userProfile={userProfile}
+      />
     </div>
   );
 };

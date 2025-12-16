@@ -8,7 +8,8 @@ import {
   Shield, 
   Clock, 
   ArrowLeft,
-  HeadphonesIcon
+  HeadphonesIcon,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,20 +66,20 @@ const Landing = () => {
                 <Sparkles className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">كاش تاسك</h1>
+                <h1 className="text-xl font-bold text-foreground">Advance</h1>
                 <p className="text-xs text-muted-foreground">اربح يومياً</p>
               </div>
             </div>
             
-            {isAdmin && (
+            {user && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/app")}
                 className="gap-2"
               >
-                <HeadphonesIcon className="w-4 h-4" />
-                لوحة التحكم
+                <ArrowRight className="w-4 h-4" />
+                العودة للتطبيق
               </Button>
             )}
           </div>
@@ -133,15 +134,18 @@ const Landing = () => {
                 </>
               )}
               
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/admin")}
-                className="w-full border-primary/50 text-primary hover:bg-primary/10"
-              >
-                <HeadphonesIcon className="w-5 h-5 ml-2" />
-                لوحة تحكم خدمة العملاء
-              </Button>
+              {/* Only show admin button to admins */}
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => navigate("/admin")}
+                  className="w-full border-primary/50 text-primary hover:bg-primary/10"
+                >
+                  <HeadphonesIcon className="w-5 h-5 ml-2" />
+                  لوحة تحكم خدمة العملاء
+                </Button>
+              )}
             </div>
           </motion.div>
         </div>
@@ -150,7 +154,7 @@ const Landing = () => {
       {/* Features Section */}
       <section className="max-w-lg mx-auto px-4 py-12">
         <h3 className="text-xl font-bold text-center text-foreground mb-8">
-          لماذا كاش تاسك؟
+          لماذا Advance؟
         </h3>
         <div className="space-y-4">
           {features.map((feature, index) => (

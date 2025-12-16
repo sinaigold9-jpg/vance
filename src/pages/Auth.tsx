@@ -186,7 +186,7 @@ const Auth = () => {
               <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow mb-4">
                 <Sparkles className="w-10 h-10 text-primary-foreground" />
               </div>
-              <h1 className="text-3xl font-bold text-foreground">كاش تاسك</h1>
+              <h1 className="text-3xl font-bold text-foreground">Advance</h1>
               <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
             </div>
 

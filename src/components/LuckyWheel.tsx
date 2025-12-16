@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Gift } from "lucide-react";
+import { Sparkles, Gift, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -8,9 +8,11 @@ interface LuckyWheelProps {
   prizes: number[];
   canSpin: boolean;
   onSpin: (prize: number) => void;
+  accountType?: string;
+  luckyWheelUsed?: boolean;
 }
 
-export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
+export const LuckyWheel = ({ prizes, canSpin, onSpin, accountType = "beginner", luckyWheelUsed = false }: LuckyWheelProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [showPrize, setShowPrize] = useState(false);
@@ -28,8 +30,11 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
     "from-orange-500 to-orange-600",
   ];
 
+  // Check if beginner already used their one-time spin
+  const isBeginnerLocked = accountType === "beginner" && luckyWheelUsed;
+
   const handleSpin = () => {
-    if (!canSpin || isSpinning) return;
+    if (!canSpin || isSpinning || isBeginnerLocked) return;
 
     setIsSpinning(true);
     setShowPrize(false);
@@ -58,6 +63,24 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
     }, 4000);
   };
 
+  const getButtonText = () => {
+    if (isSpinning) return "جاري الدوران...";
+    if (isBeginnerLocked) return "استخدمت فرصتك الوحيدة";
+    if (!canSpin && accountType !== "beginner") return "انتظر للغد";
+    if (!canSpin) return "غير متاح";
+    return "🎰 دوّر العجلة";
+  };
+
+  const getSubtitle = () => {
+    if (isBeginnerLocked) {
+      return "المبتدئون يحصلون على فرصة واحدة فقط. قم بالترقية لـ VIP للحصول على دورة يومية!";
+    }
+    if (accountType === "beginner") {
+      return "لديك فرصة واحدة فقط! استخدمها بحكمة";
+    }
+    return canSpin ? "جرب حظك الآن!" : "عُد غداً للمحاولة";
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -73,7 +96,7 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
           <div>
             <h2 className="text-xl font-bold text-foreground">عجلة الحظ</h2>
             <p className="text-muted-foreground text-sm">
-              {canSpin ? "جرب حظك الآن!" : "عُد غداً للمحاولة"}
+              {getSubtitle()}
             </p>
           </div>
         </div>
@@ -85,6 +108,14 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
 
           {/* Wheel */}
           <div className="relative w-72 h-72 my-4">
+            {isBeginnerLocked && (
+              <div className="absolute inset-0 bg-background/60 backdrop-blur-sm rounded-full z-20 flex items-center justify-center">
+                <div className="text-center">
+                  <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">تم استخدام الفرصة</p>
+                </div>
+              </div>
+            )}
             <motion.div
               ref={wheelRef}
               className="w-full h-full rounded-full border-4 border-primary shadow-gold overflow-hidden"
@@ -132,10 +163,10 @@ export const LuckyWheel = ({ prizes, canSpin, onSpin }: LuckyWheelProps) => {
           {/* Spin Button */}
           <Button
             onClick={handleSpin}
-            disabled={!canSpin || isSpinning}
+            disabled={!canSpin || isSpinning || isBeginnerLocked}
             className="w-full h-14 text-xl font-bold rounded-xl bg-gradient-gold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {isSpinning ? "جاري الدوران..." : canSpin ? "🎰 دوّر العجلة" : "انتظر للغد"}
+            {getButtonText()}
           </Button>
 
           {/* Prize Popup */}
