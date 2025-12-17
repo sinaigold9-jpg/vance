@@ -7,6 +7,7 @@ import { PackageUpgradeDialog } from "./PackageUpgradeDialog";
 interface PackageCardProps {
   name: string;
   price: number;
+  initialBalance?: number;
   rewardPerTask: number;
   dailyTasks: number;
   dailyEarnings: number;
@@ -38,6 +39,7 @@ const accountTypes = ["beginner", "vip1", "vip2", "vip3"];
 export const PackageCard = ({
   name,
   price,
+  initialBalance,
   rewardPerTask,
   dailyTasks,
   dailyEarnings,
@@ -86,6 +88,9 @@ export const PackageCard = ({
           <div className="mb-6">
             <span className="text-3xl font-black text-gradient-gold">{price}</span>
             <span className="text-muted-foreground mr-2">جنيه</span>
+            {initialBalance && vipLevel === 0 && (
+              <p className="text-xs text-amber-500 mt-1">تبدأ بـ {initialBalance} ج.م - أضف {price - initialBalance} ج.م للتفعيل</p>
+            )}
           </div>
 
           <div className="space-y-3 mb-6">

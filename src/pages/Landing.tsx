@@ -47,7 +47,7 @@ const Landing = () => {
   ];
 
   const packages = [
-    { name: "المبتدئ", price: "50 ج.م", daily: "9 ج.م/يوم" },
+    { name: "المبتدئ", price: "100 ج.م", daily: "9 ج.م/يوم", note: "(تبدأ بـ 50 ج.م)" },
     { name: "VIP 1", price: "500 ج.م", daily: "45 ج.م/يوم" },
     { name: "VIP 2", price: "850 ج.م", daily: "75 ج.م/يوم" },
     { name: "VIP 3", price: "1500 ج.م", daily: "105 ج.م/يوم" },
@@ -193,6 +193,7 @@ const Landing = () => {
             >
               <h4 className="font-bold text-foreground mb-2">{pkg.name}</h4>
               <p className="text-primary font-bold text-lg">{pkg.price}</p>
+              {pkg.note && <p className="text-xs text-amber-500 mt-1">{pkg.note}</p>}
               <p className="text-xs text-muted-foreground mt-1">{pkg.daily}</p>
             </motion.div>
           ))}

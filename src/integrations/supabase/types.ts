@@ -217,8 +217,10 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_package_activated: boolean | null
           last_wheel_spin: string | null
           lucky_wheel_used: boolean
+          membership_id: string | null
           phone: string | null
           referral_code: string | null
           referred_by: string | null
@@ -233,8 +235,10 @@ export type Database = {
           email?: string | null
           full_name: string
           id: string
+          is_package_activated?: boolean | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
+          membership_id?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
@@ -249,8 +253,10 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_package_activated?: boolean | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
+          membership_id?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
@@ -352,6 +358,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_membership_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
