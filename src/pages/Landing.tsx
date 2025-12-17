@@ -47,7 +47,7 @@ const Landing = () => {
   ];
 
   const packages = [
-    { name: "المبتدئ", price: "100 ج.م", daily: "9 ج.م/يوم" },
+    { name: "المبتدئ", price: "50 ج.م", daily: "9 ج.م/يوم" },
     { name: "VIP 1", price: "500 ج.م", daily: "45 ج.م/يوم" },
     { name: "VIP 2", price: "850 ج.م", daily: "75 ج.م/يوم" },
     { name: "VIP 3", price: "1500 ج.م", daily: "105 ج.م/يوم" },

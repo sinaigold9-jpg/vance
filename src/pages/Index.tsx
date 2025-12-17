@@ -23,7 +23,7 @@ type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 const packagesData = [
   {
     name: "باقة المبتدئين",
-    price: 100,
+    price: 50,
     rewardPerTask: 3,
     dailyTasks: 3,
     dailyEarnings: 9,
@@ -79,6 +79,7 @@ const Index = () => {
   const [canSpinWheel, setCanSpinWheel] = useState(true);
   const [luckyWheelUsed, setLuckyWheelUsed] = useState(false);
   const [showDepositDialog, setShowDepositDialog] = useState(false);
+  const [dailyCode, setDailyCode] = useState("");
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
     email: string | null;
@@ -96,8 +97,22 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       fetchUserProfile();
+      fetchDailyCode();
     }
   }, [user]);
+
+  const fetchDailyCode = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from("daily_codes")
+      .select("code")
+      .eq("valid_date", today)
+      .maybeSingle();
+
+    if (data && !error) {
+      setDailyCode(data.code);
+    }
+  };
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -280,7 +295,7 @@ const Index = () => {
               tasks={tasks}
               rewardPerTask={currentPackage.rewardPerTask}
               onCompleteTask={handleCompleteTask}
-              dailyCode=""
+              dailyCode={dailyCode}
             />
             <LuckyWheel
               prizes={[5, 10, 2, 15, 3, 20, 1, 25]}
