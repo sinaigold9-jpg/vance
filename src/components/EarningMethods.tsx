@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 interface EarningMethodsProps {
   accountType: "beginner" | "vip1" | "vip2" | "vip3";
   referralCode: string;
+  membershipId?: string;
   referralEarnings: number;
   shareEarnings: number;
   teamEarnings: number;
@@ -18,6 +19,7 @@ interface EarningMethodsProps {
 export const EarningMethods = ({
   accountType,
   referralCode,
+  membershipId,
   referralEarnings,
   shareEarnings,
   teamEarnings,
@@ -106,10 +108,20 @@ export const EarningMethods = ({
       className="bg-gradient-card rounded-2xl shadow-card border border-border/50 overflow-hidden"
     >
       <div className="p-6 border-b border-border/50">
-        <h2 className="text-xl font-bold text-foreground mb-1">طرق الربح</h2>
-        <p className="text-muted-foreground text-sm">
-          {isVip ? "4 طرق متاحة لك" : "3 طرق متاحة لك"}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-1">طرق الربح</h2>
+            <p className="text-muted-foreground text-sm">
+              {isVip ? "4 طرق متاحة لك" : "3 طرق متاحة لك"}
+            </p>
+          </div>
+          {membershipId && (
+            <div className="text-left bg-primary/10 px-3 py-2 rounded-lg">
+              <p className="text-xs text-muted-foreground">رقم العضوية</p>
+              <p className="font-bold text-primary text-lg">{membershipId}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="p-6 space-y-4">

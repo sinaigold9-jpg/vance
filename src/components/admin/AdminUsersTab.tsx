@@ -78,6 +78,10 @@ export const AdminUsersTab = () => {
     
     if (newBalance !== "" && parseFloat(newBalance) !== selectedUser.balance) {
       updates.balance = parseFloat(newBalance);
+      // Auto-activate package for beginners when balance reaches 100
+      if (selectedUser.account_type === "beginner" && parseFloat(newBalance) >= 100) {
+        updates.is_package_activated = true;
+      }
     }
     
     if (newTotalEarnings !== "" && parseFloat(newTotalEarnings) !== selectedUser.total_earnings) {

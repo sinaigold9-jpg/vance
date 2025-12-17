@@ -23,7 +23,8 @@ type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 const packagesData = [
   {
     name: "باقة المبتدئين",
-    price: 50,
+    price: 100,
+    initialBalance: 50,
     rewardPerTask: 3,
     dailyTasks: 3,
     dailyEarnings: 9,
@@ -80,6 +81,9 @@ const Index = () => {
   const [luckyWheelUsed, setLuckyWheelUsed] = useState(false);
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [dailyCode, setDailyCode] = useState("");
+  const [isPackageActivated, setIsPackageActivated] = useState(false);
+  const [membershipId, setMembershipId] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
     email: string | null;
@@ -127,6 +131,9 @@ const Index = () => {
       setAccountType(data.account_type as AccountType);
       setBalance(data.balance || 0);
       setLuckyWheelUsed(data.lucky_wheel_used || false);
+      setIsPackageActivated(data.is_package_activated || false);
+      setMembershipId(data.membership_id || "");
+      setReferralCode(data.referral_code || "");
       setUserProfile({
         full_name: data.full_name,
         email: data.email,
@@ -237,8 +244,9 @@ const Index = () => {
             />
             <EarningMethods
               accountType={accountType}
-              referralCode="ABC123"
-              referralEarnings={8}
+              referralCode={referralCode}
+              membershipId={membershipId}
+              referralEarnings={accountType === "beginner" ? 5 : 8}
               shareEarnings={accountType === "beginner" ? 2 : 5}
               teamEarnings={accountType !== "beginner" ? 6 : 0}
               totalReferrals={5}
@@ -296,6 +304,7 @@ const Index = () => {
               rewardPerTask={currentPackage.rewardPerTask}
               onCompleteTask={handleCompleteTask}
               dailyCode={dailyCode}
+              isPackageActivated={accountType !== "beginner" || isPackageActivated}
             />
             <LuckyWheel
               prizes={[5, 10, 2, 15, 3, 20, 1, 25]}

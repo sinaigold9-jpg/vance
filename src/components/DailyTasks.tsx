@@ -16,9 +16,10 @@ interface DailyTasksProps {
   rewardPerTask: number;
   onCompleteTask: (taskId: number, code: string) => boolean;
   dailyCode: string;
+  isPackageActivated?: boolean;
 }
 
-export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode }: DailyTasksProps) => {
+export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode, isPackageActivated = true }: DailyTasksProps) => {
   const [codes, setCodes] = useState<{ [key: number]: string }>({});
   const [completedAnimation, setCompletedAnimation] = useState<number | null>(null);
 
@@ -70,10 +71,23 @@ export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode }: 
         </div>
       </div>
 
-      {/* Tasks */}
-      <div className="p-6 space-y-4">
+      {/* Package Not Activated Warning */}
+      {!isPackageActivated && (
+        <div className="p-6 bg-amber-500/10 border-b border-amber-500/30">
+          <div className="flex items-center gap-3 text-amber-600">
+            <Lock className="w-6 h-6" />
+            <div>
+              <p className="font-bold">الباقة مغلقة</p>
+              <p className="text-sm">أضف 50 ج.م لتفعيل الباقة وبدء العمل</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`p-6 space-y-4 ${!isPackageActivated ? 'opacity-50 pointer-events-none' : ''}`}>
         {tasks.map((task, index) => {
           const isLocked = index > 0 && !tasks[index - 1].completed;
+          const isDisabled = !isPackageActivated;
           
           return (
             <motion.div
@@ -84,7 +98,7 @@ export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode }: 
               className={`relative p-4 rounded-xl border transition-all duration-300 ${
                 task.completed
                   ? "bg-emerald/10 border-emerald/30"
-                  : isLocked
+                  : isLocked || isDisabled
                   ? "bg-secondary/30 border-border/30 opacity-50"
                   : "bg-secondary/50 border-border/50"
               }`}
