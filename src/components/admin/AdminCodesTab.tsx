@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, Plus, Calendar, Trash2 } from "lucide-react";
+import { Key, Plus, Calendar, Trash2, Copy, Power, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ interface DailyCode {
   code: string;
   valid_date: string;
   created_at: string;
+  is_active: boolean;
 }
 
 export const AdminCodesTab = () => {
@@ -79,6 +80,25 @@ export const AdminCodesTab = () => {
     }
   };
 
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("daily_codes")
+      .update({ is_active: !currentStatus })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("حدث خطأ في تغيير حالة الكود");
+    } else {
+      toast.success(currentStatus ? "تم إيقاف الكود" : "تم تفعيل الكود");
+      fetchCodes();
+    }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success("تم نسخ الكود");
+  };
+
   const isToday = (dateStr: string) => {
     return format(new Date(), "yyyy-MM-dd") === dateStr;
   };
@@ -129,23 +149,36 @@ export const AdminCodesTab = () => {
             transition={{ delay: index * 0.05 }}
             className={`bg-card border rounded-xl p-4 ${
               isToday(code.valid_date) ? "border-primary" : "border-border"
-            }`}
+            } ${!code.is_active ? "opacity-60" : ""}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  isToday(code.valid_date) ? "bg-primary/10" : "bg-muted"
+                  code.is_active 
+                    ? isToday(code.valid_date) ? "bg-primary/10" : "bg-emerald-500/10"
+                    : "bg-destructive/10"
                 }`}>
-                  <Key className={`w-5 h-5 ${isToday(code.valid_date) ? "text-primary" : "text-muted-foreground"}`} />
+                  <Key className={`w-5 h-5 ${
+                    code.is_active 
+                      ? isToday(code.valid_date) ? "text-primary" : "text-emerald-500"
+                      : "text-destructive"
+                  }`} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-lg font-mono">{code.code}</span>
                     {isToday(code.valid_date) && (
                       <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">
                         اليوم
                       </span>
                     )}
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${
+                      code.is_active 
+                        ? "bg-emerald-500/20 text-emerald-600" 
+                        : "bg-destructive/20 text-destructive"
+                    }`}>
+                      {code.is_active ? "مفعل" : "موقف"}
+                    </span>
                   </div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
@@ -153,14 +186,38 @@ export const AdminCodesTab = () => {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => handleDeleteCode(code.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => handleCopyCode(code.code)}
+                  title="نسخ الكود"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={code.is_active 
+                    ? "text-amber-500 hover:text-amber-600 hover:bg-amber-500/10" 
+                    : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
+                  }
+                  onClick={() => handleToggleActive(code.id, code.is_active)}
+                  title={code.is_active ? "إيقاف الكود" : "تفعيل الكود"}
+                >
+                  {code.is_active ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDeleteCode(code.id)}
+                  title="حذف الكود"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </motion.div>
         ))}
