@@ -25,6 +25,17 @@ export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode, is
 
   const handleSubmit = (taskId: number) => {
     const code = codes[taskId] || "";
+    
+    // Check if there's no active code for today
+    if (!dailyCode) {
+      toast({
+        title: "⚠️ لا يوجد كود متاح",
+        description: "كود اليوم معطل حالياً، حاول لاحقاً",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (code === dailyCode) {
       const success = onCompleteTask(taskId, code);
       if (success) {

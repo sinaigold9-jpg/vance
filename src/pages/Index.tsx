@@ -109,12 +109,15 @@ const Index = () => {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from("daily_codes")
-      .select("code")
+      .select("code, is_active")
       .eq("valid_date", today)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (data && !error) {
       setDailyCode(data.code);
+    } else {
+      setDailyCode(""); // No active code for today
     }
   };
 
