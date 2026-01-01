@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { motion } from "framer-motion";
-import { Key, Plus, Calendar, Trash2, Copy, Power, PowerOff } from "lucide-react";
+import { Key, Plus, Trash2, Copy, Power, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,11 +17,10 @@ interface DailyCode {
   is_active: boolean;
 }
 
-export const AdminCodesTab = () => {
+export const AdminCodesTab = forwardRef<HTMLDivElement>((_, ref) => {
   const [codes, setCodes] = useState<DailyCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCode, setNewCode] = useState("");
-  const [newDate, setNewDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const { user } = useAuth();
 
   useEffect(() => {
@@ -50,18 +49,21 @@ export const AdminCodesTab = () => {
       return;
     }
 
+    // Generate a unique date that won't conflict
+    const uniqueDate = new Date();
+    uniqueDate.setFullYear(uniqueDate.getFullYear() + Math.floor(Math.random() * 10) + 1);
+    const validDate = uniqueDate.toISOString().split('T')[0];
+
     const { error } = await supabase.from("daily_codes").insert({
       code: newCode.trim(),
-      valid_date: newDate,
+      valid_date: validDate,
       created_by: user?.id,
+      is_active: true,
     });
 
     if (error) {
-      if (error.message.includes("unique")) {
-        toast.error("يوجد كود لهذا اليوم بالفعل");
-      } else {
-        toast.error("حدث خطأ في إضافة الكود");
-      }
+      console.error("Error adding code:", error);
+      toast.error("حدث خطأ في إضافة الكود");
     } else {
       toast.success("تم إضافة الكود بنجاح");
       setNewCode("");
@@ -99,10 +101,6 @@ export const AdminCodesTab = () => {
     toast.success("تم نسخ الكود");
   };
 
-  const isToday = (dateStr: string) => {
-    return format(new Date(), "yyyy-MM-dd") === dateStr;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -112,7 +110,7 @@ export const AdminCodesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       {/* Add New Code */}
       <div className="bg-card border border-border rounded-xl p-4">
         <h3 className="font-bold mb-4 flex items-center gap-2">
@@ -121,22 +119,19 @@ export const AdminCodesTab = () => {
         </h3>
         <div className="flex flex-wrap gap-3">
           <Input
-            placeholder="الكود اليومي"
+            placeholder="الكود الجديد"
             value={newCode}
             onChange={(e) => setNewCode(e.target.value)}
-            className="flex-1 min-w-[150px]"
-          />
-          <Input
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            className="w-[160px]"
+            className="flex-1 min-w-[200px]"
           />
           <Button onClick={handleAddCode}>
             <Plus className="w-4 h-4 ml-1" />
             إضافة
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          التحكم في صلاحية الكود يكون يدوياً عبر زر التفعيل/الإيقاف
+        </p>
       </div>
 
       {/* Codes List */}
@@ -148,30 +143,21 @@ export const AdminCodesTab = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             className={`bg-card border rounded-xl p-4 ${
-              isToday(code.valid_date) ? "border-primary" : "border-border"
-            } ${!code.is_active ? "opacity-60" : ""}`}
+              code.is_active ? "border-emerald-500/50" : "border-border opacity-60"
+            }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  code.is_active 
-                    ? isToday(code.valid_date) ? "bg-primary/10" : "bg-emerald-500/10"
-                    : "bg-destructive/10"
+                  code.is_active ? "bg-emerald-500/10" : "bg-destructive/10"
                 }`}>
                   <Key className={`w-5 h-5 ${
-                    code.is_active 
-                      ? isToday(code.valid_date) ? "text-primary" : "text-emerald-500"
-                      : "text-destructive"
+                    code.is_active ? "text-emerald-500" : "text-destructive"
                   }`} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-lg font-mono">{code.code}</span>
-                    {isToday(code.valid_date) && (
-                      <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">
-                        اليوم
-                      </span>
-                    )}
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       code.is_active 
                         ? "bg-emerald-500/20 text-emerald-600" 
@@ -180,9 +166,8 @@ export const AdminCodesTab = () => {
                       {code.is_active ? "مفعل" : "موقف"}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {format(new Date(code.valid_date), "EEEE، d MMMM yyyy", { locale: ar })}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    تمت الإضافة: {format(new Date(code.created_at), "d MMM yyyy", { locale: ar })}
                   </p>
                 </div>
               </div>
@@ -230,4 +215,6 @@ export const AdminCodesTab = () => {
       </div>
     </div>
   );
-};
+});
+
+AdminCodesTab.displayName = "AdminCodesTab";

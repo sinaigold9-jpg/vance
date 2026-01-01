@@ -106,18 +106,18 @@ const Index = () => {
   }, [user]);
 
   const fetchDailyCode = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    // Fetch any active code (no date restriction - manual control only)
     const { data, error } = await supabase
       .from("daily_codes")
-      .select("code, is_active")
-      .eq("valid_date", today)
+      .select("code")
       .eq("is_active", true)
+      .limit(1)
       .maybeSingle();
 
     if (data && !error) {
       setDailyCode(data.code);
     } else {
-      setDailyCode(""); // No active code for today
+      setDailyCode(""); // No active code available
     }
   };
 
