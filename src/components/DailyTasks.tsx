@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Lock, Gift, Sparkles } from "lucide-react";
+import { CheckCircle2, Lock, Gift, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Task {
   id: number;
@@ -22,22 +23,65 @@ interface DailyTasksProps {
 export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode, isPackageActivated = true }: DailyTasksProps) => {
   const [codes, setCodes] = useState<{ [key: number]: string }>({});
   const [completedAnimation, setCompletedAnimation] = useState<number | null>(null);
+  const [isValidating, setIsValidating] = useState<number | null>(null);
 
-  const handleSubmit = (taskId: number) => {
-    const code = codes[taskId] || "";
+  const handleSubmit = async (taskId: number) => {
+    const enteredCode = (codes[taskId] || "").trim();
     
-    // Check if there's no active code for today
-    if (!dailyCode) {
+    if (!enteredCode) {
       toast({
-        title: "⚠️ لا يوجد كود متاح",
-        description: "كود اليوم معطل حالياً، حاول لاحقاً",
+        title: "⚠️ أدخل الكود",
+        description: "يرجى إدخال كود المهمة",
         variant: "destructive",
       });
       return;
     }
-    
-    if (code === dailyCode) {
-      const success = onCompleteTask(taskId, code);
+
+    setIsValidating(taskId);
+
+    try {
+      // Query database directly to check if code exists AND is active
+      const { data: codeData, error } = await supabase
+        .from('daily_codes')
+        .select('code, is_active')
+        .eq('code', enteredCode)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error validating code:', error);
+        toast({
+          title: "❌ خطأ",
+          description: "حدث خطأ أثناء التحقق من الكود، حاول مرة أخرى",
+          variant: "destructive",
+        });
+        setIsValidating(null);
+        return;
+      }
+
+      // Check if code exists
+      if (!codeData) {
+        toast({
+          title: "❌ كود غير صالح",
+          description: "الكود غير صالح أو غير مفعل، يرجى التواصل مع خدمة العملاء أو إدخال كود آخر",
+          variant: "destructive",
+        });
+        setIsValidating(null);
+        return;
+      }
+
+      // Check if code is active
+      if (!codeData.is_active) {
+        toast({
+          title: "❌ كود موقوف",
+          description: "الكود غير صالح أو غير مفعل، يرجى التواصل مع خدمة العملاء أو إدخال كود آخر",
+          variant: "destructive",
+        });
+        setIsValidating(null);
+        return;
+      }
+
+      // Code is valid and active - complete the task
+      const success = onCompleteTask(taskId, enteredCode);
       if (success) {
         setCompletedAnimation(taskId);
         toast({
@@ -46,12 +90,15 @@ export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode, is
         });
         setTimeout(() => setCompletedAnimation(null), 1000);
       }
-    } else {
+    } catch (err) {
+      console.error('Unexpected error:', err);
       toast({
-        title: "❌ كود خاطئ",
-        description: "يرجى إدخال الكود الصحيح",
+        title: "❌ خطأ",
+        description: "حدث خطأ غير متوقع، حاول مرة أخرى",
         variant: "destructive",
       });
+    } finally {
+      setIsValidating(null);
     }
   };
 
@@ -168,9 +215,14 @@ export const DailyTasks = ({ tasks, rewardPerTask, onCompleteTask, dailyCode, is
                   />
                   <Button
                     onClick={() => handleSubmit(task.id)}
+                    disabled={isValidating === task.id}
                     className="bg-gradient-gold text-primary-foreground font-bold hover:opacity-90 px-6"
                   >
-                    تأكيد
+                    {isValidating === task.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "تأكيد"
+                    )}
                   </Button>
                 </div>
               )}
