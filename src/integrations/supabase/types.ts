@@ -217,10 +217,12 @@ export type Database = {
           account_type: Database["public"]["Enums"]["account_type"]
           balance: number
           created_at: string
+          daily_attempts_count: number
           email: string | null
           full_name: string
           id: string
           is_package_activated: boolean | null
+          last_attempt_date: string | null
           last_wheel_spin: string | null
           lucky_wheel_used: boolean
           membership_id: string | null
@@ -235,10 +237,12 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"]
           balance?: number
           created_at?: string
+          daily_attempts_count?: number
           email?: string | null
           full_name: string
           id: string
           is_package_activated?: boolean | null
+          last_attempt_date?: string | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
           membership_id?: string | null
@@ -253,10 +257,12 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"]
           balance?: number
           created_at?: string
+          daily_attempts_count?: number
           email?: string | null
           full_name?: string
           id?: string
           is_package_activated?: boolean | null
+          last_attempt_date?: string | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
           membership_id?: string | null

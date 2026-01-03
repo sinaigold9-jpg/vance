@@ -80,7 +80,6 @@ const Index = () => {
   const [canSpinWheel, setCanSpinWheel] = useState(true);
   const [luckyWheelUsed, setLuckyWheelUsed] = useState(false);
   const [showDepositDialog, setShowDepositDialog] = useState(false);
-  const [dailyCode, setDailyCode] = useState("");
   const [isPackageActivated, setIsPackageActivated] = useState(false);
   const [membershipId, setMembershipId] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -89,11 +88,6 @@ const Index = () => {
     email: string | null;
     phone: string | null;
   } | null>(null);
-  const [tasks, setTasks] = useState([
-    { id: 1, completed: false, reward: 3 },
-    { id: 2, completed: false, reward: 3 },
-    { id: 3, completed: false, reward: 3 },
-  ]);
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -101,25 +95,8 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       fetchUserProfile();
-      fetchDailyCode();
     }
   }, [user]);
-
-  const fetchDailyCode = async () => {
-    // Fetch any active code (no date restriction - manual control only)
-    const { data, error } = await supabase
-      .from("daily_codes")
-      .select("code")
-      .eq("is_active", true)
-      .limit(1)
-      .maybeSingle();
-
-    if (data && !error) {
-      setDailyCode(data.code);
-    } else {
-      setDailyCode(""); // No active code available
-    }
-  };
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -160,16 +137,9 @@ const Index = () => {
     (p) => p.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))
   ) || packagesData[0];
 
-  const handleCompleteTask = (taskId: number, code: string) => {
-    // This is mock - actual implementation would verify code from database
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, completed: true } : task
-      )
-    );
-    setBalance((prev) => prev + currentPackage.rewardPerTask);
-    setTodayEarnings((prev) => prev + currentPackage.rewardPerTask);
-    return true;
+  const handleBalanceUpdate = (newBalance: number, earnings: number) => {
+    setBalance(newBalance);
+    setTodayEarnings((prev) => prev + earnings);
   };
 
   const handleSpinWheel = async (prize: number) => {
@@ -302,13 +272,17 @@ const Index = () => {
             exit={{ opacity: 0, x: 20 }}
             className="space-y-6"
           >
-            <DailyTasks
-              tasks={tasks}
-              rewardPerTask={currentPackage.rewardPerTask}
-              onCompleteTask={handleCompleteTask}
-              dailyCode={dailyCode}
-              isPackageActivated={accountType !== "beginner" || isPackageActivated}
-            />
+            {user ? (
+              <DailyTasks
+                userId={user.id}
+                accountType={accountType}
+                onBalanceUpdate={handleBalanceUpdate}
+              />
+            ) : (
+              <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6 text-center">
+                <p className="text-muted-foreground">يرجى تسجيل الدخول للوصول للمهام اليومية</p>
+              </div>
+            )}
             <LuckyWheel
               prizes={[5, 10, 2, 15, 3, 20, 1, 25]}
               canSpin={canSpinWheel}
