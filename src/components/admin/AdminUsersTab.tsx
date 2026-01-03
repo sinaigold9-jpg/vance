@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Phone, Mail, Package, DollarSign, Edit, Crown } from "lucide-react";
+import { Search, User, Phone, Mail, DollarSign, Edit, Crown, Calendar, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,8 @@ interface UserProfile {
   balance: number;
   total_earnings: number;
   created_at: string;
+  daily_attempts_count: number;
+  last_attempt_date: string | null;
 }
 
 export const AdminUsersTab = () => {
@@ -199,7 +201,7 @@ export const AdminUsersTab = () => {
                       {user.phone || "لا يوجد"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-4 text-sm flex-wrap">
                     <span className="flex items-center gap-1 text-emerald">
                       <DollarSign className="w-3 h-3" />
                       الرصيد: {user.balance} ج
@@ -207,6 +209,14 @@ export const AdminUsersTab = () => {
                     <span className="flex items-center gap-1 text-vip-gold">
                       <Crown className="w-3 h-3" />
                       الأرباح: {user.total_earnings} ج
+                    </span>
+                    <span className="flex items-center gap-1 text-primary">
+                      <Target className="w-3 h-3" />
+                      المحاولات: {user.daily_attempts_count}/3
+                    </span>
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      آخر محاولة: {user.last_attempt_date || "لا يوجد"}
                     </span>
                   </div>
                 </div>
