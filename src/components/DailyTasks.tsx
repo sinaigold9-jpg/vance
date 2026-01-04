@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Gift, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Briefcase, Loader2, AlertCircle, CheckCircle2, Clock, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,21 +20,45 @@ const getCairoDateString = () => {
   return cairoTime.toISOString().split('T')[0];
 };
 
-export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksProps) => {
-  const [code, setCode] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dailyAttemptsCount, setDailyAttemptsCount] = useState(0);
-  const [lastAttemptDate, setLastAttemptDate] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [taskReward, setTaskReward] = useState(0);
+const TASK_DURATION_SECONDS = 300; // 5 minutes
+const MAX_DAILY_TASKS = 3;
 
-  const MAX_DAILY_ATTEMPTS = 3;
+export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [completedTasks, setCompletedTasks] = useState(0);
+  const [taskReward, setTaskReward] = useState(0);
+  const [isTaskActive, setIsTaskActive] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [canCollect, setCanCollect] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
 
   useEffect(() => {
     if (userId) {
       initializeUserData();
     }
   }, [userId]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isTaskActive && remainingSeconds > 0) {
+      interval = setInterval(() => {
+        setRemainingSeconds((prev) => {
+          if (prev <= 1) {
+            setCanCollect(true);
+            setIsTaskActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTaskActive, remainingSeconds]);
 
   const initializeUserData = async () => {
     setIsLoading(true);
@@ -54,12 +77,12 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
       }
 
       const todayCairo = getCairoDateString();
-      let attempts = profile?.daily_attempts_count || 0;
+      let tasks = profile?.daily_attempts_count || 0;
       const lastDate = profile?.last_attempt_date;
 
-      // Reset attempts if it's a new day (Cairo time)
+      // Reset tasks if it's a new day (Cairo time)
       if (lastDate !== todayCairo) {
-        attempts = 0;
+        tasks = 0;
         // Update database with reset
         await supabase
           .from("profiles")
@@ -70,8 +93,7 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
           .eq("id", userId);
       }
 
-      setDailyAttemptsCount(attempts);
-      setLastAttemptDate(todayCairo);
+      setCompletedTasks(tasks);
 
       // Fetch task reward from packages table
       const { data: packageData } = await supabase
@@ -100,144 +122,93 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
     }
   };
 
-  const handleSubmit = async () => {
-    // Check attempts before anything
-    if (dailyAttemptsCount >= MAX_DAILY_ATTEMPTS) {
-      return;
-    }
+  const handleStartWork = () => {
+    if (completedTasks >= MAX_DAILY_TASKS) return;
+    
+    setIsTaskActive(true);
+    setRemainingSeconds(TASK_DURATION_SECONDS);
+    setCanCollect(false);
+    
+    toast({
+      title: "🚀 بدأت المهمة",
+      description: "انتظر حتى انتهاء العد التنازلي لاستلام المكافأة",
+    });
+  };
 
-    const enteredCode = code.trim();
-    if (!enteredCode) {
-      toast({
-        title: "⚠️ أدخل الكود",
-        description: "يرجى إدخال كود المهمة",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const handleCollectReward = async () => {
+    if (!canCollect || isCollecting) return;
+    
+    setIsCollecting(true);
+    
     try {
-      // Search for code in daily_codes
-      const { data: codeData, error: codeError } = await supabase
-        .from("daily_codes")
-        .select("code, is_active")
-        .eq("code", enteredCode)
+      const todayCairo = getCairoDateString();
+      const newCompletedTasks = completedTasks + 1;
+
+      // Get current balance
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("balance, total_earnings")
+        .eq("id", userId)
         .maybeSingle();
 
-      if (codeError) {
-        console.error("Error validating code:", codeError);
-        toast({
-          title: "❌ خطأ",
-          description: "حدث خطأ أثناء التحقق من الكود، حاول مرة أخرى",
-          variant: "destructive",
-        });
-        // Still count as attempt
-        await incrementAttempt();
-        return;
+      const currentBalance = currentProfile?.balance || 0;
+      const currentEarnings = currentProfile?.total_earnings || 0;
+      const newBalance = currentBalance + taskReward;
+      const newEarnings = currentEarnings + taskReward;
+
+      // Update profile with new balance and increment tasks count
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          balance: newBalance,
+          total_earnings: newEarnings,
+          daily_attempts_count: newCompletedTasks,
+          last_attempt_date: todayCairo,
+        })
+        .eq("id", userId);
+
+      if (updateError) {
+        throw updateError;
       }
 
-      const todayCairo = getCairoDateString();
-      const newAttemptsCount = dailyAttemptsCount + 1;
+      // Log activity
+      await supabase.from("activity_logs").insert({
+        user_id: userId,
+        action: "أرباح المهام اليومية",
+        amount: taskReward,
+        details: { task_number: newCompletedTasks, method: "timer" },
+      });
 
-      // Check if code is valid and active
-      if (codeData && codeData.is_active) {
-        // SUCCESS: Add balance
-        const { data: currentProfile } = await supabase
-          .from("profiles")
-          .select("balance, total_earnings")
-          .eq("id", userId)
-          .maybeSingle();
+      setCompletedTasks(newCompletedTasks);
+      setCanCollect(false);
+      
+      onBalanceUpdate(newBalance, taskReward);
 
-        const currentBalance = currentProfile?.balance || 0;
-        const currentEarnings = currentProfile?.total_earnings || 0;
-        const newBalance = currentBalance + taskReward;
-        const newEarnings = currentEarnings + taskReward;
-
-        // Update profile with new balance and increment attempts
-        await supabase
-          .from("profiles")
-          .update({
-            balance: newBalance,
-            total_earnings: newEarnings,
-            daily_attempts_count: newAttemptsCount,
-            last_attempt_date: todayCairo,
-          })
-          .eq("id", userId);
-
-        // Log activity
-        await supabase.from("activity_logs").insert({
-          user_id: userId,
-          action: "أرباح المهام اليومية",
-          amount: taskReward,
-          details: { code: enteredCode, attempt: newAttemptsCount },
-        });
-
-        setDailyAttemptsCount(newAttemptsCount);
-        setCode("");
-        
-        onBalanceUpdate(newBalance, taskReward);
-
-        toast({
-          title: "🎉 مبروك!",
-          description: `لقد ربحت ${taskReward} جنيه`,
-        });
-      } else {
-        // FAILURE: Code not found or inactive
-        await supabase
-          .from("profiles")
-          .update({
-            daily_attempts_count: newAttemptsCount,
-            last_attempt_date: todayCairo,
-          })
-          .eq("id", userId);
-
-        // Log failed attempt
-        await supabase.from("activity_logs").insert({
-          user_id: userId,
-          action: "محاولة مهمة فاشلة",
-          amount: 0,
-          details: { code: enteredCode, attempt: newAttemptsCount, reason: "invalid_or_inactive" },
-        });
-
-        setDailyAttemptsCount(newAttemptsCount);
-        setCode("");
-
-        toast({
-          title: "❌ كود غير صالح",
-          description: "الكود غير صالح أو غير مفعل، يرجى التواصل مع خدمة العملاء أو إدخال كود آخر",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "🎉 مبروك!",
+        description: `تم إضافة ${taskReward} جنيه إلى رصيدك`,
+      });
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("Error collecting reward:", err);
       toast({
         title: "❌ خطأ",
-        description: "حدث خطأ غير متوقع، حاول مرة أخرى",
+        description: "حدث خطأ أثناء استلام المكافأة، حاول مرة أخرى",
         variant: "destructive",
       });
-      await incrementAttempt();
     } finally {
-      setIsSubmitting(false);
+      setIsCollecting(false);
     }
   };
 
-  const incrementAttempt = async () => {
-    const todayCairo = getCairoDateString();
-    const newCount = dailyAttemptsCount + 1;
-    await supabase
-      .from("profiles")
-      .update({
-        daily_attempts_count: newCount,
-        last_attempt_date: todayCairo,
-      })
-      .eq("id", userId);
-    setDailyAttemptsCount(newCount);
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isDisabled = dailyAttemptsCount >= MAX_DAILY_ATTEMPTS;
-  const remainingAttempts = MAX_DAILY_ATTEMPTS - dailyAttemptsCount;
+  const isDayComplete = completedTasks >= MAX_DAILY_TASKS;
+  const remainingTasks = MAX_DAILY_TASKS - completedTasks;
+  const currentTaskNumber = completedTasks + 1;
 
   if (isLoading) {
     return (
@@ -260,16 +231,16 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Gift className="w-6 h-6 text-primary" />
+              <Briefcase className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">المهام اليومية</h2>
-              <p className="text-muted-foreground text-sm">أدخل الكود للحصول على مكافأتك</p>
+              <p className="text-muted-foreground text-sm">أكمل مهامك اليومية للحصول على أرباحك</p>
             </div>
           </div>
           <div className="text-left">
-            <p className="text-2xl font-black text-gradient-gold">{dailyAttemptsCount}/{MAX_DAILY_ATTEMPTS}</p>
-            <p className="text-muted-foreground text-xs">محاولات اليوم</p>
+            <p className="text-2xl font-black text-gradient-gold">{completedTasks}/{MAX_DAILY_TASKS}</p>
+            <p className="text-muted-foreground text-xs">مهام مكتملة</p>
           </div>
         </div>
       </div>
@@ -278,18 +249,18 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
       <div className="p-6 space-y-4">
         {/* Reward Info */}
         <div className="bg-primary/10 rounded-xl p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-1">مكافأة كل مهمة ناجحة</p>
+          <p className="text-sm text-muted-foreground mb-1">مكافأة كل مهمة</p>
           <p className="text-2xl font-bold text-primary">+{taskReward} جنيه</p>
         </div>
 
         {/* Status Message */}
-        {isDisabled ? (
+        {isDayComplete ? (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <div className="flex items-center gap-3 text-amber-600">
               <AlertCircle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-bold">لقد استهلكت عدد المحاولات اليومية</p>
-                <p className="text-sm">عد غداً بعد منتصف الليل للمحاولة مجدداً</p>
+                <p className="font-bold">أكملت جميع مهام اليوم</p>
+                <p className="text-sm">عد غداً بعد منتصف الليل للعمل مجدداً</p>
               </div>
             </div>
           </div>
@@ -298,34 +269,78 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
             <div className="flex items-center gap-3 text-emerald">
               <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-bold">لديك {remainingAttempts} محاولات متبقية</p>
-                <p className="text-sm">أدخل الكود الصحيح للفوز بالمكافأة</p>
+                <p className="font-bold">لديك {remainingTasks} مهام متبقية اليوم</p>
+                <p className="text-sm">اضغط على "بدء العمل" لبدء المهمة</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Code Input */}
-        <div className="space-y-3">
-          <Input
-            placeholder="أدخل الكود هنا..."
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            disabled={isDisabled || isSubmitting}
-            className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground text-center text-lg h-14"
-          />
+        {/* Timer Display (when task is active) */}
+        {isTaskActive && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border-2 border-primary/50 rounded-2xl p-6 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Clock className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">المهمة رقم {currentTaskNumber}</span>
+            </div>
+            <p className="text-5xl font-black text-gradient-gold tabular-nums">
+              {formatTime(remainingSeconds)}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">انتظر حتى انتهاء الوقت</p>
+            <div className="mt-4 bg-muted rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-gold"
+                initial={{ width: "100%" }}
+                animate={{ width: `${(remainingSeconds / TASK_DURATION_SECONDS) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Collect Reward Button (when timer finished) */}
+        {canCollect && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
+          >
+            <div className="bg-emerald/20 border border-emerald/50 rounded-xl p-4 text-center">
+              <Coins className="w-8 h-8 text-emerald mx-auto mb-2" />
+              <p className="font-bold text-emerald">المهمة مكتملة!</p>
+              <p className="text-sm text-muted-foreground">اضغط لاستلام مكافأتك</p>
+            </div>
+            <Button
+              onClick={handleCollectReward}
+              disabled={isCollecting}
+              className="w-full bg-gradient-gold text-primary-foreground font-bold hover:opacity-90 h-14 text-lg"
+            >
+              {isCollecting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Coins className="w-5 h-5 ml-2" />
+                  استلام {taskReward} جنيه
+                </>
+              )}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Start Work Button */}
+        {!isTaskActive && !canCollect && !isDayComplete && (
           <Button
-            onClick={handleSubmit}
-            disabled={isDisabled || isSubmitting || !code.trim()}
+            onClick={handleStartWork}
             className="w-full bg-gradient-gold text-primary-foreground font-bold hover:opacity-90 h-14 text-lg"
           >
-            {isSubmitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              "تأكيد المهمة"
-            )}
+            <Briefcase className="w-5 h-5 ml-2" />
+            بدء العمل
           </Button>
-        </div>
+        )}
       </div>
     </motion.div>
   );

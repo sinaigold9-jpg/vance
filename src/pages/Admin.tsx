@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Users, DollarSign, Package, Settings, 
+  Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { BackButton } from "@/components/BackButton";
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
 import { AdminTransactionsTab } from "@/components/admin/AdminTransactionsTab";
 import { AdminPackagesTab } from "@/components/admin/AdminPackagesTab";
-import { AdminCodesTab } from "@/components/admin/AdminCodesTab";
 import { AdminActivityTab } from "@/components/admin/AdminActivityTab";
 import { AdminUpgradeRequestsTab } from "@/components/admin/AdminUpgradeRequestsTab";
 
@@ -193,10 +192,6 @@ const Admin = () => {
               <Package className="w-4 h-4 ml-1" />
               الباقات
             </TabsTrigger>
-            <TabsTrigger value="codes" className="flex-1 min-w-[80px]">
-              <Settings className="w-4 h-4 ml-1" />
-              الأكواد
-            </TabsTrigger>
             <TabsTrigger value="activity" className="flex-1 min-w-[80px]">
               <Clock className="w-4 h-4 ml-1" />
               النشاطات
@@ -217,10 +212,6 @@ const Admin = () => {
 
           <TabsContent value="packages" className="mt-6">
             <AdminPackagesTab />
-          </TabsContent>
-
-          <TabsContent value="codes" className="mt-6">
-            <AdminCodesTab />
           </TabsContent>
 
           <TabsContent value="activity" className="mt-6">
