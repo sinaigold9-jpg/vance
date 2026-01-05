@@ -283,6 +283,57 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          admin_reply: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          membership_id: string | null
+          message: string
+          phone: string
+          rating: number | null
+          replied_at: string | null
+          replied_by: string | null
+          status: string
+          ticket_type: string
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          membership_id?: string | null
+          message: string
+          phone: string
+          rating?: number | null
+          replied_at?: string | null
+          replied_by?: string | null
+          status?: string
+          ticket_type: string
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          membership_id?: string | null
+          message?: string
+          phone?: string
+          rating?: number | null
+          replied_at?: string | null
+          replied_by?: string | null
+          status?: string
+          ticket_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
