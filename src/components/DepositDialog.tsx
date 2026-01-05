@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Upload, CheckCircle2, User, Mail, Phone } from "lucide-react";
+import { CheckCircle2, User, Mail, Phone, IdCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,19 +25,31 @@ interface DepositDialogProps {
 
 export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogProps) => {
   const [amount, setAmount] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [membershipId, setMembershipId] = useState("");
   const { user } = useAuth();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchMembershipId();
+    }
+  }, [isOpen, user]);
+
+  const fetchMembershipId = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("membership_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (data) {
+      setMembershipId(data.membership_id || "");
     }
   };
 
   const handleSubmit = async () => {
-    if (!file || !user || !amount) {
+    if (!user || !amount) {
       toast.error("يرجى ملء جميع الحقول");
       return;
     }
@@ -51,16 +63,6 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
     setUploading(true);
 
     try {
-      // Upload receipt
-      const fileExt = file.name.split(".").pop();
-      const fileName = `deposits/${user.id}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("receipts")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
       // Create transaction record
       const { error: transactionError } = await supabase
         .from("transactions")
@@ -69,8 +71,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
           type: "deposit",
           amount: parsedAmount,
           status: "pending",
-          payment_gateway: "vodafone",
-          notes: `Receipt: ${fileName}`,
+          notes: `طلب شحن - ${userProfile?.full_name} - ${userProfile?.email} - ${userProfile?.phone} - رقم العضوية: ${membershipId}`,
         });
 
       if (transactionError) throw transactionError;
@@ -80,11 +81,16 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
         user_id: user.id,
         action: "طلب إيداع",
         amount: parsedAmount,
-        details: { receipt: fileName },
+        details: { 
+          user_name: userProfile?.full_name,
+          user_email: userProfile?.email,
+          user_phone: userProfile?.phone,
+          membership_id: membershipId,
+        },
       });
 
       setSuccess(true);
-      toast.success("تم إرسال طلب الإيداع بنجاح");
+      toast.success("تم إرسال طلب الشحن بنجاح");
     } catch (error) {
       console.error("Error submitting deposit:", error);
       toast.error("حدث خطأ في إرسال الطلب");
@@ -95,16 +101,15 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
 
   const handleClose = () => {
     setAmount("");
-    setFile(null);
     setSuccess(false);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl">طلب إيداع</DialogTitle>
+          <DialogTitle className="text-xl">طلب شحن الرصيد</DialogTitle>
         </DialogHeader>
 
         {success ? (
@@ -116,7 +121,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
             <CheckCircle2 className="w-16 h-16 text-emerald mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">تم الإرسال بنجاح 🎉</h3>
             <p className="text-muted-foreground">
-              سنراجع المعلومات المقدمة وسيتم إضافة الرصيد تلقائياً
+              سنراجع طلبك وسيتم إضافة الرصيد بعد التأكيد
             </p>
             <Button onClick={handleClose} className="mt-4">
               إغلاق
@@ -140,12 +145,16 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
                   <Phone className="w-4 h-4 text-primary" />
                   <span className="text-sm">{userProfile?.phone || "غير متوفر"}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <IdCard className="w-4 h-4 text-primary" />
+                  <span className="text-sm">رقم العضوية: {membershipId || "غير متوفر"}</span>
+                </div>
               </div>
             </div>
 
             {/* Amount Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">المبلغ المراد إيداعه</label>
+              <label className="text-sm font-medium">المبلغ المطلوب شحنه</label>
               <Input
                 type="number"
                 placeholder="أدخل المبلغ"
@@ -154,47 +163,24 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
               />
             </div>
 
-            {/* Payment Info */}
-            <div className="bg-primary/10 rounded-xl p-4 border border-primary/30">
-              <h4 className="font-bold text-primary mb-2">معلومات الدفع</h4>
-              <p className="text-sm text-muted-foreground mb-2">
-                أرسل الإيداع على حساب فودافون كاش:
-              </p>
-              <p className="text-2xl font-bold text-primary text-center py-2 bg-background/50 rounded-lg">
-                01080048591
-              </p>
-            </div>
-
-            {/* Upload Receipt */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">صورة الإيصال</label>
-              <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="deposit-receipt"
-                />
-                <label
-                  htmlFor="deposit-receipt"
-                  className="cursor-pointer flex flex-col items-center"
-                >
-                  <Upload className="w-10 h-10 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    {file ? file.name : "اضغط لرفع صورة الإيصال"}
-                  </span>
-                </label>
-              </div>
-            </div>
-
             <Button
               className="w-full h-12 bg-gradient-gold text-primary-foreground font-bold"
               onClick={handleSubmit}
-              disabled={!file || !amount || uploading}
+              disabled={!amount || uploading}
             >
-              {uploading ? "جاري الإرسال..." : "إرسال طلب الإيداع"}
+              {uploading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                  جاري الإرسال...
+                </>
+              ) : (
+                "إرسال طلب الشحن"
+              )}
             </Button>
+
+            <p className="text-xs text-muted-foreground text-center">
+              سيتم إرسال بياناتك إلى خدمة العملاء للمراجعة وإضافة الرصيد
+            </p>
           </div>
         )}
       </DialogContent>

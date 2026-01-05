@@ -6,13 +6,12 @@ import { PackageCard } from "@/components/PackageCard";
 import { DailyTasks } from "@/components/DailyTasks";
 import { LuckyWheel } from "@/components/LuckyWheel";
 import { EarningMethods } from "@/components/EarningMethods";
-import { EarningsInfo } from "@/components/EarningsInfo";
 import { Navigation } from "@/components/Navigation";
 import { WalletSection } from "@/components/WalletSection";
 import { TeamSection } from "@/components/TeamSection";
+import { SupportSection } from "@/components/SupportSection";
 import { AppSidebar } from "@/components/AppSidebar";
 import { DepositDialog } from "@/components/DepositDialog";
-import { BackButton } from "@/components/BackButton";
 import { Sparkles, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -252,17 +251,6 @@ const Index = () => {
             </div>
           </motion.div>
         );
-      case "earnings":
-        return (
-          <motion.div
-            key="earnings"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <EarningsInfo />
-          </motion.div>
-        );
       case "tasks":
         return (
           <motion.div
@@ -324,6 +312,17 @@ const Index = () => {
               onWithdraw={handleWithdraw}
               onDeposit={handleDeposit}
             />
+          </motion.div>
+        );
+      case "support":
+        return (
+          <motion.div
+            key="support"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+          >
+            <SupportSection />
           </motion.div>
         );
       default:

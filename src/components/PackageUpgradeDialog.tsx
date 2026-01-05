@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, Phone, CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, User, Mail, Phone, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,22 +27,44 @@ export const PackageUpgradeDialog = ({
   packagePrice,
   targetAccountType,
 }: PackageUpgradeDialogProps) => {
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    email: string | null;
+    phone: string | null;
+    membership_id: string | null;
+  } | null>(null);
   const { user } = useAuth();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name, email, phone, membership_id, account_type")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (data) {
+      setUserProfile({
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        membership_id: data.membership_id,
+      });
     }
   };
 
+  useState(() => {
+    if (isOpen && user) {
+      fetchUserProfile();
+    }
+  });
+
   const handleSubmit = async () => {
-    if (!file || !user) {
+    if (!user) {
       toast({
         title: "خطأ",
-        description: "يرجى رفع إيصال الدفع",
+        description: "يرجى تسجيل الدخول أولاً",
         variant: "destructive",
       });
       return;
@@ -51,31 +73,16 @@ export const PackageUpgradeDialog = ({
     setUploading(true);
 
     try {
-      // Upload receipt to storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('receipts')
-        .getPublicUrl(fileName);
-
       // Get user profile
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('account_type')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("account_type, full_name, email, phone, membership_id")
+        .eq("id", user.id)
         .single();
 
       // Create upgrade request
       const { error: requestError } = await supabase
-        .from('package_upgrade_requests')
+        .from("package_upgrade_requests")
         .insert([{
           user_id: user.id,
           current_package: profile?.account_type || 'beginner',
@@ -85,20 +92,23 @@ export const PackageUpgradeDialog = ({
       if (requestError) throw requestError;
 
       // Log activity
-      await supabase.from('activity_logs').insert({
+      await supabase.from("activity_logs").insert({
         user_id: user.id,
-        action: 'طلب ترقية باقة',
+        action: "طلب ترقية باقة",
         details: { 
           package: packageName, 
           price: packagePrice,
-          receipt_url: publicUrl 
+          user_name: profile?.full_name,
+          user_email: profile?.email,
+          user_phone: profile?.phone,
+          membership_id: profile?.membership_id,
         },
         amount: packagePrice,
       });
 
       setSuccess(true);
     } catch (error) {
-      console.error('Error submitting upgrade request:', error);
+      console.error("Error submitting upgrade request:", error);
       toast({
         title: "خطأ",
         description: "حدث خطأ أثناء إرسال الطلب",
@@ -110,7 +120,6 @@ export const PackageUpgradeDialog = ({
   };
 
   const handleClose = () => {
-    setFile(null);
     setSuccess(false);
     onClose();
   };
@@ -152,19 +161,26 @@ export const PackageUpgradeDialog = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Vodafone Cash Info */}
+          {/* User Info */}
           <div className="p-4 rounded-xl bg-muted/50 border border-border">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-white" />
+            <h4 className="font-bold text-sm text-muted-foreground mb-3">بيانات المستخدم</h4>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" />
+                <span className="text-sm">{userProfile?.full_name || "جاري التحميل..."}</span>
               </div>
-              <div>
-                <p className="font-bold text-foreground">فودافون كاش</p>
-                <p className="text-sm text-muted-foreground">أرسل قيمة الباقة على الرقم التالي</p>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-primary" />
+                <span className="text-sm">{userProfile?.email || "غير متوفر"}</span>
               </div>
-            </div>
-            <div className="p-3 rounded-lg bg-background border border-border text-center">
-              <p className="text-2xl font-bold text-primary tracking-wider">01080048591</p>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                <span className="text-sm">{userProfile?.phone || "غير متوفر"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <IdCard className="w-4 h-4 text-primary" />
+                <span className="text-sm">رقم العضوية: {userProfile?.membership_id || "غير متوفر"}</span>
+              </div>
             </div>
           </div>
 
@@ -174,35 +190,10 @@ export const PackageUpgradeDialog = ({
             <p className="text-3xl font-black text-gradient-gold">{packagePrice} جنيه</p>
           </div>
 
-          {/* File Upload */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              رفع إيصال الدفع
-            </label>
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                id="receipt-upload"
-              />
-              <label
-                htmlFor="receipt-upload"
-                className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
-              >
-                <Upload className="w-5 h-5 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  {file ? file.name : "اختر صورة الإيصال"}
-                </span>
-              </label>
-            </div>
-          </div>
-
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={!file || uploading}
+            disabled={uploading}
             className="w-full bg-gradient-gold text-primary-foreground h-12 text-lg"
           >
             {uploading ? (
@@ -211,9 +202,13 @@ export const PackageUpgradeDialog = ({
                 جاري الإرسال...
               </>
             ) : (
-              "تأكيد الطلب"
+              "إرسال طلب الترقية"
             )}
           </Button>
+
+          <p className="text-xs text-muted-foreground text-center">
+            سيتم إرسال بياناتك إلى خدمة العملاء للمراجعة والتفعيل
+          </p>
         </div>
       </DialogContent>
     </Dialog>
