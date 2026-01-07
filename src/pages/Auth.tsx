@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { CaptchaVerification } from "@/components/CaptchaVerification";
+import appIcon from "@/assets/app-icon.png";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -38,6 +40,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -87,6 +90,13 @@ const Auth = () => {
           navigate("/app");
         }
       } else {
+        // Check captcha for signup
+        if (!captchaVerified) {
+          toast.error("يرجى التحقق من رمز التحقق أولاً");
+          setIsLoading(false);
+          return;
+        }
+
         const validation = signUpSchema.safeParse({ 
           fullName, 
           email, 
@@ -120,7 +130,7 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          toast.success("تم إنشاء حسابك بنجاح! 🎉");
+          toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
           navigate("/app");
         }
       }
@@ -140,11 +150,16 @@ const Auth = () => {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow mb-4">
-            <Sparkles className="w-10 h-10 text-primary-foreground" />
-          </div>
+          <img 
+            src={appIcon} 
+            alt="Advance" 
+            className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-gold"
+          />
           <h1 className="text-3xl font-bold text-foreground">Advance</h1>
           <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
+          {!isLogin && (
+            <p className="text-primary text-sm mt-1">7 أيام تجربة مجانية!</p>
+          )}
         </div>
 
         {/* Auth Form */}
@@ -262,13 +277,21 @@ const Auth = () => {
                     dir="ltr"
                   />
                 </div>
+
+                {/* Captcha */}
+                <div className="border border-border rounded-xl p-4 bg-muted/30">
+                  <CaptchaVerification 
+                    onVerify={setCaptchaVerified}
+                    disabled={isLoading}
+                  />
+                </div>
               </>
             )}
 
             <Button
               type="submit"
               className="w-full bg-gradient-gold text-primary-foreground shadow-gold"
-              disabled={isLoading}
+              disabled={isLoading || (!isLogin && !captchaVerified)}
             >
               {isLoading ? (
                 <span className="animate-spin">⏳</span>

@@ -11,17 +11,29 @@ interface DailyTasksProps {
   onBalanceUpdate: (newBalance: number, earnings: number) => void;
 }
 
-// Get Cairo timezone date string (YYYY-MM-DD)
 const getCairoDateString = () => {
   const now = new Date();
-  const cairoOffset = 2 * 60; // Cairo is UTC+2
+  const cairoOffset = 2 * 60;
   const localOffset = now.getTimezoneOffset();
   const cairoTime = new Date(now.getTime() + (cairoOffset + localOffset) * 60000);
   return cairoTime.toISOString().split('T')[0];
 };
 
-const TASK_DURATION_SECONDS = 300; // 5 minutes
+const TASK_DURATION_SECONDS = 300;
 const MAX_DAILY_TASKS = 3;
+
+const motivationalMessages = [
+  "ابق هنا، لا تغلق الجهاز 📱",
+  "المهمة قيد التنفيذ... 🚀",
+  "المهمة تحت المراجعة ✅",
+  "أنت رائع! فقط أكمل 💪",
+  "لا توقف قبل نهاية المهمة ⏳",
+  "كل ثانية قريبة من المكافأة 💰",
+  "العد التنازلي مفعل، كن صبوراً ⌛",
+  "المهمة تحت التنفيذ الآن 🔄",
+  "أنت بطل المهمة اليوم 🏆",
+  "رائع! فقط تابع حتى النهاية 🎯",
+];
 
 export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +43,7 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [canCollect, setCanCollect] = useState(false);
   const [isCollecting, setIsCollecting] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
 
   useEffect(() => {
     if (userId) {
@@ -38,7 +51,6 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
     }
   }, [userId]);
 
-  // Timer countdown effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     
@@ -52,6 +64,10 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
           }
           return prev - 1;
         });
+        // Change motivational message every 30 seconds
+        if (remainingSeconds % 30 === 0) {
+          setCurrentMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+        }
       }, 1000);
     }
 
@@ -63,39 +79,26 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
   const initializeUserData = async () => {
     setIsLoading(true);
     try {
-      // Fetch user profile with attempts data
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("daily_attempts_count, last_attempt_date")
         .eq("id", userId)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
-        setIsLoading(false);
-        return;
-      }
-
       const todayCairo = getCairoDateString();
       let tasks = profile?.daily_attempts_count || 0;
       const lastDate = profile?.last_attempt_date;
 
-      // Reset tasks if it's a new day (Cairo time)
       if (lastDate !== todayCairo) {
         tasks = 0;
-        // Update database with reset
         await supabase
           .from("profiles")
-          .update({
-            daily_attempts_count: 0,
-            last_attempt_date: todayCairo,
-          })
+          .update({ daily_attempts_count: 0, last_attempt_date: todayCairo })
           .eq("id", userId);
       }
 
       setCompletedTasks(tasks);
 
-      // Fetch task reward from packages table
       const { data: packageData } = await supabase
         .from("packages")
         .select("task_reward")
@@ -106,13 +109,7 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
       if (packageData) {
         setTaskReward(packageData.task_reward);
       } else {
-        // Fallback rewards
-        const fallbackRewards: Record<string, number> = {
-          beginner: 3,
-          vip1: 15,
-          vip2: 25,
-          vip3: 35,
-        };
+        const fallbackRewards: Record<string, number> = { beginner: 3, vip1: 15, vip2: 25, vip3: 35 };
         setTaskReward(fallbackRewards[accountType] || 3);
       }
     } catch (err) {
@@ -124,77 +121,43 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
 
   const handleStartWork = () => {
     if (completedTasks >= MAX_DAILY_TASKS) return;
-    
     setIsTaskActive(true);
     setRemainingSeconds(TASK_DURATION_SECONDS);
     setCanCollect(false);
-    
-    toast({
-      title: "🚀 بدأت المهمة",
-      description: "انتظر حتى انتهاء العد التنازلي لاستلام المكافأة",
-    });
+    setCurrentMessage(motivationalMessages[0]);
+    toast({ title: "🚀 بدأت المهمة", description: "انتظر حتى انتهاء العد التنازلي" });
   };
 
   const handleCollectReward = async () => {
     if (!canCollect || isCollecting) return;
-    
     setIsCollecting(true);
     
     try {
       const todayCairo = getCairoDateString();
       const newCompletedTasks = completedTasks + 1;
 
-      // Get current balance
       const { data: currentProfile } = await supabase
         .from("profiles")
         .select("balance, total_earnings")
         .eq("id", userId)
         .maybeSingle();
 
-      const currentBalance = currentProfile?.balance || 0;
-      const currentEarnings = currentProfile?.total_earnings || 0;
-      const newBalance = currentBalance + taskReward;
-      const newEarnings = currentEarnings + taskReward;
+      const newBalance = (currentProfile?.balance || 0) + taskReward;
+      const newEarnings = (currentProfile?.total_earnings || 0) + taskReward;
 
-      // Update profile with new balance and increment tasks count
-      const { error: updateError } = await supabase
+      await supabase
         .from("profiles")
-        .update({
-          balance: newBalance,
-          total_earnings: newEarnings,
-          daily_attempts_count: newCompletedTasks,
-          last_attempt_date: todayCairo,
-        })
+        .update({ balance: newBalance, total_earnings: newEarnings, daily_attempts_count: newCompletedTasks, last_attempt_date: todayCairo })
         .eq("id", userId);
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Log activity
-      await supabase.from("activity_logs").insert({
-        user_id: userId,
-        action: "أرباح المهام اليومية",
-        amount: taskReward,
-        details: { task_number: newCompletedTasks, method: "timer" },
-      });
+      await supabase.from("activity_logs").insert({ user_id: userId, action: "أرباح المهام اليومية", amount: taskReward });
 
       setCompletedTasks(newCompletedTasks);
       setCanCollect(false);
-      
       onBalanceUpdate(newBalance, taskReward);
-
-      toast({
-        title: "🎉 مبروك!",
-        description: `تم إضافة ${taskReward} جنيه إلى رصيدك`,
-      });
+      toast({ title: "🎉 مبروك!", description: `تم إضافة ${taskReward} جنيه` });
     } catch (err) {
-      console.error("Error collecting reward:", err);
-      toast({
-        title: "❌ خطأ",
-        description: "حدث خطأ أثناء استلام المكافأة، حاول مرة أخرى",
-        variant: "destructive",
-      });
+      toast({ title: "❌ خطأ", description: "حاول مرة أخرى", variant: "destructive" });
     } finally {
       setIsCollecting(false);
     }
@@ -207,8 +170,6 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
   };
 
   const isDayComplete = completedTasks >= MAX_DAILY_TASKS;
-  const remainingTasks = MAX_DAILY_TASKS - completedTasks;
-  const currentTaskNumber = completedTasks + 1;
 
   if (isLoading) {
     return (
@@ -221,12 +182,7 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-card rounded-2xl shadow-card border border-border/50 overflow-hidden"
-    >
-      {/* Header */}
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
       <div className="p-6 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -235,108 +191,68 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">المهام اليومية</h2>
-              <p className="text-muted-foreground text-sm">أكمل مهامك اليومية للحصول على أرباحك</p>
+              <p className="text-muted-foreground text-sm">أكمل مهامك للحصول على أرباحك</p>
             </div>
           </div>
           <div className="text-left">
             <p className="text-2xl font-black text-gradient-gold">{completedTasks}/{MAX_DAILY_TASKS}</p>
-            <p className="text-muted-foreground text-xs">مهام مكتملة</p>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6 space-y-4">
-        {/* Reward Info */}
         <div className="bg-primary/10 rounded-xl p-4 text-center">
           <p className="text-sm text-muted-foreground mb-1">مكافأة كل مهمة</p>
           <p className="text-2xl font-bold text-primary">+{taskReward} جنيه</p>
         </div>
 
-        {/* Status Message */}
         {isDayComplete ? (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <div className="flex items-center gap-3 text-amber-600">
-              <AlertCircle className="w-6 h-6 flex-shrink-0" />
+              <AlertCircle className="w-6 h-6" />
               <div>
                 <p className="font-bold">أكملت جميع مهام اليوم</p>
-                <p className="text-sm">عد غداً بعد منتصف الليل للعمل مجدداً</p>
+                <p className="text-sm">عد غداً للعمل مجدداً</p>
               </div>
             </div>
           </div>
         ) : (
           <div className="bg-emerald/10 border border-emerald/30 rounded-xl p-4">
             <div className="flex items-center gap-3 text-emerald">
-              <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
-              <div>
-                <p className="font-bold">لديك {remainingTasks} مهام متبقية اليوم</p>
-                <p className="text-sm">اضغط على "بدء العمل" لبدء المهمة</p>
-              </div>
+              <CheckCircle2 className="w-6 h-6" />
+              <p className="font-bold">لديك {MAX_DAILY_TASKS - completedTasks} مهام متبقية</p>
             </div>
           </div>
         )}
 
-        {/* Timer Display (when task is active) */}
         {isTaskActive && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border-2 border-primary/50 rounded-2xl p-6 text-center"
-          >
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border-2 border-primary/50 rounded-2xl p-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Clock className="w-5 h-5 text-primary animate-pulse" />
-              <span className="text-sm text-muted-foreground">المهمة رقم {currentTaskNumber}</span>
+              <span className="text-sm text-muted-foreground">المهمة رقم {completedTasks + 1}</span>
             </div>
-            <p className="text-5xl font-black text-gradient-gold tabular-nums">
-              {formatTime(remainingSeconds)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">انتظر حتى انتهاء الوقت</p>
+            <p className="text-5xl font-black text-gradient-gold tabular-nums">{formatTime(remainingSeconds)}</p>
+            <motion.p key={currentMessage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-primary mt-3 font-medium">{currentMessage}</motion.p>
             <div className="mt-4 bg-muted rounded-full h-2 overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-gold"
-                initial={{ width: "100%" }}
-                animate={{ width: `${(remainingSeconds / TASK_DURATION_SECONDS) * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
+              <motion.div className="h-full bg-gradient-gold" animate={{ width: `${(remainingSeconds / TASK_DURATION_SECONDS) * 100}%` }} />
             </div>
           </motion.div>
         )}
 
-        {/* Collect Reward Button (when timer finished) */}
         {canCollect && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-3"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <div className="bg-emerald/20 border border-emerald/50 rounded-xl p-4 text-center">
               <Coins className="w-8 h-8 text-emerald mx-auto mb-2" />
               <p className="font-bold text-emerald">المهمة مكتملة!</p>
-              <p className="text-sm text-muted-foreground">اضغط لاستلام مكافأتك</p>
             </div>
-            <Button
-              onClick={handleCollectReward}
-              disabled={isCollecting}
-              className="w-full bg-gradient-gold text-primary-foreground font-bold hover:opacity-90 h-14 text-lg"
-            >
-              {isCollecting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <Coins className="w-5 h-5 ml-2" />
-                  استلام {taskReward} جنيه
-                </>
-              )}
+            <Button onClick={handleCollectReward} disabled={isCollecting} className="w-full bg-gradient-gold text-primary-foreground font-bold h-14 text-lg">
+              {isCollecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>استلام {taskReward} جنيه</>}
             </Button>
           </motion.div>
         )}
 
-        {/* Start Work Button */}
         {!isTaskActive && !canCollect && !isDayComplete && (
-          <Button
-            onClick={handleStartWork}
-            className="w-full bg-gradient-gold text-primary-foreground font-bold hover:opacity-90 h-14 text-lg"
-          >
+          <Button onClick={handleStartWork} className="w-full bg-gradient-gold text-primary-foreground font-bold h-14 text-lg">
             <Briefcase className="w-5 h-5 ml-2" />
             بدء العمل
           </Button>
