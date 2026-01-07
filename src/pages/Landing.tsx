@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  Sparkles, 
   TrendingUp, 
   Users, 
   Gift, 
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import appIcon from "@/assets/app-icon.png";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -26,8 +26,8 @@ const Landing = () => {
     },
     {
       icon: Gift,
-      title: "عجلة الحظ",
-      description: "فرصة للفوز بجوائز إضافية كل يوم لأعضاء VIP"
+      title: "7 أيام تجربة مجانية",
+      description: "جرب جميع الميزات مجاناً عند إنشاء حساب جديد"
     },
     {
       icon: Users,
@@ -47,7 +47,7 @@ const Landing = () => {
   ];
 
   const packages = [
-    { name: "المبتدئ", price: "100 ج.م", daily: "9 ج.م/يوم", note: "(تبدأ بـ 50 ج.م)" },
+    { name: "المبتدئ", price: "مجاني", daily: "9 ج.م/يوم", note: "(7 أيام تجربة)" },
     { name: "VIP 1", price: "500 ج.م", daily: "45 ج.م/يوم" },
     { name: "VIP 2", price: "850 ج.م", daily: "75 ج.م/يوم" },
     { name: "VIP 3", price: "1500 ج.م", daily: "105 ج.م/يوم" },
@@ -62,9 +62,11 @@ const Landing = () => {
           {/* Navigation */}
           <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-2">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow">
-                <Sparkles className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src={appIcon} 
+                alt="Advance" 
+                className="w-12 h-12 rounded-2xl shadow-gold"
+              />
               <div>
                 <h1 className="text-xl font-bold text-foreground">Advance</h1>
                 <p className="text-xs text-muted-foreground">اربح يومياً</p>
@@ -90,9 +92,11 @@ const Landing = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center space-y-6"
           >
-            <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-gold flex items-center justify-center shadow-gold animate-pulse-glow">
-              <Sparkles className="w-12 h-12 text-primary-foreground" />
-            </div>
+            <img 
+              src={appIcon} 
+              alt="Advance" 
+              className="w-24 h-24 mx-auto rounded-3xl shadow-gold"
+            />
             
             <h2 className="text-3xl font-bold text-foreground">
               اربح حتى <span className="text-primary">105 ج.م</span> يومياً
@@ -120,7 +124,7 @@ const Landing = () => {
                     className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg py-6"
                     onClick={() => navigate("/auth")}
                   >
-                    إنشاء حساب جديد
+                    إنشاء حساب جديد - 7 أيام مجاناً
                     <ArrowLeft className="w-5 h-5 mr-2" />
                   </Button>
                   <Button
@@ -193,7 +197,7 @@ const Landing = () => {
             >
               <h4 className="font-bold text-foreground mb-2">{pkg.name}</h4>
               <p className="text-primary font-bold text-lg">{pkg.price}</p>
-              {pkg.note && <p className="text-xs text-amber-500 mt-1">{pkg.note}</p>}
+              {pkg.note && <p className="text-xs text-emerald mt-1">{pkg.note}</p>}
               <p className="text-xs text-muted-foreground mt-1">{pkg.daily}</p>
             </motion.div>
           ))}
@@ -211,7 +215,7 @@ const Landing = () => {
             className="bg-gradient-gold text-primary-foreground shadow-gold"
             onClick={() => navigate("/auth")}
           >
-            سجل الآن مجاناً
+            سجل الآن - 7 أيام مجاناً
             <ArrowLeft className="w-5 h-5 mr-2" />
           </Button>
         )}

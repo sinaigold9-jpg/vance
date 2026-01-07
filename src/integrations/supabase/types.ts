@@ -124,31 +124,37 @@ export type Database = {
       }
       package_upgrade_requests: {
         Row: {
+          amount: number | null
           created_at: string
           current_package: Database["public"]["Enums"]["account_type"]
           id: string
           processed_at: string | null
           processed_by: string | null
+          receipt_url: string | null
           requested_package: Database["public"]["Enums"]["account_type"]
           status: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
         Insert: {
+          amount?: number | null
           created_at?: string
           current_package: Database["public"]["Enums"]["account_type"]
           id?: string
           processed_at?: string | null
           processed_by?: string | null
+          receipt_url?: string | null
           requested_package: Database["public"]["Enums"]["account_type"]
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
         Update: {
+          amount?: number | null
           created_at?: string
           current_package?: Database["public"]["Enums"]["account_type"]
           id?: string
           processed_at?: string | null
           processed_by?: string | null
+          receipt_url?: string | null
           requested_package?: Database["public"]["Enums"]["account_type"]
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id?: string
@@ -231,7 +237,9 @@ export type Database = {
           referred_by: string | null
           team_code: string | null
           total_earnings: number
+          trial_end_date: string | null
           updated_at: string
+          withdrawal_pin: string | null
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"]
@@ -251,7 +259,9 @@ export type Database = {
           referred_by?: string | null
           team_code?: string | null
           total_earnings?: number
+          trial_end_date?: string | null
           updated_at?: string
+          withdrawal_pin?: string | null
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"]
@@ -271,7 +281,9 @@ export type Database = {
           referred_by?: string | null
           team_code?: string | null
           total_earnings?: number
+          trial_end_date?: string | null
           updated_at?: string
+          withdrawal_pin?: string | null
         }
         Relationships: [
           {
@@ -347,6 +359,8 @@ export type Database = {
           status: Database["public"]["Enums"]["transaction_status"]
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
+          wallet_holder_name: string | null
+          wallet_number: string | null
         }
         Insert: {
           amount: number
@@ -362,6 +376,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["transaction_status"]
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
+          wallet_holder_name?: string | null
+          wallet_number?: string | null
         }
         Update: {
           amount?: number
@@ -377,6 +393,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["transaction_status"]
           type?: Database["public"]["Enums"]["transaction_type"]
           user_id?: string
+          wallet_holder_name?: string | null
+          wallet_number?: string | null
         }
         Relationships: [
           {
