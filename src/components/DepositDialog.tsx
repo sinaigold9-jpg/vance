@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, User, Mail, Phone, IdCard, Loader2 } from "lucide-react";
+import { CheckCircle2, User, Mail, Phone, IdCard, Loader2, Upload, CreditCard, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,11 +23,16 @@ interface DepositDialogProps {
   } | null;
 }
 
+const ACCOUNT_NUMBER = "01080048591";
+
 export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogProps) => {
   const [amount, setAmount] = useState("");
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [membershipId, setMembershipId] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -48,9 +53,26 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setReceiptFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReceiptPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const copyAccountNumber = () => {
+    navigator.clipboard.writeText(ACCOUNT_NUMBER);
+    toast.success("تم نسخ رقم الحساب");
+  };
+
   const handleSubmit = async () => {
-    if (!user || !amount) {
-      toast.error("يرجى ملء جميع الحقول");
+    if (!user || !amount || !receiptFile) {
+      toast.error("يرجى ملء جميع الحقول وإرفاق إيصال الدفع");
       return;
     }
 
@@ -63,6 +85,19 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
     setUploading(true);
 
     try {
+      // Upload receipt image
+      const fileExt = receiptFile.name.split(".").pop();
+      const fileName = `${user.id}-deposit-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("receipts")
+        .upload(fileName, receiptFile);
+
+      let receiptUrl = "";
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from("receipts").getPublicUrl(fileName);
+        receiptUrl = urlData.publicUrl;
+      }
+
       // Create transaction record
       const { error: transactionError } = await supabase
         .from("transactions")
@@ -71,7 +106,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
           type: "deposit",
           amount: parsedAmount,
           status: "pending",
-          notes: `طلب شحن - ${userProfile?.full_name} - ${userProfile?.email} - ${userProfile?.phone} - رقم العضوية: ${membershipId}`,
+          notes: `طلب إيداع - إيصال: ${receiptUrl || "لم يتم الرفع"} - ${userProfile?.full_name} - ${userProfile?.email} - ${userProfile?.phone} - رقم العضوية: ${membershipId}`,
         });
 
       if (transactionError) throw transactionError;
@@ -86,11 +121,12 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
           user_email: userProfile?.email,
           user_phone: userProfile?.phone,
           membership_id: membershipId,
+          receipt_url: receiptUrl,
         },
       });
 
       setSuccess(true);
-      toast.success("تم إرسال طلب الشحن بنجاح");
+      toast.success("تم إرسال طلب الإيداع بنجاح");
     } catch (error) {
       console.error("Error submitting deposit:", error);
       toast.error("حدث خطأ في إرسال الطلب");
@@ -102,14 +138,16 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
   const handleClose = () => {
     setAmount("");
     setSuccess(false);
+    setReceiptFile(null);
+    setReceiptPreview(null);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md" dir="rtl">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl">طلب شحن الرصيد</DialogTitle>
+          <DialogTitle className="text-xl">طلب إيداع الرصيد</DialogTitle>
         </DialogHeader>
 
         {success ? (
@@ -129,6 +167,20 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
           </motion.div>
         ) : (
           <div className="space-y-4">
+            {/* Account Number */}
+            <div className="bg-primary/10 rounded-xl p-4 border border-primary/30">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <span className="font-bold text-primary">حوّل المبلغ إلى الحساب التالي</span>
+              </div>
+              <div className="flex items-center justify-between bg-background/80 rounded-lg p-3">
+                <span className="text-2xl font-bold tracking-wider" dir="ltr">{ACCOUNT_NUMBER}</span>
+                <Button variant="ghost" size="icon" onClick={copyAccountNumber}>
+                  <Copy className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
             {/* User Info */}
             <div className="bg-muted/50 rounded-xl p-4 space-y-3">
               <h4 className="font-bold text-sm text-muted-foreground">بيانات المستخدم</h4>
@@ -154,7 +206,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
 
             {/* Amount Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">المبلغ المطلوب شحنه</label>
+              <label className="text-sm font-medium">المبلغ المحوّل</label>
               <Input
                 type="number"
                 placeholder="أدخل المبلغ"
@@ -163,10 +215,37 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
               />
             </div>
 
+            {/* Receipt Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">إيصال الدفع</label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-24 border-dashed"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {receiptPreview ? (
+                  <img src={receiptPreview} alt="Receipt" className="h-20 object-contain" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">اضغط لرفع إيصال الدفع</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+
             <Button
               className="w-full h-12 bg-gradient-gold text-primary-foreground font-bold"
               onClick={handleSubmit}
-              disabled={!amount || uploading}
+              disabled={!amount || !receiptFile || uploading}
             >
               {uploading ? (
                 <>
@@ -174,7 +253,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
                   جاري الإرسال...
                 </>
               ) : (
-                "إرسال طلب الشحن"
+                "إرسال طلب الإيداع"
               )}
             </Button>
 

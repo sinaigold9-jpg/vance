@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { CaptchaVerification } from "@/components/CaptchaVerification";
+import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
 
 const signUpSchema = z.object({
@@ -40,7 +40,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -63,6 +64,20 @@ const Auth = () => {
       return null;
     }
     return data.id;
+  };
+
+  const handleSignupClick = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!privacyAccepted) {
+      setShowPrivacyPolicy(true);
+      return;
+    }
+    handleSubmit(e);
+  };
+
+  const handlePrivacyAccept = () => {
+    setPrivacyAccepted(true);
+    setShowPrivacyPolicy(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,13 +105,6 @@ const Auth = () => {
           navigate("/app");
         }
       } else {
-        // Check captcha for signup
-        if (!captchaVerified) {
-          toast.error("يرجى التحقق من رمز التحقق أولاً");
-          setIsLoading(false);
-          return;
-        }
-
         const validation = signUpSchema.safeParse({ 
           fullName, 
           email, 
@@ -111,7 +119,6 @@ const Auth = () => {
           return;
         }
 
-        // Validate referral code if provided
         let referredBy: string | null = null;
         if (referralCode.trim()) {
           referredBy = await validateReferralCode(referralCode);
@@ -131,7 +138,7 @@ const Auth = () => {
           }
         } else {
           toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
-          navigate("/app");
+          navigate("/app?onboarding=true");
         }
       }
     } catch (error) {
@@ -181,7 +188,7 @@ const Auth = () => {
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={isLogin ? handleSubmit : handleSignupClick} className="space-y-4">
             {!isLogin && (
               <>
                 <div className="relative">
@@ -277,21 +284,13 @@ const Auth = () => {
                     dir="ltr"
                   />
                 </div>
-
-                {/* Captcha */}
-                <div className="border border-border rounded-xl p-4 bg-muted/30">
-                  <CaptchaVerification 
-                    onVerify={setCaptchaVerified}
-                    disabled={isLoading}
-                  />
-                </div>
               </>
             )}
 
             <Button
               type="submit"
               className="w-full bg-gradient-gold text-primary-foreground shadow-gold"
-              disabled={isLoading || (!isLogin && !captchaVerified)}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <span className="animate-spin">⏳</span>
@@ -317,6 +316,11 @@ const Auth = () => {
           </Button>
         </div>
       </motion.div>
+
+      <PrivacyPolicyModal 
+        isOpen={showPrivacyPolicy} 
+        onAccept={handlePrivacyAccept}
+      />
     </div>
   );
 };
