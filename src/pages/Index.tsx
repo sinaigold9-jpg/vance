@@ -16,7 +16,7 @@ import { WithdrawalDialog } from "@/components/WithdrawalDialog";
 import { WithdrawalPinSetup } from "@/components/WithdrawalPinSetup";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
-import { AppToggle } from "@/components/AppToggle";
+
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LogIn, LogOut, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -243,7 +243,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
-      <AppToggle />
       
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 py-4">
