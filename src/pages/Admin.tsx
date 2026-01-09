@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
-  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings
+  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +18,7 @@ import { AdminActivityTab } from "@/components/admin/AdminActivityTab";
 import { AdminUpgradeRequestsTab } from "@/components/admin/AdminUpgradeRequestsTab";
 import { AdminSupportTab } from "@/components/admin/AdminSupportTab";
 import { AdminBotSettingsTab } from "@/components/admin/AdminBotSettingsTab";
+import { AdminAppSettingsTab } from "@/components/admin/AdminAppSettingsTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -202,6 +203,10 @@ const Admin = () => {
               <Bot className="w-4 h-4 ml-1" />
               البوت
             </TabsTrigger>
+            <TabsTrigger value="app-settings" className="flex-1 min-w-[80px]">
+              <Power className="w-4 h-4 ml-1" />
+              التحكم
+            </TabsTrigger>
             <TabsTrigger value="activity" className="flex-1 min-w-[80px]">
               <Clock className="w-4 h-4 ml-1" />
               النشاطات
@@ -230,6 +235,10 @@ const Admin = () => {
 
           <TabsContent value="bot" className="mt-6">
             <AdminBotSettingsTab />
+          </TabsContent>
+
+          <TabsContent value="app-settings" className="mt-6">
+            <AdminAppSettingsTab />
           </TabsContent>
 
           <TabsContent value="activity" className="mt-6">

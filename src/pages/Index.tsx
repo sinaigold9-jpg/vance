@@ -17,7 +17,8 @@ import { WithdrawalPinSetup } from "@/components/WithdrawalPinSetup";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
 import { AppToggle } from "@/components/AppToggle";
-import { LogIn, LogOut, AlertTriangle } from "lucide-react";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { LogIn, LogOut, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ const Index = () => {
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { settings: appSettings } = useAppSettings();
 
   // Check if trial has expired
   const isTrialExpired = () => {
@@ -129,17 +131,30 @@ const Index = () => {
 
   const trialExpired = isTrialExpired();
 
+  // Check if app is disabled
+  if (!appSettings.appEnabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-card border border-border rounded-2xl p-8 text-center max-w-md"
+        >
+          <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-4">التطبيق متوقف مؤقتاً</h1>
+          <p className="text-muted-foreground">{appSettings.appDisabledMessage}</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case "home":
         return (
           <motion.div key="home" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
             {trialExpired && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-center gap-3"
-              >
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-destructive" />
                 <div>
                   <p className="font-bold text-destructive">انتهت فترة التجربة</p>
@@ -169,36 +184,39 @@ const Index = () => {
       case "tasks":
         return (
           <motion.div key="tasks" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            {trialExpired ? (
+            {!appSettings.tasksEnabled ? (
+              <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
+                <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">نظام المهام متوقف</h3>
+                <p className="text-muted-foreground">{appSettings.tasksDisabledMessage}</p>
+              </div>
+            ) : trialExpired ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">انتهت فترة التجربة</h3>
                 <p className="text-muted-foreground mb-4">قم بترقية باقتك للاستمرار في إنجاز المهام</p>
-                <Button onClick={() => setActiveTab("packages")} className="bg-gradient-gold text-primary-foreground">
-                  ترقية الباقة
-                </Button>
+                <Button onClick={() => setActiveTab("packages")} className="bg-gradient-gold text-primary-foreground">ترقية الباقة</Button>
               </div>
             ) : user ? (
               <DailyTasks userId={user.id} accountType={accountType} onBalanceUpdate={handleBalanceUpdate} />
             ) : (
-              <div className="bg-gradient-card rounded-2xl p-6 text-center">
-                <p className="text-muted-foreground">يرجى تسجيل الدخول</p>
-              </div>
+              <div className="bg-gradient-card rounded-2xl p-6 text-center"><p className="text-muted-foreground">يرجى تسجيل الدخول</p></div>
             )}
-            <LuckyWheel 
-              prizes={[3, 5, 1, 10]} 
-              canSpin={canSpinWheel && !trialExpired} 
-              onSpin={handleSpinWheel} 
-              accountType={accountType} 
-              luckyWheelUsed={luckyWheelUsed}
-              trialExpired={trialExpired}
-            />
+            {!appSettings.luckyWheelEnabled ? (
+              <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
+                <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">عجلة الحظ متوقفة</h3>
+                <p className="text-muted-foreground">{appSettings.luckyWheelDisabledMessage}</p>
+              </div>
+            ) : (
+              <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} trialExpired={trialExpired} />
+            )}
           </motion.div>
         );
       case "team":
         return (
           <motion.div key="team" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <TeamSection isVip={true} teamCode="TEAM-XYZ789" teamMembers={[]} teamEarnings={6} earningsPerMember={3} />
+            {user && <TeamSection userId={user.id} referralCode={referralCode} isTrialExpired={trialExpired} teamEnabled={appSettings.teamEnabled} teamDisabledMessage={appSettings.teamDisabledMessage} />}
           </motion.div>
         );
       case "wallet":
