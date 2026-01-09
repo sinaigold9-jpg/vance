@@ -263,6 +263,8 @@ export type Database = {
           referral_code: string | null
           referred_by: string | null
           team_code: string | null
+          team_members_count: number | null
+          team_rank: string | null
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
@@ -285,6 +287,8 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           team_code?: string | null
+          team_members_count?: number | null
+          team_rank?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -307,6 +311,8 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           team_code?: string | null
+          team_members_count?: number | null
+          team_rank?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -384,6 +390,7 @@ export type Database = {
           processed_at: string | null
           processed_by: string | null
           status: Database["public"]["Enums"]["transaction_status"]
+          transaction_number: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
           wallet_holder_name: string | null
@@ -401,6 +408,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_number?: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
           wallet_holder_name?: string | null
@@ -418,6 +426,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_number?: string | null
           type?: Database["public"]["Enums"]["transaction_type"]
           user_id?: string
           wallet_holder_name?: string | null
@@ -464,6 +473,7 @@ export type Database = {
     }
     Functions: {
       generate_membership_id: { Args: never; Returns: string }
+      generate_transaction_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
