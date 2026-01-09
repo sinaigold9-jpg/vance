@@ -55,22 +55,25 @@ export const useAppSettings = () => {
       .select("*");
 
     if (!error && data) {
-      const settingsMap: Record<string, string> = {};
+      const settingsMap: Record<string, { is_active: boolean; value: string }> = {};
       data.forEach((setting) => {
-        settingsMap[setting.key] = setting.value || "";
+        settingsMap[setting.key] = {
+          is_active: setting.is_active ?? true,
+          value: setting.value || ""
+        };
       });
 
       setSettings({
-        appEnabled: settingsMap["app_enabled"] === "true",
-        appDisabledMessage: settingsMap["app_disabled_message"] || "التطبيق تحت الصيانة",
-        tasksEnabled: settingsMap["tasks_enabled"] === "true",
-        tasksDisabledMessage: settingsMap["tasks_disabled_message"] || "نظام المهام متوقف مؤقتاً",
-        luckyWheelEnabled: settingsMap["lucky_wheel_enabled"] === "true",
-        luckyWheelDisabledMessage: settingsMap["lucky_wheel_disabled_message"] || "عجلة الحظ متوقفة مؤقتاً",
-        referralEnabled: settingsMap["referral_enabled"] === "true",
-        referralDisabledMessage: settingsMap["referral_disabled_message"] || "نظام الإحالة متوقف مؤقتاً",
-        teamEnabled: settingsMap["team_enabled"] === "true",
-        teamDisabledMessage: settingsMap["team_disabled_message"] || "نظام الفريق متوقف مؤقتاً",
+        appEnabled: settingsMap["app_enabled"]?.is_active ?? true,
+        appDisabledMessage: settingsMap["app_disabled_message"]?.value || "التطبيق تحت الصيانة",
+        tasksEnabled: settingsMap["tasks_enabled"]?.is_active ?? true,
+        tasksDisabledMessage: settingsMap["tasks_disabled_message"]?.value || "نظام المهام متوقف مؤقتاً",
+        luckyWheelEnabled: settingsMap["lucky_wheel_enabled"]?.is_active ?? true,
+        luckyWheelDisabledMessage: settingsMap["lucky_wheel_disabled_message"]?.value || "عجلة الحظ متوقفة مؤقتاً",
+        referralEnabled: settingsMap["referral_enabled"]?.is_active ?? true,
+        referralDisabledMessage: settingsMap["referral_disabled_message"]?.value || "نظام الإحالة متوقف مؤقتاً",
+        teamEnabled: settingsMap["team_enabled"]?.is_active ?? true,
+        teamDisabledMessage: settingsMap["team_disabled_message"]?.value || "نظام الفريق متوقف مؤقتاً",
       });
     }
     setLoading(false);

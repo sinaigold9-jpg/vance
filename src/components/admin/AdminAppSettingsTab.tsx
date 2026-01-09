@@ -52,12 +52,13 @@ export const AdminAppSettingsTab = () => {
   };
 
   const handleToggle = async (key: string, enabled: boolean) => {
-    const value = enabled ? "true" : "false";
-    
     const { error } = await supabase
       .from("app_settings")
-      .update({ value })
-      .eq("key", key);
+      .upsert({ 
+        key, 
+        is_active: enabled,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "key" });
 
     if (error) {
       toast.error("حدث خطأ في تحديث الإعداد");
@@ -65,7 +66,7 @@ export const AdminAppSettingsTab = () => {
     } else {
       setSettings((prev) => ({
         ...prev,
-        [key]: { ...prev[key], value },
+        [key]: { ...prev[key], is_active: enabled },
       }));
       toast.success(enabled ? "تم تفعيل الميزة" : "تم إيقاف الميزة");
     }
@@ -112,7 +113,7 @@ export const AdminAppSettingsTab = () => {
 
         <div className="space-y-4">
           {settingsConfig.map((config) => {
-            const isEnabled = settings[config.key]?.value === "true";
+            const isEnabled = settings[config.key]?.is_active ?? true;
             const messageValue = settings[config.messageKey]?.value || "";
             const Icon = config.icon;
 
