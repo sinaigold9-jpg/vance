@@ -128,6 +128,12 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
     toast({ title: "🚀 بدأت المهمة", description: "انتظر حتى انتهاء العد التنازلي" });
   };
 
+  const playCompletionSound = () => {
+    const audio = new Audio('/sounds/task-complete.wav');
+    audio.volume = 0.5;
+    audio.play().catch(console.error);
+  };
+
   const handleCollectReward = async () => {
     if (!canCollect || isCollecting) return;
     setIsCollecting(true);
@@ -155,6 +161,10 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
       setCompletedTasks(newCompletedTasks);
       setCanCollect(false);
       onBalanceUpdate(newBalance, taskReward);
+      
+      // Play completion sound
+      playCompletionSound();
+      
       toast({ title: "🎉 مبروك!", description: `تم إضافة ${taskReward} جنيه` });
     } catch (err) {
       toast({ title: "❌ خطأ", description: "حاول مرة أخرى", variant: "destructive" });

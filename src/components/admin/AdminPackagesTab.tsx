@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Edit, DollarSign, Gift, Crown } from "lucide-react";
+import { Package, Edit, DollarSign, Gift, Crown, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Database } from "@/integrations/supabase/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type AccountType = Database["public"]["Enums"]["account_type"];
 
@@ -24,11 +32,26 @@ interface PackageData {
   is_active: boolean;
 }
 
+const defaultNewPackage: Omit<PackageData, 'id'> = {
+  name: "",
+  price: 0,
+  account_type: "vip1",
+  task_reward: 0,
+  daily_tasks: 3,
+  daily_earnings: 0,
+  min_withdrawal: 500,
+  has_daily_wheel: true,
+  is_active: true
+};
+
 export const AdminPackagesTab = () => {
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPackage, setSelectedPackage] = useState<PackageData | null>(null);
   const [editedPackage, setEditedPackage] = useState<PackageData | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newPackage, setNewPackage] = useState<Omit<PackageData, 'id'>>(defaultNewPackage);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => { fetchPackages(); }, []);
 
@@ -42,6 +65,8 @@ export const AdminPackagesTab = () => {
 
   const handleSavePackage = async () => {
     if (!selectedPackage || !editedPackage) return;
+    setIsSaving(true);
+    
     const { error } = await supabase.from("packages").update({
       name: editedPackage.name,
       price: editedPackage.price,
@@ -52,8 +77,42 @@ export const AdminPackagesTab = () => {
       has_daily_wheel: editedPackage.has_daily_wheel,
       is_active: editedPackage.is_active
     }).eq("id", selectedPackage.id);
+    
     if (error) toast.error("حدث خطأ في تحديث الباقة");
     else { toast.success("تم تحديث الباقة بنجاح"); fetchPackages(); setSelectedPackage(null); }
+    setIsSaving(false);
+  };
+
+  const handleAddPackage = async () => {
+    if (!newPackage.name) {
+      toast.error("يرجى إدخال اسم الباقة");
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    const { error } = await supabase.from("packages").insert({
+      name: newPackage.name,
+      price: newPackage.price,
+      account_type: newPackage.account_type,
+      task_reward: newPackage.task_reward,
+      daily_tasks: newPackage.daily_tasks,
+      daily_earnings: newPackage.daily_earnings,
+      min_withdrawal: newPackage.min_withdrawal,
+      has_daily_wheel: newPackage.has_daily_wheel,
+      is_active: newPackage.is_active
+    });
+    
+    if (error) {
+      console.error("Error adding package:", error);
+      toast.error("حدث خطأ في إضافة الباقة");
+    } else {
+      toast.success("تم إضافة الباقة بنجاح");
+      fetchPackages();
+      setShowAddDialog(false);
+      setNewPackage(defaultNewPackage);
+    }
+    setIsSaving(false);
   };
 
   const getAccountTypeLabel = (type: string) => {
@@ -64,6 +123,12 @@ export const AdminPackagesTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* Add Package Button */}
+      <Button onClick={() => setShowAddDialog(true)} className="w-full bg-gradient-gold text-primary-foreground">
+        <Plus className="w-5 h-5 ml-2" />
+        إضافة باقة جديدة
+      </Button>
+
       <div className="grid gap-4 md:grid-cols-2">
         {packages.map((pkg, index) => (
           <motion.div key={pkg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className={`bg-card border rounded-xl p-4 ${pkg.is_active ? "border-primary/50" : "border-border opacity-60"}`}>
@@ -84,21 +149,92 @@ export const AdminPackagesTab = () => {
         ))}
       </div>
 
+      {/* Edit Package Dialog */}
       <Dialog open={!!selectedPackage} onOpenChange={() => setSelectedPackage(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>تعديل الباقة</DialogTitle></DialogHeader>
           {editedPackage && (
             <div className="space-y-4">
-              <div className="space-y-2"><label className="text-sm font-medium">اسم الباقة</label><Input value={editedPackage.name} onChange={(e) => setEditedPackage({ ...editedPackage, name: e.target.value })} /></div>
-              <div className="space-y-2"><label className="text-sm font-medium">السعر (جنيه)</label><Input type="number" value={editedPackage.price} onChange={(e) => setEditedPackage({ ...editedPackage, price: Number(e.target.value) })} /></div>
-              <div className="space-y-2"><label className="text-sm font-medium">ربح المهمة (جنيه)</label><Input type="number" value={editedPackage.task_reward} onChange={(e) => setEditedPackage({ ...editedPackage, task_reward: Number(e.target.value) })} /></div>
-              <div className="space-y-2"><label className="text-sm font-medium">الربح اليومي (جنيه)</label><Input type="number" value={editedPackage.daily_earnings} onChange={(e) => setEditedPackage({ ...editedPackage, daily_earnings: Number(e.target.value) })} /></div>
-              <div className="space-y-2"><label className="text-sm font-medium">الحد الأدنى للسحب (جنيه)</label><Input type="number" value={editedPackage.min_withdrawal} onChange={(e) => setEditedPackage({ ...editedPackage, min_withdrawal: Number(e.target.value) })} /></div>
-              <div className="flex items-center justify-between"><label className="text-sm font-medium">عجلة الحظ اليومية</label><Switch checked={editedPackage.has_daily_wheel} onCheckedChange={(checked) => setEditedPackage({ ...editedPackage, has_daily_wheel: checked })} /></div>
-              <div className="flex items-center justify-between"><label className="text-sm font-medium">تفعيل الباقة</label><Switch checked={editedPackage.is_active} onCheckedChange={(checked) => setEditedPackage({ ...editedPackage, is_active: checked })} /></div>
-              <Button className="w-full" onClick={handleSavePackage}>حفظ التغييرات</Button>
+              <div className="space-y-2"><Label>اسم الباقة</Label><Input value={editedPackage.name} onChange={(e) => setEditedPackage({ ...editedPackage, name: e.target.value })} /></div>
+              <div className="space-y-2"><Label>السعر (جنيه)</Label><Input type="number" value={editedPackage.price} onChange={(e) => setEditedPackage({ ...editedPackage, price: Number(e.target.value) })} /></div>
+              <div className="space-y-2"><Label>ربح المهمة (جنيه)</Label><Input type="number" value={editedPackage.task_reward} onChange={(e) => setEditedPackage({ ...editedPackage, task_reward: Number(e.target.value) })} /></div>
+              <div className="space-y-2"><Label>عدد المهام اليومية</Label><Input type="number" value={editedPackage.daily_tasks} onChange={(e) => setEditedPackage({ ...editedPackage, daily_tasks: Number(e.target.value) })} /></div>
+              <div className="space-y-2"><Label>الربح اليومي (جنيه)</Label><Input type="number" value={editedPackage.daily_earnings} onChange={(e) => setEditedPackage({ ...editedPackage, daily_earnings: Number(e.target.value) })} /></div>
+              <div className="space-y-2"><Label>الحد الأدنى للسحب (جنيه)</Label><Input type="number" value={editedPackage.min_withdrawal} onChange={(e) => setEditedPackage({ ...editedPackage, min_withdrawal: Number(e.target.value) })} /></div>
+              <div className="flex items-center justify-between"><Label>عجلة الحظ اليومية</Label><Switch checked={editedPackage.has_daily_wheel} onCheckedChange={(checked) => setEditedPackage({ ...editedPackage, has_daily_wheel: checked })} /></div>
+              <div className="flex items-center justify-between"><Label>تفعيل الباقة</Label><Switch checked={editedPackage.is_active} onCheckedChange={(checked) => setEditedPackage({ ...editedPackage, is_active: checked })} /></div>
+              <Button className="w-full" onClick={handleSavePackage} disabled={isSaving}>
+                {isSaving ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />جاري الحفظ...</> : "حفظ التغييرات"}
+              </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Package Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>إضافة باقة جديدة</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم الباقة</Label>
+              <Input value={newPackage.name} onChange={(e) => setNewPackage({ ...newPackage, name: e.target.value })} placeholder="مثال: VIP 4" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>نوع الحساب</Label>
+              <Select value={newPackage.account_type} onValueChange={(value: AccountType) => setNewPackage({ ...newPackage, account_type: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">مبتدئ</SelectItem>
+                  <SelectItem value="vip1">VIP 1</SelectItem>
+                  <SelectItem value="vip2">VIP 2</SelectItem>
+                  <SelectItem value="vip3">VIP 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>السعر (جنيه)</Label>
+              <Input type="number" value={newPackage.price} onChange={(e) => setNewPackage({ ...newPackage, price: Number(e.target.value) })} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>ربح المهمة (جنيه)</Label>
+              <Input type="number" value={newPackage.task_reward} onChange={(e) => setNewPackage({ ...newPackage, task_reward: Number(e.target.value) })} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>عدد المهام اليومية</Label>
+              <Input type="number" value={newPackage.daily_tasks} onChange={(e) => setNewPackage({ ...newPackage, daily_tasks: Number(e.target.value) })} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>الربح اليومي (جنيه)</Label>
+              <Input type="number" value={newPackage.daily_earnings} onChange={(e) => setNewPackage({ ...newPackage, daily_earnings: Number(e.target.value) })} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>الحد الأدنى للسحب (جنيه)</Label>
+              <Input type="number" value={newPackage.min_withdrawal} onChange={(e) => setNewPackage({ ...newPackage, min_withdrawal: Number(e.target.value) })} />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label>عجلة الحظ اليومية</Label>
+              <Switch checked={newPackage.has_daily_wheel} onCheckedChange={(checked) => setNewPackage({ ...newPackage, has_daily_wheel: checked })} />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label>تفعيل الباقة</Label>
+              <Switch checked={newPackage.is_active} onCheckedChange={(checked) => setNewPackage({ ...newPackage, is_active: checked })} />
+            </div>
+            
+            <Button className="w-full bg-gradient-gold text-primary-foreground" onClick={handleAddPackage} disabled={isSaving}>
+              {isSaving ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />جاري الإضافة...</> : "إضافة الباقة"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

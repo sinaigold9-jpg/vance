@@ -16,6 +16,7 @@ import { WithdrawalDialog } from "@/components/WithdrawalDialog";
 import { WithdrawalPinSetup } from "@/components/WithdrawalPinSetup";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
+import { BalanceReveal } from "@/components/BalanceReveal";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LogIn, LogOut, AlertTriangle, Lock } from "lucide-react";
@@ -45,6 +46,8 @@ const Index = () => {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showBalanceReveal, setShowBalanceReveal] = useState(false);
+  const [isBalanceRevealed, setIsBalanceRevealed] = useState(false);
   const [withdrawalPin, setWithdrawalPin] = useState<string | null>(null);
   const [trialEndDate, setTrialEndDate] = useState<string | null>(null);
   const [membershipId, setMembershipId] = useState("");
@@ -84,11 +87,6 @@ const Index = () => {
       setTrialEndDate(data.trial_end_date);
       setUserProfile({ full_name: data.full_name, email: data.email, phone: data.phone });
       
-      // Show PIN setup if not set
-      if (!data.withdrawal_pin) {
-        setShowPinSetup(true);
-      }
-      
       if (data.account_type === "beginner") { 
         setCanSpinWheel(!data.lucky_wheel_used); 
       } else {
@@ -124,9 +122,40 @@ const Index = () => {
   const handleWithdraw = (amount: number) => { setBalance((prev) => prev - amount); };
   const handleDeposit = () => { setShowDepositDialog(true); };
 
+  const handleOpenWallet = () => {
+    // Check if PIN is set first
+    if (!withdrawalPin) {
+      setShowPinSetup(true);
+      return;
+    }
+    
+    // If PIN is set but balance not revealed, show reveal dialog
+    if (!isBalanceRevealed) {
+      setShowBalanceReveal(true);
+      return;
+    }
+    
+    setActiveTab("wallet");
+  };
+
   const handleOpenWithdraw = () => {
-    if (!withdrawalPin) { setShowPinSetup(true); }
-    else { setShowWithdrawDialog(true); }
+    if (!withdrawalPin) { 
+      setShowPinSetup(true); 
+      return;
+    }
+    
+    if (!isBalanceRevealed) {
+      setShowBalanceReveal(true);
+      return;
+    }
+    
+    setShowWithdrawDialog(true);
+  };
+
+  const handleBalanceRevealSuccess = () => {
+    setIsBalanceRevealed(true);
+    setShowBalanceReveal(false);
+    setActiveTab("wallet");
   };
 
   const trialExpired = isTrialExpired();
@@ -162,7 +191,7 @@ const Index = () => {
                 </div>
               </motion.div>
             )}
-            <BalanceCard balance={balance} todayEarnings={todayEarnings} accountType={accountType} />
+            <BalanceCard balance={isBalanceRevealed ? balance : null} todayEarnings={todayEarnings} accountType={accountType} onRevealClick={() => !withdrawalPin ? setShowPinSetup(true) : setShowBalanceReveal(true)} isRevealed={isBalanceRevealed} />
             <SocialLinks />
             <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
@@ -225,7 +254,9 @@ const Index = () => {
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="text-center mb-6">
                 <p className="text-muted-foreground text-sm">رصيدك الحالي</p>
-                <p className="text-3xl font-black text-gradient-gold">{balance.toLocaleString()} جنيه</p>
+                <p className="text-3xl font-black text-gradient-gold">
+                  {isBalanceRevealed ? `${balance.toLocaleString()} جنيه` : "••••••"}
+                </p>
               </div>
               <div className="flex gap-3">
                 <Button onClick={handleOpenWithdraw} className="flex-1 h-12 bg-gradient-gold text-primary-foreground">سحب</Button>
@@ -260,11 +291,12 @@ const Index = () => {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6"><AnimatePresence mode="wait">{renderContent()}</AnimatePresence></main>
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navigation activeTab={activeTab} onTabChange={(tab) => tab === "wallet" ? handleOpenWallet() : setActiveTab(tab)} />
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
       {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage.minWithdraw} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
+      {user && withdrawalPin && <BalanceReveal isOpen={showBalanceReveal} onClose={() => setShowBalanceReveal(false)} withdrawalPin={withdrawalPin} onSuccess={handleBalanceRevealSuccess} />}
       
       {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
       <BotWidget />
