@@ -24,13 +24,14 @@ const signUpSchema = z.object({
 });
 
 const signInSchema = z.object({
-  email: z.string().email("البريد الإلكتروني غير صحيح"),
+  identifier: z.string().min(1, "البريد الإلكتروني أو رقم الهاتف مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(searchParams.get("mode") === "login");
+  const [identifier, setIdentifier] = useState(""); // Can be email or phone
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,6 +46,15 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
+  // Check for referral link
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setReferralCode(ref);
+      setIsLogin(false);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (user) {
       navigate("/app");
@@ -54,6 +64,16 @@ const Auth = () => {
   const validateReferralCode = async (code: string): Promise<string | null> => {
     if (!code.trim()) return null;
     
+    // Check if it's a user ID (from referral link)
+    const { data: profileById } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", code.trim())
+      .maybeSingle();
+    
+    if (profileById) return profileById.id;
+
+    // Check if it's a referral code
     const { data, error } = await supabase
       .from("profiles")
       .select("id")
@@ -64,6 +84,19 @@ const Auth = () => {
       return null;
     }
     return data.id;
+  };
+
+  const findEmailByPhone = async (phoneNumber: string): Promise<string | null> => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("phone", phoneNumber)
+      .maybeSingle();
+    
+    if (error || !data || !data.email) {
+      return null;
+    }
+    return data.email;
   };
 
   const handleSignupClick = (e: React.FormEvent) => {
@@ -86,17 +119,30 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const validation = signInSchema.safeParse({ email, password });
+        const validation = signInSchema.safeParse({ identifier, password });
         if (!validation.success) {
           toast.error(validation.error.errors[0].message);
           setIsLoading(false);
           return;
         }
 
-        const { error } = await signIn(email, password);
+        let loginEmail = identifier;
+        
+        // Check if identifier is a phone number (starts with 0 or +)
+        if (/^[0+]/.test(identifier)) {
+          const foundEmail = await findEmailByPhone(identifier);
+          if (!foundEmail) {
+            toast.error("رقم الهاتف غير مسجل");
+            setIsLoading(false);
+            return;
+          }
+          loginEmail = foundEmail;
+        }
+
+        const { error } = await signIn(loginEmail, password);
         if (error) {
           if (error.message.includes("Invalid login")) {
-            toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+            toast.error("البريد الإلكتروني/رقم الهاتف أو كلمة المرور غير صحيحة");
           } else {
             toast.error(error.message);
           }
@@ -212,20 +258,33 @@ const Auth = () => {
                     dir="ltr"
                   />
                 </div>
+                <div className="relative">
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="البريد الإلكتروني"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pr-10 text-right"
+                    dir="ltr"
+                  />
+                </div>
               </>
             )}
 
-            <div className="relative">
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="البريد الإلكتروني"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pr-10 text-right"
-                dir="ltr"
-              />
-            </div>
+            {isLogin && (
+              <div className="relative">
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="البريد الإلكتروني أو رقم الهاتف"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  className="pr-10 text-right"
+                  dir="ltr"
+                />
+              </div>
+            )}
 
             <div className="relative">
               <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />

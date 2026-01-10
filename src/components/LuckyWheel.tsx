@@ -18,15 +18,17 @@ type PrizeType = {
   value: number;
   type: "cash" | "retry" | "box";
   color: string;
+  bgColor: string;
+  icon: string;
 };
 
 const wheelPrizes: PrizeType[] = [
-  { label: "3 جنيه", value: 3, type: "cash", color: "from-red-500 to-red-600" },
-  { label: "إعادة", value: 0, type: "retry", color: "from-yellow-400 to-yellow-500" },
-  { label: "5 جنيه", value: 5, type: "cash", color: "from-green-500 to-green-600" },
-  { label: "1 جنيه", value: 1, type: "cash", color: "from-pink-500 to-pink-600" },
-  { label: "10 جنيه", value: 10, type: "cash", color: "from-purple-500 to-purple-600" },
-  { label: "صندوق", value: 0, type: "box", color: "from-amber-500 to-amber-600" },
+  { label: "3 جنيه", value: 3, type: "cash", color: "#FFFFFF", bgColor: "#1a1a2e", icon: "💰" },
+  { label: "إعادة", value: 0, type: "retry", color: "#FFFFFF", bgColor: "#dc2626", icon: "🔄" },
+  { label: "5 جنيه", value: 5, type: "cash", color: "#FFFFFF", bgColor: "#ec4899", icon: "💵" },
+  { label: "1 جنيه", value: 1, type: "cash", color: "#FFFFFF", bgColor: "#78350f", icon: "🪙" },
+  { label: "10 جنيه", value: 10, type: "cash", color: "#1a1a2e", bgColor: "#fbbf24", icon: "💎" },
+  { label: "صندوق", value: 0, type: "box", color: "#FFFFFF", bgColor: "#16a34a", icon: "🎁" },
 ];
 
 type BoxPrize = "extra_spin" | "cash_5" | "nothing";
@@ -107,7 +109,7 @@ export const LuckyWheel = ({
         description: "لقد ربحت 5 جنيه!",
       });
       onSpin(5);
-      setWonPrize({ label: "5 جنيه", value: 5, type: "cash", color: "from-emerald-500 to-emerald-600" });
+      setWonPrize({ label: "5 جنيه", value: 5, type: "cash", color: "#FFFFFF", bgColor: "#16a34a", icon: "💵" });
       setShowPrize(true);
     } else {
       toast({
@@ -158,6 +160,7 @@ export const LuckyWheel = ({
         </div>
 
         <div className="relative flex flex-col items-center">
+          {/* Wheel Pointer */}
           <div className="absolute top-0 z-10 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-primary" />
 
           <div className="relative w-72 h-72 my-4">
@@ -172,46 +175,76 @@ export const LuckyWheel = ({
               </div>
             )}
             
+            {/* Wheel */}
             <motion.div
               ref={wheelRef}
-              className="w-full h-full rounded-full border-4 border-primary shadow-gold overflow-hidden"
+              className="w-full h-full rounded-full border-4 border-primary shadow-gold overflow-hidden relative"
               style={{
                 transform: `rotate(${rotation}deg)`,
                 transition: isSpinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)" : "none",
               }}
             >
-              {wheelPrizes.map((prize, index) => {
-                const segmentAngle = 360 / wheelPrizes.length;
-                const startAngle = index * segmentAngle;
-                const midAngle = startAngle + segmentAngle / 2;
+              <svg viewBox="0 0 200 200" className="w-full h-full">
+                {wheelPrizes.map((prize, index) => {
+                  const segmentAngle = 360 / wheelPrizes.length;
+                  const startAngle = index * segmentAngle - 90;
+                  const endAngle = startAngle + segmentAngle;
+                  const midAngle = startAngle + segmentAngle / 2;
+                  
+                  const startRad = (startAngle * Math.PI) / 180;
+                  const endRad = (endAngle * Math.PI) / 180;
+                  const midRad = (midAngle * Math.PI) / 180;
+                  
+                  const x1 = 100 + 100 * Math.cos(startRad);
+                  const y1 = 100 + 100 * Math.sin(startRad);
+                  const x2 = 100 + 100 * Math.cos(endRad);
+                  const y2 = 100 + 100 * Math.sin(endRad);
+                  
+                  const largeArc = segmentAngle > 180 ? 1 : 0;
+                  
+                  const textX = 100 + 55 * Math.cos(midRad);
+                  const textY = 100 + 55 * Math.sin(midRad);
+                  
+                  const iconX = 100 + 75 * Math.cos(midRad);
+                  const iconY = 100 + 75 * Math.sin(midRad);
 
-                return (
-                  <div
-                    key={index}
-                    className="absolute w-full h-full"
-                    style={{
-                      clipPath: `polygon(50% 50%, ${50 + 50 * Math.cos((startAngle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((startAngle - 90) * Math.PI / 180)}%, ${50 + 50 * Math.cos((startAngle + segmentAngle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((startAngle + segmentAngle - 90) * Math.PI / 180)}%)`,
-                    }}
-                  >
-                    <div className={`w-full h-full bg-gradient-to-br ${prize.color}`}>
-                      <div
-                        className="absolute text-white font-bold text-xs whitespace-nowrap"
-                        style={{
-                          top: "30%",
-                          left: "50%",
-                          transform: `rotate(${midAngle}deg) translateX(-50%)`,
-                          transformOrigin: "center center",
-                          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-                        }}
+                  return (
+                    <g key={index}>
+                      <path
+                        d={`M 100 100 L ${x1} ${y1} A 100 100 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                        fill={prize.bgColor}
+                        stroke="#fff"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x={iconX}
+                        y={iconY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="20"
+                        transform={`rotate(${midAngle + 90}, ${iconX}, ${iconY})`}
                       >
-                        {prize.type === "box" ? "📦" : prize.type === "retry" ? "🔄" : prize.label}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                        {prize.icon}
+                      </text>
+                      <text
+                        x={textX}
+                        y={textY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={prize.color}
+                        fontSize="10"
+                        fontWeight="bold"
+                        transform={`rotate(${midAngle + 90}, ${textX}, ${textY})`}
+                      >
+                        {prize.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
               
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-gold shadow-lg flex items-center justify-center">
+              {/* Center Hub */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-gold shadow-lg flex items-center justify-center z-10">
                 <Gift className="w-8 h-8 text-primary-foreground" />
               </div>
             </motion.div>
@@ -259,7 +292,7 @@ export const LuckyWheel = ({
                   <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant="outline"
-                      className="flex flex-col items-center p-4 h-auto"
+                      className="flex flex-col items-center p-4 h-auto border-2 border-primary/30 hover:border-primary"
                       onClick={() => handleBoxChoice("extra_spin")}
                     >
                       <RotateCcw className="w-8 h-8 text-primary mb-2" />
@@ -267,7 +300,7 @@ export const LuckyWheel = ({
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex flex-col items-center p-4 h-auto"
+                      className="flex flex-col items-center p-4 h-auto border-2 border-emerald/30 hover:border-emerald"
                       onClick={() => handleBoxChoice("cash_5")}
                     >
                       <Coins className="w-8 h-8 text-emerald mb-2" />
@@ -275,7 +308,7 @@ export const LuckyWheel = ({
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex flex-col items-center p-4 h-auto"
+                      className="flex flex-col items-center p-4 h-auto border-2 border-muted-foreground/30 hover:border-muted-foreground"
                       onClick={() => handleBoxChoice("nothing")}
                     >
                       <HelpCircle className="w-8 h-8 text-muted-foreground mb-2" />

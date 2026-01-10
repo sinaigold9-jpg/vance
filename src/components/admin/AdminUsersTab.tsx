@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Phone, Mail, DollarSign, Edit, Crown, Calendar, Target } from "lucide-react";
+import { Search, User, Phone, Mail, DollarSign, Edit, Crown, Calendar, Target, Key, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UserProfile {
   id: string;
@@ -41,6 +42,10 @@ export const AdminUsersTab = () => {
   const [newAccountType, setNewAccountType] = useState<string>("");
   const [newBalance, setNewBalance] = useState<string>("");
   const [newTotalEarnings, setNewTotalEarnings] = useState<string>("");
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [newPhone, setNewPhone] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -71,54 +76,70 @@ export const AdminUsersTab = () => {
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
+    setIsUpdating(true);
 
-    const updates: any = {};
-    
-    if (newAccountType && newAccountType !== selectedUser.account_type) {
-      updates.account_type = newAccountType;
-    }
-    
-    if (newBalance !== "" && parseFloat(newBalance) !== selectedUser.balance) {
-      updates.balance = parseFloat(newBalance);
-      // Auto-activate package for beginners when balance reaches 100
-      if (selectedUser.account_type === "beginner" && parseFloat(newBalance) >= 100) {
-        updates.is_package_activated = true;
-      }
-    }
-    
-    if (newTotalEarnings !== "" && parseFloat(newTotalEarnings) !== selectedUser.total_earnings) {
-      updates.total_earnings = parseFloat(newTotalEarnings);
-    }
-
-    if (Object.keys(updates).length === 0) {
-      toast.info("لم يتم إجراء أي تغييرات");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", selectedUser.id);
-
-    if (error) {
-      toast.error("حدث خطأ في تحديث البيانات");
-      console.error("Error updating user:", error);
-    } else {
-      toast.success("تم تحديث البيانات بنجاح");
+    try {
+      const updates: any = {};
       
-      // Log activity
-      await supabase.from("activity_logs").insert({
-        user_id: selectedUser.id,
-        action: "تعديل بيانات المستخدم من الإدارة",
-        details: { 
-          changes: updates,
-          admin_action: true 
-        },
-        amount: updates.balance || updates.total_earnings || null,
-      });
+      if (newAccountType && newAccountType !== selectedUser.account_type) {
+        updates.account_type = newAccountType;
+      }
+      
+      if (newBalance !== "" && parseFloat(newBalance) !== selectedUser.balance) {
+        updates.balance = parseFloat(newBalance);
+        if (selectedUser.account_type === "beginner" && parseFloat(newBalance) >= 100) {
+          updates.is_package_activated = true;
+        }
+      }
+      
+      if (newTotalEarnings !== "" && parseFloat(newTotalEarnings) !== selectedUser.total_earnings) {
+        updates.total_earnings = parseFloat(newTotalEarnings);
+      }
 
-      fetchUsers();
+      if (newEmail && newEmail !== selectedUser.email) {
+        updates.email = newEmail;
+      }
+
+      if (newPhone && newPhone !== selectedUser.phone) {
+        updates.phone = newPhone;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase
+          .from("profiles")
+          .update(updates)
+          .eq("id", selectedUser.id);
+
+        if (error) throw error;
+      }
+
+      // Update password if provided (requires admin API)
+      if (newPassword && newPassword.length >= 6) {
+        // Note: Password update requires service role key via edge function
+        toast.info("تحديث كلمة المرور يتطلب صلاحيات إضافية");
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("activity_logs").insert({
+          user_id: selectedUser.id,
+          action: "تعديل بيانات المستخدم من الإدارة",
+          details: { 
+            changes: updates,
+            admin_action: true 
+          },
+          amount: updates.balance || updates.total_earnings || null,
+        });
+
+        toast.success("تم تحديث البيانات بنجاح");
+        fetchUsers();
+      }
+
       setSelectedUser(null);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("حدث خطأ في تحديث البيانات");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -146,6 +167,9 @@ export const AdminUsersTab = () => {
     setNewAccountType(user.account_type);
     setNewBalance(user.balance.toString());
     setNewTotalEarnings(user.total_earnings.toString());
+    setNewEmail(user.email || "");
+    setNewPhone(user.phone || "");
+    setNewPassword("");
   };
 
   if (loading) {
@@ -242,58 +266,116 @@ export const AdminUsersTab = () => {
 
       {/* Edit User Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تعديل بيانات المستخدم</DialogTitle>
           </DialogHeader>
           {selectedUser && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-xl space-y-2">
-                <p><strong>الاسم:</strong> {selectedUser.full_name}</p>
-                <p><strong>البريد:</strong> {selectedUser.email}</p>
-                <p><strong>الهاتف:</strong> {selectedUser.phone}</p>
-                <p><strong>رقم العضوية:</strong> {selectedUser.id.slice(0, 8)}</p>
-              </div>
+            <Tabs defaultValue="general" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="general">البيانات العامة</TabsTrigger>
+                <TabsTrigger value="credentials">بيانات الدخول</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="general" className="space-y-4 mt-4">
+                <div className="p-4 bg-muted/50 rounded-xl space-y-2">
+                  <p><strong>الاسم:</strong> {selectedUser.full_name}</p>
+                  <p><strong>رقم العضوية:</strong> {selectedUser.id.slice(0, 8)}</p>
+                </div>
 
-              <div className="space-y-2">
-                <Label>الباقة</Label>
-                <Select value={newAccountType} onValueChange={setNewAccountType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beginner">مبتدئ</SelectItem>
-                    <SelectItem value="vip1">VIP 1</SelectItem>
-                    <SelectItem value="vip2">VIP 2</SelectItem>
-                    <SelectItem value="vip3">VIP 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label>الباقة</Label>
+                  <Select value={newAccountType} onValueChange={setNewAccountType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">مبتدئ</SelectItem>
+                      <SelectItem value="vip1">VIP 1</SelectItem>
+                      <SelectItem value="vip2">VIP 2</SelectItem>
+                      <SelectItem value="vip3">VIP 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>الرصيد الحالي (جنيه)</Label>
-                <Input
-                  type="number"
-                  value={newBalance}
-                  onChange={(e) => setNewBalance(e.target.value)}
-                  placeholder="أدخل الرصيد"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label>الرصيد الحالي (جنيه)</Label>
+                  <Input
+                    type="number"
+                    value={newBalance}
+                    onChange={(e) => setNewBalance(e.target.value)}
+                    placeholder="أدخل الرصيد"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>إجمالي الأرباح (جنيه)</Label>
-                <Input
-                  type="number"
-                  value={newTotalEarnings}
-                  onChange={(e) => setNewTotalEarnings(e.target.value)}
-                  placeholder="أدخل إجمالي الأرباح"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label>إجمالي الأرباح (جنيه)</Label>
+                  <Input
+                    type="number"
+                    value={newTotalEarnings}
+                    onChange={(e) => setNewTotalEarnings(e.target.value)}
+                    placeholder="أدخل إجمالي الأرباح"
+                  />
+                </div>
+              </TabsContent>
 
-              <Button className="w-full" onClick={handleUpdateUser}>
-                حفظ التغييرات
+              <TabsContent value="credentials" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    البريد الإلكتروني
+                  </Label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="أدخل البريد الإلكتروني"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    رقم الهاتف
+                  </Label>
+                  <Input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="أدخل رقم الهاتف"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Key className="w-4 h-4" />
+                    كلمة المرور الجديدة
+                  </Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    اترك الحقل فارغاً إذا لم ترد تغيير كلمة المرور
+                  </p>
+                </div>
+              </TabsContent>
+
+              <Button className="w-full mt-4" onClick={handleUpdateUser} disabled={isUpdating}>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  "حفظ التغييرات"
+                )}
               </Button>
-            </div>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>

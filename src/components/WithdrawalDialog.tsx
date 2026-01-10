@@ -79,6 +79,16 @@ export const WithdrawalDialog = ({
     setIsLoading(true);
 
     try {
+      // Deduct balance immediately
+      const newBalance = balance - parsedAmount;
+      
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ balance: newBalance })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
+
       // Create withdrawal transaction
       const { error } = await supabase
         .from("transactions")
