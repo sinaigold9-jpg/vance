@@ -17,6 +17,7 @@ import { WithdrawalPinSetup } from "@/components/WithdrawalPinSetup";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
 import { BalanceReveal } from "@/components/BalanceReveal";
+import { EarningsInfo } from "@/components/EarningsInfo";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LogIn, LogOut, AlertTriangle, Lock } from "lucide-react";
@@ -27,12 +28,28 @@ import appIcon from "@/assets/app-icon.png";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 
-const packagesData = [
-  { name: "باقة المبتدئين", price: 0, rewardPerTask: 3, dailyTasks: 3, dailyEarnings: 9, minWithdraw: 500, hasLuckyWheel: true, luckyWheelFrequency: "مرة واحدة", isVip: false, vipLevel: 0, note: "7 أيام تجربة مجانية" },
-  { name: "VIP 1", price: 500, rewardPerTask: 15, dailyTasks: 3, dailyEarnings: 45, minWithdraw: 1000, hasLuckyWheel: true, luckyWheelFrequency: "يومياً", isVip: true, vipLevel: 1 },
-  { name: "VIP 2", price: 850, rewardPerTask: 25, dailyTasks: 3, dailyEarnings: 75, minWithdraw: 1500, hasLuckyWheel: true, luckyWheelFrequency: "يومياً", isVip: true, vipLevel: 2 },
-  { name: "VIP 3", price: 1500, rewardPerTask: 35, dailyTasks: 3, dailyEarnings: 105, minWithdraw: 2000, hasLuckyWheel: true, luckyWheelFrequency: "يومياً", isVip: true, vipLevel: 3 },
-];
+interface PackageFromDB {
+  id: string;
+  name: string;
+  price: number;
+  task_reward: number;
+  daily_tasks: number;
+  daily_earnings: number;
+  min_withdrawal: number;
+  has_daily_wheel: boolean;
+  account_type: string;
+  is_active: boolean;
+}
+
+const getVipLevel = (accountType: string): number => {
+  switch (accountType) {
+    case "beginner": return 0;
+    case "vip1": return 1;
+    case "vip2": return 2;
+    case "vip3": return 3;
+    default: return 4; // Custom packages
+  }
+};
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -53,6 +70,7 @@ const Index = () => {
   const [membershipId, setMembershipId] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [userProfile, setUserProfile] = useState<{ full_name: string; email: string | null; phone: string | null; } | null>(null);
+  const [packagesData, setPackagesData] = useState<PackageFromDB[]>([]);
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -65,14 +83,29 @@ const Index = () => {
   };
 
   useEffect(() => { 
+    fetchPackages();
     if (user) {
       fetchUserProfile();
-      // Check for onboarding flag
       if (searchParams.get("onboarding") === "true") {
         setShowOnboarding(true);
       }
     }
+
+    // Real-time subscription for packages
+    const channel = supabase
+      .channel("packages-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "packages" }, () => {
+        fetchPackages();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user, searchParams]);
+
+  const fetchPackages = async () => {
+    const { data } = await supabase.from("packages").select("*").eq("is_active", true).order("price", { ascending: true });
+    if (data) setPackagesData(data);
+  };
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -97,7 +130,7 @@ const Index = () => {
     }
   };
 
-  const currentPackage = packagesData.find((p) => p.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))) || packagesData[0];
+  const currentPackage = packagesData.find((p) => p.account_type === accountType) || packagesData[0];
 
   const handleBalanceUpdate = (newBalance: number, earnings: number) => {
     setBalance(newBalance);
@@ -204,10 +237,33 @@ const Index = () => {
               <p className="text-muted-foreground">كلما زادت الباقة، زادت الأرباح</p>
             </div>
             <div className="grid gap-4">
-              {packagesData.map((pkg, index) => (
-                <PackageCard key={index} {...pkg} isActive={pkg.vipLevel === (accountType === "beginner" ? 0 : parseInt(accountType.replace("vip", "")))} />
-              ))}
+              {packagesData.map((pkg, index) => {
+                const vipLevel = getVipLevel(pkg.account_type);
+                return (
+                  <PackageCard
+                    key={pkg.id}
+                    name={pkg.name}
+                    price={pkg.price}
+                    rewardPerTask={pkg.task_reward}
+                    dailyTasks={pkg.daily_tasks}
+                    dailyEarnings={pkg.daily_earnings}
+                    minWithdraw={pkg.min_withdrawal}
+                    hasLuckyWheel={pkg.has_daily_wheel}
+                    luckyWheelFrequency={pkg.account_type === "beginner" ? "مرة واحدة" : "يومياً"}
+                    isVip={vipLevel > 0}
+                    vipLevel={vipLevel}
+                    isActive={pkg.account_type === accountType}
+                    accountType={pkg.account_type}
+                  />
+                );
+              })}
             </div>
+          </motion.div>
+        );
+      case "earnings":
+        return (
+          <motion.div key="earnings" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <EarningsInfo />
           </motion.div>
         );
       case "tasks":
@@ -295,7 +351,7 @@ const Index = () => {
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
-      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage.minWithdraw} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
+      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
       {user && withdrawalPin && <BalanceReveal isOpen={showBalanceReveal} onClose={() => setShowBalanceReveal(false)} withdrawalPin={withdrawalPin} onSuccess={handleBalanceRevealSuccess} />}
       
       {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}

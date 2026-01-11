@@ -9,10 +9,10 @@ interface NavigationProps {
 const tabs = [
   { id: "home", icon: Home, label: "الرئيسية" },
   { id: "packages", icon: Package, label: "الباقات" },
+  { id: "earnings", icon: Calculator, label: "الأرباح" },
   { id: "tasks", icon: Gift, label: "المهام" },
   { id: "wallet", icon: Wallet, label: "المحفظة" },
   { id: "team", icon: Users, label: "الفريق" },
-  { id: "support", icon: HeadphonesIcon, label: "الدعم" },
 ];
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {

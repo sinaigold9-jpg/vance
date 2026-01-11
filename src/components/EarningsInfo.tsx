@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Calendar, Crown, Coins, Calculator } from "lucide-react";
+import { TrendingUp, Calendar, Crown, Coins, Calculator, Loader2 } from "lucide-react";
 import { BackButton } from "./BackButton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PackageEarnings {
+  id?: string;
   name: string;
   price: number;
   dailyEarnings: number;
@@ -15,65 +18,24 @@ interface PackageEarnings {
   vipLevel: number;
 }
 
-const packagesEarnings: PackageEarnings[] = [
-  {
-    name: "باقة المبتدئين",
-    price: 100,
-    dailyEarnings: 9,
-    monthlyEarnings: 270,
-    yearlyEarnings: 3285,
-    rewardPerTask: 3,
-    dailyTasks: 3,
-    minWithdraw: 500,
-    isVip: false,
-    vipLevel: 0,
-  },
-  {
-    name: "VIP 1",
-    price: 500,
-    dailyEarnings: 45,
-    monthlyEarnings: 1350,
-    yearlyEarnings: 16425,
-    rewardPerTask: 15,
-    dailyTasks: 3,
-    minWithdraw: 1000,
-    isVip: true,
-    vipLevel: 1,
-  },
-  {
-    name: "VIP 2",
-    price: 850,
-    dailyEarnings: 75,
-    monthlyEarnings: 2250,
-    yearlyEarnings: 27375,
-    rewardPerTask: 25,
-    dailyTasks: 3,
-    minWithdraw: 1500,
-    isVip: true,
-    vipLevel: 2,
-  },
-  {
-    name: "VIP 3",
-    price: 1500,
-    dailyEarnings: 105,
-    monthlyEarnings: 3150,
-    yearlyEarnings: 38325,
-    rewardPerTask: 35,
-    dailyTasks: 3,
-    minWithdraw: 2000,
-    isVip: true,
-    vipLevel: 3,
-  },
-];
+const getVipLevel = (accountType: string): number => {
+  switch (accountType) {
+    case "beginner": return 0;
+    case "vip1": return 1;
+    case "vip2": return 2;
+    case "vip3": return 3;
+    default: return 0;
+  }
+};
 
-const vipColors = {
+const vipColors: Record<number, string> = {
   0: "border-beginner/50 bg-beginner/10",
   1: "border-vip1/50 bg-vip1/10",
   2: "border-vip2/50 bg-vip2/10",
   3: "border-vip3/50 bg-vip3/10",
 };
 
-const vipTextColors = {
+const vipTextColors: Record<number, string> = {
   0: "text-beginner",
   1: "text-vip1",
   2: "text-vip2",
@@ -81,6 +43,61 @@ const vipTextColors = {
 };
 
 export const EarningsInfo = () => {
+  const [packages, setPackages] = useState<PackageEarnings[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      const { data, error } = await supabase
+        .from("packages")
+        .select("*")
+        .eq("is_active", true)
+        .order("price", { ascending: true });
+
+      if (!error && data) {
+        const formatted = data.map((pkg) => {
+          const vipLevel = getVipLevel(pkg.account_type);
+          const dailyEarnings = pkg.daily_earnings;
+          return {
+            id: pkg.id,
+            name: pkg.name,
+            price: pkg.price,
+            dailyEarnings,
+            monthlyEarnings: dailyEarnings * 30,
+            yearlyEarnings: Math.round(dailyEarnings * 365),
+            rewardPerTask: pkg.task_reward,
+            dailyTasks: pkg.daily_tasks,
+            minWithdraw: pkg.min_withdrawal,
+            isVip: vipLevel > 0,
+            vipLevel,
+          };
+        });
+        setPackages(formatted);
+      }
+      setLoading(false);
+    };
+
+    fetchPackages();
+
+    // Real-time subscription for packages
+    const channel = supabase
+      .channel("packages-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "packages" }, () => {
+        fetchPackages();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <BackButton />
@@ -114,7 +131,7 @@ export const EarningsInfo = () => {
 
       {/* Packages Earnings Details */}
       <div className="space-y-4">
-        {packagesEarnings.map((pkg, index) => (
+        {packages.map((pkg, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
