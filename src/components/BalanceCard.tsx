@@ -2,9 +2,11 @@ import { motion } from "framer-motion";
 import { Wallet, TrendingUp, Award } from "lucide-react";
 
 interface BalanceCardProps {
-  balance: number;
+  balance: number | null;
   todayEarnings: number;
   accountType: "beginner" | "vip1" | "vip2" | "vip3";
+  onRevealClick?: () => void;
+  isRevealed?: boolean;
 }
 
 const accountLabels = {
@@ -21,7 +23,8 @@ const accountColors = {
   vip3: "from-gold to-gold-dark",
 };
 
-export const BalanceCard = ({ balance, todayEarnings, accountType }: BalanceCardProps) => {
+export const BalanceCard = ({ balance, todayEarnings, accountType, onRevealClick, isRevealed = true }: BalanceCardProps) => {
+  const displayBalance = isRevealed && balance !== null ? balance.toLocaleString() : "••••••";
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -45,8 +48,8 @@ export const BalanceCard = ({ balance, todayEarnings, accountType }: BalanceCard
         {/* Balance */}
         <div className="mb-6">
           <p className="text-muted-foreground text-sm mb-1">رصيدك الحالي</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-black text-gradient-gold">{balance.toLocaleString()}</span>
+          <div className="flex items-baseline gap-2 cursor-pointer" onClick={!isRevealed ? onRevealClick : undefined}>
+            <span className="text-4xl font-black text-gradient-gold">{displayBalance}</span>
             <span className="text-xl text-muted-foreground">جنيه</span>
           </div>
         </div>
