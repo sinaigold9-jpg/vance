@@ -86,10 +86,18 @@ export const PackageCard = ({
           </div>
 
           <div className="mb-6">
-            <span className="text-3xl font-black text-gradient-gold">{price}</span>
-            <span className="text-muted-foreground mr-2">جنيه</span>
-            {initialBalance && vipLevel === 0 && (
-              <p className="text-xs text-amber-500 mt-1">تبدأ بـ {initialBalance} ج.م - أضف {price - initialBalance} ج.م للتفعيل</p>
+            {vipLevel === 0 ? (
+              <>
+                <span className="text-xl font-black text-emerald">مجانية لمدة 7 أيام</span>
+                {initialBalance && (
+                  <p className="text-xs text-amber-500 mt-1">تبدأ بـ {initialBalance} ج.م رصيد افتتاحي</p>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-3xl font-black text-gradient-gold">{price}</span>
+                <span className="text-muted-foreground mr-2">جنيه</span>
+              </>
             )}
           </div>
 

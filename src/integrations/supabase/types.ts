@@ -215,6 +215,7 @@ export type Database = {
           min_withdrawal: number
           name: string
           price: number
+          task_duration: number | null
           task_reward: number
         }
         Insert: {
@@ -228,6 +229,7 @@ export type Database = {
           min_withdrawal: number
           name: string
           price: number
+          task_duration?: number | null
           task_reward: number
         }
         Update: {
@@ -241,6 +243,7 @@ export type Database = {
           min_withdrawal?: number
           name?: string
           price?: number
+          task_duration?: number | null
           task_reward?: number
         }
         Relationships: []

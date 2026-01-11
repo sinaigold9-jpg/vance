@@ -13,6 +13,7 @@ const tabs = [
   { id: "tasks", icon: Gift, label: "المهام" },
   { id: "wallet", icon: Wallet, label: "المحفظة" },
   { id: "team", icon: Users, label: "الفريق" },
+  { id: "support", icon: HeadphonesIcon, label: "الدعم" },
 ];
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {

@@ -49,7 +49,9 @@ export const LuckyWheel = ({
   const [extraSpin, setExtraSpin] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
 
+  // Beginners can use the wheel during the 7-day trial period (once only)
   const isBeginnerLocked = accountType === "beginner" && luckyWheelUsed;
+  // Lock after trial expires
   const isTrialLocked = trialExpired && accountType === "beginner";
 
   const handleSpin = () => {
@@ -137,8 +139,8 @@ export const LuckyWheel = ({
 
   const getSubtitle = () => {
     if (isTrialLocked) return "قم بترقية باقتك للوصول لعجلة الحظ";
-    if (isBeginnerLocked) return "المبتدئون يحصلون على فرصة واحدة فقط. قم بالترقية لـ VIP للحصول على دورة يومية!";
-    if (accountType === "beginner") return "لديك فرصة واحدة فقط! استخدمها بحكمة";
+    if (isBeginnerLocked) return "استخدمت فرصتك الوحيدة خلال الفترة التجريبية. قم بالترقية لـ VIP للحصول على دورة يومية!";
+    if (accountType === "beginner") return "لديك فرصة واحدة فقط خلال الـ 7 أيام التجريبية! استخدمها بحكمة";
     return canSpin ? "جرب حظك الآن!" : "عُد غداً للمحاولة";
   };
 
