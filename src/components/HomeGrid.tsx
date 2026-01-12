@@ -6,9 +6,9 @@ import {
   Users, 
   Wallet, 
   Calculator, 
-  HeadphonesIcon,
-  LucideIcon
+  HeadphonesIcon
 } from "lucide-react";
+import type { FC, SVGProps } from "react";
 
 interface HomeGridProps {
   onTabChange: (tab: string) => void;
@@ -17,7 +17,7 @@ interface HomeGridProps {
 
 interface GridItem {
   id: string;
-  icon: LucideIcon;
+  icon: FC<SVGProps<SVGSVGElement>>;
   label: string;
   description: string;
   gradient: string;
@@ -80,6 +80,7 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
     <div className="grid grid-cols-3 gap-3 md:gap-4">
       {gridItems.map((item, index) => {
         const isActive = activeTab === item.id;
+        const IconComponent = item.icon;
         return (
           <motion.button
             key={item.id}
@@ -104,7 +105,7 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
               bg-gradient-to-br ${item.gradient}
               shadow-lg
             `}>
-              <item.icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+              <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             <span className={`
               text-sm md:text-base font-bold mb-1
