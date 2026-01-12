@@ -233,8 +233,6 @@ const Index = () => {
               <h2 className="text-lg font-bold text-foreground mb-4">الأقسام</h2>
               <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            
-            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
         );
       case "packages":
@@ -328,6 +326,7 @@ const Index = () => {
                 <Button variant="outline" onClick={handleDeposit} className="flex-1 h-12">إيداع</Button>
               </div>
             </div>
+            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
         );
       case "support":
