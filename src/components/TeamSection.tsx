@@ -52,8 +52,14 @@ export const TeamSection = ({
   const [userRank, setUserRank] = useState("member");
   const [loading, setLoading] = useState(true);
 
-  // Generate referral link
-  const referralLink = `${window.location.origin}/auth?ref=${userId}`;
+  // Generate referral link - use the current origin for production
+  const getBaseUrl = () => {
+    // Check if we're on a custom domain or production
+    const origin = window.location.origin;
+    return origin;
+  };
+  
+  const referralLink = `${getBaseUrl()}/auth?ref=${userId}`;
 
   useEffect(() => {
     if (userId) {
