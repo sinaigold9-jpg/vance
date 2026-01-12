@@ -7,6 +7,7 @@ import { DailyTasks } from "@/components/DailyTasks";
 import { LuckyWheel } from "@/components/LuckyWheel";
 import { EarningMethods } from "@/components/EarningMethods";
 import { HomeGrid } from "@/components/HomeGrid";
+import { PageHeader } from "@/components/PageHeader";
 import { TeamSection } from "@/components/TeamSection";
 import { SupportSection } from "@/components/SupportSection";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -214,7 +215,7 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return (
-          <motion.div key="home" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+          <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
             {trialExpired && (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-destructive" />
@@ -226,26 +227,20 @@ const Index = () => {
             )}
             <BalanceCard balance={isBalanceRevealed ? balance : null} todayEarnings={todayEarnings} accountType={accountType} onRevealClick={() => !withdrawalPin ? setShowPinSetup(true) : setShowBalanceReveal(true)} isRevealed={isBalanceRevealed} />
             <SocialLinks />
-            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
-          </motion.div>
-        );
-      case "menu":
-        return (
-          <motion.div key="menu" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-            <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-foreground mb-2">القائمة الرئيسية</h1>
-              <p className="text-muted-foreground">اختر من الأقسام أدناه</p>
+            
+            {/* Navigation Grid */}
+            <div className="pt-4">
+              <h2 className="text-lg font-bold text-foreground mb-4">الأقسام</h2>
+              <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
+            
+            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
         );
       case "packages":
         return (
-          <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-foreground mb-2">اختر باقتك</h1>
-              <p className="text-muted-foreground">كلما زادت الباقة، زادت الأرباح</p>
-            </div>
+          <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
+            <PageHeader title="الباقات" subtitle="كلما زادت الباقة، زادت الأرباح" onBack={() => setActiveTab("home")} />
             <div className="grid gap-4">
               {packagesData.map((pkg, index) => {
                 const vipLevel = getVipLevel(pkg.account_type);
@@ -273,12 +268,14 @@ const Index = () => {
       case "earnings":
         return (
           <motion.div key="earnings" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الأرباح" subtitle="حاسبة أرباح الباقات" onBack={() => setActiveTab("home")} />
             <EarningsInfo />
           </motion.div>
         );
       case "tasks":
         return (
           <motion.div key="tasks" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح يومياً" onBack={() => setActiveTab("home")} />
             {!appSettings.tasksEnabled ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -311,12 +308,14 @@ const Index = () => {
       case "team":
         return (
           <motion.div key="team" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الفريق" subtitle="ادعُ أصدقاءك واربح" onBack={() => setActiveTab("home")} />
             {user && <TeamSection userId={user.id} referralCode={referralCode} isTrialExpired={trialExpired} teamEnabled={appSettings.teamEnabled} teamDisabledMessage={appSettings.teamDisabledMessage} />}
           </motion.div>
         );
       case "wallet":
         return (
           <motion.div key="wallet" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+            <PageHeader title="المحفظة" subtitle="إيداع وسحب الأموال" onBack={() => setActiveTab("home")} />
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="text-center mb-6">
                 <p className="text-muted-foreground text-sm">رصيدك الحالي</p>
@@ -332,7 +331,12 @@ const Index = () => {
           </motion.div>
         );
       case "support":
-        return <motion.div key="support" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}><SupportSection /></motion.div>;
+        return (
+          <motion.div key="support" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمساعدة" onBack={() => setActiveTab("home")} />
+            <SupportSection />
+          </motion.div>
+        );
       default:
         return null;
     }
@@ -365,14 +369,8 @@ const Index = () => {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Grid Navigation always visible */}
-        <div className="mb-6">
-          <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
-
-        {/* Content Section */}
         <AnimatePresence mode="wait">
-          {activeTab !== "menu" && renderContent()}
+          {renderContent()}
         </AnimatePresence>
       </main>
 
