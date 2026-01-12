@@ -6,7 +6,7 @@ import { PackageCard } from "@/components/PackageCard";
 import { DailyTasks } from "@/components/DailyTasks";
 import { LuckyWheel } from "@/components/LuckyWheel";
 import { EarningMethods } from "@/components/EarningMethods";
-import { Navigation } from "@/components/Navigation";
+import { HomeGrid } from "@/components/HomeGrid";
 import { TeamSection } from "@/components/TeamSection";
 import { SupportSection } from "@/components/SupportSection";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -20,7 +20,7 @@ import { BalanceReveal } from "@/components/BalanceReveal";
 import { EarningsInfo } from "@/components/EarningsInfo";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { LogIn, LogOut, AlertTriangle, Lock } from "lucide-react";
+import { LogIn, LogOut, AlertTriangle, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -229,6 +229,16 @@ const Index = () => {
             <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
         );
+      case "menu":
+        return (
+          <motion.div key="menu" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
+            <div className="text-center mb-4">
+              <h1 className="text-2xl font-bold text-foreground mb-2">القائمة الرئيسية</h1>
+              <p className="text-muted-foreground">اختر من الأقسام أدناه</p>
+            </div>
+            <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
+          </motion.div>
+        );
       case "packages":
         return (
           <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
@@ -328,11 +338,19 @@ const Index = () => {
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    if (tab === "wallet") {
+      handleOpenWallet();
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-8">
       
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="max-w-lg mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -346,8 +364,17 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6"><AnimatePresence mode="wait">{renderContent()}</AnimatePresence></main>
-      <Navigation activeTab={activeTab} onTabChange={(tab) => tab === "wallet" ? handleOpenWallet() : setActiveTab(tab)} />
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Grid Navigation always visible */}
+        <div className="mb-6">
+          <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        {/* Content Section */}
+        <AnimatePresence mode="wait">
+          {activeTab !== "menu" && renderContent()}
+        </AnimatePresence>
+      </main>
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
