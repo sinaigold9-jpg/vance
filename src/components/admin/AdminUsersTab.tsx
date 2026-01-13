@@ -34,6 +34,11 @@ interface UserProfile {
   last_attempt_date: string | null;
 }
 
+interface PackageOption {
+  account_type: string;
+  name: string;
+}
+
 export const AdminUsersTab = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,10 +51,24 @@ export const AdminUsersTab = () => {
   const [newPhone, setNewPhone] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
 
   useEffect(() => {
     fetchUsers();
+    fetchPackages();
   }, []);
+
+  const fetchPackages = async () => {
+    const { data } = await supabase
+      .from("packages")
+      .select("account_type, name")
+      .eq("is_active", true)
+      .order("price", { ascending: true });
+    
+    if (data) {
+      setPackageOptions(data);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -290,10 +309,11 @@ export const AdminUsersTab = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="beginner">مبتدئ</SelectItem>
-                      <SelectItem value="vip1">VIP 1</SelectItem>
-                      <SelectItem value="vip2">VIP 2</SelectItem>
-                      <SelectItem value="vip3">VIP 3</SelectItem>
+                      {packageOptions.map((pkg) => (
+                        <SelectItem key={pkg.account_type} value={pkg.account_type}>
+                          {pkg.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

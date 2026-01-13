@@ -11,11 +11,18 @@ interface DailyTasksProps {
   onBalanceUpdate: (newBalance: number, earnings: number) => void;
 }
 
+// Get Cairo date string, reset at 1 AM Cairo time
 const getCairoDateString = () => {
   const now = new Date();
-  const cairoOffset = 2 * 60;
+  const cairoOffset = 2 * 60; // Cairo is UTC+2
   const localOffset = now.getTimezoneOffset();
   const cairoTime = new Date(now.getTime() + (cairoOffset + localOffset) * 60000);
+  
+  // If current hour is before 1 AM, use previous day's date for task reset
+  if (cairoTime.getHours() < 1) {
+    cairoTime.setDate(cairoTime.getDate() - 1);
+  }
+  
   return cairoTime.toISOString().split('T')[0];
 };
 

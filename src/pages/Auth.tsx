@@ -64,26 +64,34 @@ const Auth = () => {
   const validateReferralCode = async (code: string): Promise<string | null> => {
     if (!code.trim()) return null;
     
-    // Check if it's a user ID (from referral link)
-    const { data: profileById } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", code.trim())
-      .maybeSingle();
+    const cleanCode = code.trim();
     
-    if (profileById) return profileById.id;
+    // Check if it's a valid UUID format (user ID from referral link)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (uuidRegex.test(cleanCode)) {
+      // It's a UUID, check if user exists
+      const { data: profileById } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", cleanCode)
+        .maybeSingle();
+      
+      if (profileById) return profileById.id;
+    }
 
-    // Check if it's a referral code
+    // Check if it's a referral code (8 character hex string)
     const { data, error } = await supabase
       .from("profiles")
       .select("id")
-      .eq("referral_code", code.trim())
+      .eq("referral_code", cleanCode)
       .maybeSingle();
     
-    if (error || !data) {
-      return null;
+    if (!error && data) {
+      return data.id;
     }
-    return data.id;
+    
+    return null;
   };
 
   const findEmailByPhone = async (phoneNumber: string): Promise<string | null> => {
