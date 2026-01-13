@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
-  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power
+  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +19,7 @@ import { AdminUpgradeRequestsTab } from "@/components/admin/AdminUpgradeRequests
 import { AdminSupportTab } from "@/components/admin/AdminSupportTab";
 import { AdminBotSettingsTab } from "@/components/admin/AdminBotSettingsTab";
 import { AdminAppSettingsTab } from "@/components/admin/AdminAppSettingsTab";
+import { AdminChatTab } from "@/components/admin/AdminChatTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -199,6 +200,10 @@ const Admin = () => {
               <HeadphonesIcon className="w-4 h-4 ml-1" />
               الدعم
             </TabsTrigger>
+            <TabsTrigger value="chat" className="flex-1 min-w-[80px]">
+              <MessageCircle className="w-4 h-4 ml-1" />
+              المحادثات
+            </TabsTrigger>
             <TabsTrigger value="bot" className="flex-1 min-w-[80px]">
               <Bot className="w-4 h-4 ml-1" />
               البوت
@@ -231,6 +236,10 @@ const Admin = () => {
 
           <TabsContent value="support" className="mt-6">
             <AdminSupportTab />
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-6">
+            <AdminChatTab />
           </TabsContent>
 
           <TabsContent value="bot" className="mt-6">
