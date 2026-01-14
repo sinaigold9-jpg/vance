@@ -49,6 +49,322 @@ export type Database = {
           },
         ]
       }
+      ad_clicks: {
+        Row: {
+          ad_id: string
+          created_at: string
+          id: string
+          points_earned: number | null
+          user_id: string | null
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_clicks_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_images: {
+        Row: {
+          ad_id: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_images_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_interaction_replies: {
+        Row: {
+          created_at: string
+          id: string
+          interaction_id: string
+          reply_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interaction_id: string
+          reply_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interaction_id?: string
+          reply_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_interaction_replies_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "ad_interactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_interaction_replies_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_interactions: {
+        Row: {
+          ad_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          points_earned: number | null
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          ad_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          ad_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_interactions_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_interactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_views: {
+        Row: {
+          ad_id: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advertisements: {
+        Row: {
+          ad_type: Database["public"]["Enums"]["ad_type"]
+          approved_at: string | null
+          approved_by: string | null
+          category: Database["public"]["Enums"]["ad_category"]
+          clicks_count: number
+          created_at: string
+          expires_at: string | null
+          external_link: string | null
+          full_description: string | null
+          id: string
+          images: string[] | null
+          max_views: number | null
+          priority_level: number | null
+          promotion_amount: number | null
+          promotion_days: number | null
+          rejected_reason: string | null
+          short_description: string
+          status: Database["public"]["Enums"]["ad_status"]
+          title: string
+          updated_at: string
+          user_id: string
+          views_count: number
+        }
+        Insert: {
+          ad_type?: Database["public"]["Enums"]["ad_type"]
+          approved_at?: string | null
+          approved_by?: string | null
+          category: Database["public"]["Enums"]["ad_category"]
+          clicks_count?: number
+          created_at?: string
+          expires_at?: string | null
+          external_link?: string | null
+          full_description?: string | null
+          id?: string
+          images?: string[] | null
+          max_views?: number | null
+          priority_level?: number | null
+          promotion_amount?: number | null
+          promotion_days?: number | null
+          rejected_reason?: string | null
+          short_description: string
+          status?: Database["public"]["Enums"]["ad_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+          views_count?: number
+        }
+        Update: {
+          ad_type?: Database["public"]["Enums"]["ad_type"]
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: Database["public"]["Enums"]["ad_category"]
+          clicks_count?: number
+          created_at?: string
+          expires_at?: string | null
+          external_link?: string | null
+          full_description?: string | null
+          id?: string
+          images?: string[] | null
+          max_views?: number | null
+          priority_level?: number | null
+          promotion_amount?: number | null
+          promotion_days?: number | null
+          rejected_reason?: string | null
+          short_description?: string
+          status?: Database["public"]["Enums"]["ad_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advertisements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advertiser_profiles: {
+        Row: {
+          advertiser_image: string | null
+          advertiser_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          advertiser_image?: string | null
+          advertiser_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          advertiser_image?: string | null
+          advertiser_name?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertiser_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -177,6 +493,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -522,6 +879,59 @@ export type Database = {
     }
     Enums: {
       account_type: "beginner" | "vip1" | "vip2" | "vip3"
+      ad_category:
+        | "clothes"
+        | "services"
+        | "real_estate"
+        | "digital_products"
+        | "cars"
+        | "electronics"
+        | "restaurants"
+        | "travel"
+        | "health_beauty"
+        | "education"
+        | "technology"
+        | "sports"
+        | "hobbies"
+        | "events"
+        | "entertainment"
+        | "hotels"
+        | "music"
+        | "design"
+        | "games"
+        | "home_tools"
+        | "decor"
+        | "office_equipment"
+        | "digital_apps"
+        | "books"
+        | "office_supplies"
+        | "finance"
+        | "legal_services"
+        | "medical_services"
+        | "social_services"
+        | "cafes"
+        | "beverages"
+        | "fast_food"
+        | "tourism"
+        | "online_shopping"
+        | "gifts"
+        | "jewelry"
+        | "accessories"
+        | "fashion"
+        | "fitness"
+        | "mental_health"
+        | "workshops"
+        | "training_courses"
+        | "government_services"
+        | "festivals"
+        | "educational_events"
+        | "digital_services"
+        | "seasonal_offers"
+        | "jobs"
+        | "charity"
+        | "community"
+      ad_status: "draft" | "pending" | "approved" | "rejected" | "archived"
+      ad_type: "free" | "paid"
       app_role: "admin" | "user"
       payment_gateway: "vodafone" | "etisalat" | "orange" | "we"
       transaction_status: "pending" | "approved" | "rejected"
@@ -661,6 +1071,60 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["beginner", "vip1", "vip2", "vip3"],
+      ad_category: [
+        "clothes",
+        "services",
+        "real_estate",
+        "digital_products",
+        "cars",
+        "electronics",
+        "restaurants",
+        "travel",
+        "health_beauty",
+        "education",
+        "technology",
+        "sports",
+        "hobbies",
+        "events",
+        "entertainment",
+        "hotels",
+        "music",
+        "design",
+        "games",
+        "home_tools",
+        "decor",
+        "office_equipment",
+        "digital_apps",
+        "books",
+        "office_supplies",
+        "finance",
+        "legal_services",
+        "medical_services",
+        "social_services",
+        "cafes",
+        "beverages",
+        "fast_food",
+        "tourism",
+        "online_shopping",
+        "gifts",
+        "jewelry",
+        "accessories",
+        "fashion",
+        "fitness",
+        "mental_health",
+        "workshops",
+        "training_courses",
+        "government_services",
+        "festivals",
+        "educational_events",
+        "digital_services",
+        "seasonal_offers",
+        "jobs",
+        "charity",
+        "community",
+      ],
+      ad_status: ["draft", "pending", "approved", "rejected", "archived"],
+      ad_type: ["free", "paid"],
       app_role: ["admin", "user"],
       payment_gateway: ["vodafone", "etisalat", "orange", "we"],
       transaction_status: ["pending", "approved", "rejected"],
