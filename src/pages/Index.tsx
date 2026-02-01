@@ -19,6 +19,9 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
 import { BalanceReveal } from "@/components/BalanceReveal";
 import { EarningsInfo } from "@/components/EarningsInfo";
+import { AdsPage } from "@/components/ads/AdsPage";
+import { ProfileSection } from "@/components/profile/ProfileSection";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LogIn, LogOut, AlertTriangle, Lock, ArrowRight } from "lucide-react";
@@ -336,6 +339,31 @@ const Index = () => {
             <SupportSection />
           </motion.div>
         );
+      case "ads":
+        return (
+          <motion.div key="ads" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الإعلانات" subtitle="تصفح وأنشئ إعلاناتك" onBack={() => setActiveTab("home")} />
+            <AdsPage userBalance={balance} />
+          </motion.div>
+        );
+      case "profile":
+        return (
+          <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الملف الشخصي" subtitle="إعدادات حسابك" onBack={() => setActiveTab("home")} />
+            {user && userProfile && (
+              <ProfileSection 
+                userProfile={{
+                  ...userProfile,
+                  membership_id: membershipId,
+                  account_type: accountType,
+                  balance: balance,
+                  total_earnings: todayEarnings
+                }} 
+                onRefresh={fetchUserProfile} 
+              />
+            )}
+          </motion.div>
+        );
       default:
         return null;
     }
@@ -361,6 +389,7 @@ const Index = () => {
               <div><h1 className="text-lg font-bold text-foreground">Advance</h1><p className="text-xs text-muted-foreground">اربح يومياً</p></div>
             </div>
             <div className="flex items-center gap-2">
+              {user && <NotificationBell />}
               {user ? <Button variant="outline" size="sm" onClick={signOut} className="gap-2"><LogOut className="w-4 h-4" />خروج</Button> : <Button variant="default" size="sm" onClick={() => navigate("/auth")} className="gap-2 bg-gradient-gold text-primary-foreground"><LogIn className="w-4 h-4" />دخول</Button>}
             </div>
           </div>
