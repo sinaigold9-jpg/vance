@@ -26,7 +26,7 @@ const getCairoDateString = () => {
   return cairoTime.toISOString().split('T')[0];
 };
 
-const TASK_DURATION_SECONDS = 300;
+const TASK_DURATION_SECONDS = 30;
 const MAX_DAILY_TASKS = 3;
 
 const motivationalMessages = [

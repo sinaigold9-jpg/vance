@@ -8,7 +8,8 @@ import {
   Calculator, 
   HeadphonesIcon,
   Megaphone,
-  User
+  User,
+  Trophy
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
 
@@ -81,6 +82,13 @@ const gridItems: GridItem[] = [
     label: "الملف الشخصي", 
     description: "إعدادات حسابك",
     gradient: "from-violet-500 to-purple-500"
+  },
+  { 
+    id: "offers", 
+    icon: Trophy, 
+    label: "العروض", 
+    description: "العروض والمسابقات",
+    gradient: "from-amber-500 to-yellow-500"
   },
   { 
     id: "support", 
