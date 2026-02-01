@@ -132,15 +132,6 @@ export const AdsPage = ({ userBalance }: AdsPageProps) => {
                 <h2 className="text-xl font-bold">الإعلانات</h2>
                 <p className="text-sm text-muted-foreground">تصفح الإعلانات واكسب نقاط</p>
               </div>
-              {user && (
-                <Button
-                  onClick={() => setShowCreateForm(true)}
-                  className="gap-2 bg-gradient-gold text-primary-foreground"
-                >
-                  <Plus className="w-4 h-4" />
-                  إعلان جديد
-                </Button>
-              )}
             </div>
 
             <Tabs defaultValue="all" className="w-full">

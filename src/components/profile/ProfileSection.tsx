@@ -10,9 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { CreateAdForm } from "@/components/ads/CreateAdForm";
 import { 
-  User, Mail, Phone, CreditCard, Camera, Upload, Save, 
-  Megaphone, Gift, Crown, Clock, Lock 
+  User, Mail, Phone, CreditCard, Camera, Save, 
+  Megaphone, Gift, Crown, Clock, Lock, Plus, ArrowLeft
 } from "lucide-react";
 
 interface ProfileSectionProps {
@@ -26,9 +27,10 @@ interface ProfileSectionProps {
     total_earnings: number;
   } | null;
   onRefresh: () => void;
+  onNavigateToAds?: () => void;
 }
 
-export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) => {
+export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -39,6 +41,7 @@ export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) 
   const [advertiserName, setAdvertiserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingAdvertiser, setIsCreatingAdvertiser] = useState(false);
+  const [showCreateAdForm, setShowCreateAdForm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -242,7 +245,27 @@ export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {advertiserProfile ? (
+          {showCreateAdForm ? (
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                onClick={() => setShowCreateAdForm(false)}
+                className="gap-2 mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                العودة لملف المعلن
+              </Button>
+              <CreateAdForm 
+                onSuccess={() => {
+                  setShowCreateAdForm(false);
+                  toast.success("تم إنشاء الإعلان بنجاح!");
+                  if (onNavigateToAds) onNavigateToAds();
+                }}
+                onCancel={() => setShowCreateAdForm(false)}
+                userBalance={userProfile?.balance || 0}
+              />
+            </div>
+          ) : advertiserProfile ? (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
@@ -282,6 +305,16 @@ export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) 
               >
                 <Save className="w-4 h-4" />
                 حفظ التغييرات
+              </Button>
+              
+              {/* Create New Ad Button */}
+              <Separator className="my-4" />
+              <Button
+                onClick={() => setShowCreateAdForm(true)}
+                className="w-full gap-2 bg-gradient-gold text-primary-foreground"
+              >
+                <Plus className="w-4 h-4" />
+                إنشاء إعلان جديد
               </Button>
             </div>
           ) : isCreatingAdvertiser ? (
@@ -328,18 +361,18 @@ export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) 
         </CardContent>
       </Card>
 
-      {/* Coming Soon Sections */}
-      <Card className="border-border/50 border-dashed">
-        <CardContent className="py-8 text-center">
-          <Megaphone className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <h3 className="font-bold mb-1">الإعلانات</h3>
-          <Badge variant="secondary" className="gap-1">
-            <Clock className="w-3 h-3" />
-            قريباً
-          </Badge>
-        </CardContent>
-      </Card>
+      {/* My Ads Link - if advertiser profile exists */}
+      {advertiserProfile && (
+        <Card className="border-border/50 hover:border-primary/50 transition-colors cursor-pointer" onClick={onNavigateToAds}>
+          <CardContent className="py-6 text-center">
+            <Megaphone className="w-10 h-10 mx-auto text-primary mb-3" />
+            <h3 className="font-bold mb-1">إعلاناتي</h3>
+            <p className="text-sm text-muted-foreground">عرض وإدارة إعلاناتك</p>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Coming Soon - Offers */}
       <Card className="border-border/50 border-dashed">
         <CardContent className="py-8 text-center">
           <Gift className="w-10 h-10 mx-auto text-muted-foreground mb-3" />

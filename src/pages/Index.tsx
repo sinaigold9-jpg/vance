@@ -22,6 +22,7 @@ import { EarningsInfo } from "@/components/EarningsInfo";
 import { AdsPage } from "@/components/ads/AdsPage";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { OffersPage } from "@/components/OffersPage";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LogIn, LogOut, AlertTriangle, Lock, ArrowRight } from "lucide-react";
@@ -359,9 +360,17 @@ const Index = () => {
                   balance: balance,
                   total_earnings: todayEarnings
                 }} 
-                onRefresh={fetchUserProfile} 
+                onRefresh={fetchUserProfile}
+                onNavigateToAds={() => setActiveTab("ads")}
               />
             )}
+          </motion.div>
+        );
+      case "offers":
+        return (
+          <motion.div key="offers" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="العروض والمسابقات" subtitle="ترقبوا المفاجآت" onBack={() => setActiveTab("home")} />
+            <OffersPage />
           </motion.div>
         );
       default:
