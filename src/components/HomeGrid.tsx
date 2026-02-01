@@ -6,7 +6,9 @@ import {
   Users, 
   Wallet, 
   Calculator, 
-  HeadphonesIcon
+  HeadphonesIcon,
+  Megaphone,
+  User
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
 
@@ -53,6 +55,13 @@ const gridItems: GridItem[] = [
     gradient: "from-purple-500 to-violet-500"
   },
   { 
+    id: "ads", 
+    icon: Megaphone, 
+    label: "الإعلانات", 
+    description: "تصفح وأنشئ إعلانات",
+    gradient: "from-rose-500 to-pink-500"
+  },
+  { 
     id: "wallet", 
     icon: Wallet, 
     label: "المحفظة", 
@@ -65,6 +74,13 @@ const gridItems: GridItem[] = [
     label: "الفريق", 
     description: "ادعُ أصدقاءك واربح",
     gradient: "from-cyan-500 to-teal-500"
+  },
+  { 
+    id: "profile", 
+    icon: User, 
+    label: "الملف الشخصي", 
+    description: "إعدادات حسابك",
+    gradient: "from-violet-500 to-purple-500"
   },
   { 
     id: "support", 

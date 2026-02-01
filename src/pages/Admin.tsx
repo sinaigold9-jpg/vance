@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
-  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle
+  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
+  Megaphone, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +21,8 @@ import { AdminSupportTab } from "@/components/admin/AdminSupportTab";
 import { AdminBotSettingsTab } from "@/components/admin/AdminBotSettingsTab";
 import { AdminAppSettingsTab } from "@/components/admin/AdminAppSettingsTab";
 import { AdminChatTab } from "@/components/admin/AdminChatTab";
+import { AdminAdsTab } from "@/components/admin/AdminAdsTab";
+import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -196,6 +199,14 @@ const Admin = () => {
               <Package className="w-4 h-4 ml-1" />
               الباقات
             </TabsTrigger>
+            <TabsTrigger value="ads" className="flex-1 min-w-[80px]">
+              <Megaphone className="w-4 h-4 ml-1" />
+              الإعلانات
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex-1 min-w-[80px]">
+              <Bell className="w-4 h-4 ml-1" />
+              الإشعارات
+            </TabsTrigger>
             <TabsTrigger value="support" className="flex-1 min-w-[80px]">
               <HeadphonesIcon className="w-4 h-4 ml-1" />
               الدعم
@@ -232,6 +243,14 @@ const Admin = () => {
 
           <TabsContent value="packages" className="mt-6">
             <AdminPackagesTab />
+          </TabsContent>
+
+          <TabsContent value="ads" className="mt-6">
+            <AdminAdsTab />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="mt-6">
+            <AdminNotificationsTab />
           </TabsContent>
 
           <TabsContent value="support" className="mt-6">
