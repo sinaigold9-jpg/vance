@@ -1,19 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CreateAdForm } from "@/components/ads/CreateAdForm";
+import { useNavigate } from "react-router-dom";
 import { 
-  User, Mail, Phone, CreditCard, Camera, Save, 
-  Megaphone, Gift, Crown, Clock, Lock, Plus, ArrowLeft
+  User, Mail, Phone, CreditCard, 
+  Gift, Crown, Clock, Lock, Shield
 } from "lucide-react";
 
 interface ProfileSectionProps {
@@ -31,121 +27,8 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
-  const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [advertiserProfile, setAdvertiserProfile] = useState<{
-    advertiser_name: string;
-    advertiser_image: string | null;
-  } | null>(null);
-  const [advertiserName, setAdvertiserName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCreatingAdvertiser, setIsCreatingAdvertiser] = useState(false);
-  const [showCreateAdForm, setShowCreateAdForm] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchAdvertiserProfile();
-    }
-  }, [user]);
-
-  const fetchAdvertiserProfile = async () => {
-    if (!user) return;
-    
-    const { data } = await supabase
-      .from("advertiser_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (data) {
-      setAdvertiserProfile({
-        advertiser_name: data.advertiser_name,
-        advertiser_image: data.advertiser_image
-      });
-      setAdvertiserName(data.advertiser_name);
-    }
-  };
-
-  const handleCreateAdvertiserProfile = async () => {
-    if (!user || !advertiserName.trim()) {
-      toast.error("يرجى إدخال اسم المعلن");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.from("advertiser_profiles").insert({
-        user_id: user.id,
-        advertiser_name: advertiserName
-      });
-
-      if (error) throw error;
-
-      toast.success("تم إنشاء ملف المعلن بنجاح");
-      fetchAdvertiserProfile();
-      setIsCreatingAdvertiser(false);
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdateAdvertiserProfile = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from("advertiser_profiles")
-        .update({ advertiser_name: advertiserName })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      toast.success("تم تحديث ملف المعلن");
-      fetchAdvertiserProfile();
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    setIsLoading(true);
-
-    try {
-      const fileName = `${user.id}/advertiser-${Date.now()}.${file.name.split('.').pop()}`;
-      const { data, error } = await supabase.storage
-        .from('ad-images')
-        .upload(fileName, file);
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from('ad-images')
-        .getPublicUrl(data.path);
-
-      await supabase
-        .from("advertiser_profiles")
-        .update({ advertiser_image: urlData.publicUrl })
-        .eq("user_id", user.id);
-
-      toast.success("تم تحديث صورة المعلن");
-      fetchAdvertiserProfile();
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ في رفع الصورة");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const getAccountTypeBadge = (type: string) => {
     switch (type) {
@@ -236,138 +119,20 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
         </CardContent>
       </Card>
 
-      {/* Advertiser Profile */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="w-5 h-5" />
-            ملف المعلن
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {showCreateAdForm ? (
-            <div className="space-y-4">
-              <Button
-                variant="ghost"
-                onClick={() => setShowCreateAdForm(false)}
-                className="gap-2 mb-4"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                العودة لملف المعلن
-              </Button>
-              <CreateAdForm 
-                onSuccess={() => {
-                  setShowCreateAdForm(false);
-                  toast.success("تم إنشاء الإعلان بنجاح!");
-                  if (onNavigateToAds) onNavigateToAds();
-                }}
-                onCancel={() => setShowCreateAdForm(false)}
-                userBalance={userProfile?.balance || 0}
-              />
+      {/* Admin Panel Button - Only for sinaigold9@gmail.com */}
+      {isAdmin && (
+        <Card 
+          className="border-vip-gold/50 bg-vip-gold/5 hover:bg-vip-gold/10 transition-colors cursor-pointer" 
+          onClick={() => navigate("/admin")}
+        >
+          <CardContent className="py-6 flex items-center gap-4">
+            <div className="bg-vip-gold/20 p-3 rounded-xl">
+              <Shield className="w-8 h-8 text-vip-gold" />
             </div>
-          ) : advertiserProfile ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={advertiserProfile.advertiser_image || undefined} />
-                    <AvatarFallback className="bg-primary/20">
-                      {advertiserProfile.advertiser_name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground p-1 rounded-full"
-                  >
-                    <Camera className="w-3 h-3" />
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label>اسم المعلن</Label>
-                  <Input
-                    value={advertiserName}
-                    onChange={e => setAdvertiserName(e.target.value)}
-                    placeholder="اسم المعلن"
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={handleUpdateAdvertiserProfile}
-                disabled={isLoading || advertiserName === advertiserProfile.advertiser_name}
-                className="w-full gap-2"
-              >
-                <Save className="w-4 h-4" />
-                حفظ التغييرات
-              </Button>
-              
-              {/* Create New Ad Button */}
-              <Separator className="my-4" />
-              <Button
-                onClick={() => setShowCreateAdForm(true)}
-                className="w-full gap-2 bg-gradient-gold text-primary-foreground"
-              >
-                <Plus className="w-4 h-4" />
-                إنشاء إعلان جديد
-              </Button>
+            <div className="flex-1">
+              <h3 className="font-bold text-vip-gold">لوحة التحكم</h3>
+              <p className="text-sm text-muted-foreground">إدارة التطبيق والمستخدمين</p>
             </div>
-          ) : isCreatingAdvertiser ? (
-            <div className="space-y-4">
-              <div>
-                <Label>اسم المعلن</Label>
-                <Input
-                  value={advertiserName}
-                  onChange={e => setAdvertiserName(e.target.value)}
-                  placeholder="أدخل اسم المعلن"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleCreateAdvertiserProfile}
-                  disabled={isLoading}
-                  className="flex-1 gap-2 bg-gradient-gold text-primary-foreground"
-                >
-                  إنشاء
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreatingAdvertiser(false)}
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Megaphone className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                أنشئ ملف معلن لنشر إعلاناتك
-              </p>
-              <Button
-                onClick={() => setIsCreatingAdvertiser(true)}
-                className="gap-2 bg-gradient-gold text-primary-foreground"
-              >
-                <Megaphone className="w-4 h-4" />
-                إنشاء ملف معلن
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* My Ads Link - if advertiser profile exists */}
-      {advertiserProfile && (
-        <Card className="border-border/50 hover:border-primary/50 transition-colors cursor-pointer" onClick={onNavigateToAds}>
-          <CardContent className="py-6 text-center">
-            <Megaphone className="w-10 h-10 mx-auto text-primary mb-3" />
-            <h3 className="font-bold mb-1">إعلاناتي</h3>
-            <p className="text-sm text-muted-foreground">عرض وإدارة إعلاناتك</p>
           </CardContent>
         </Card>
       )}

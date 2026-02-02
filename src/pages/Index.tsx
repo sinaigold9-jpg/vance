@@ -21,6 +21,7 @@ import { BalanceReveal } from "@/components/BalanceReveal";
 import { EarningsInfo } from "@/components/EarningsInfo";
 import { AdsPage } from "@/components/ads/AdsPage";
 import { ProfileSection } from "@/components/profile/ProfileSection";
+import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
 
@@ -371,6 +372,16 @@ const Index = () => {
           <motion.div key="offers" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="العروض والمسابقات" subtitle="ترقبوا المفاجآت" onBack={() => setActiveTab("home")} />
             <OffersPage />
+          </motion.div>
+        );
+      case "sponsor":
+        return (
+          <motion.div key="sponsor" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="ممول" subtitle="إنشاء صفحة ممول وإدارة إعلاناتك" onBack={() => setActiveTab("home")} />
+            <SponsorPage 
+              userBalance={balance}
+              onNavigateToAds={() => setActiveTab("ads")}
+            />
           </motion.div>
         );
       default:
