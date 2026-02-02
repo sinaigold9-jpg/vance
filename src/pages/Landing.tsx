@@ -33,11 +33,10 @@ const Landing = () => {
           <img 
             src={appIcon} 
             alt="Advance" 
-            className="w-24 h-24 mx-auto mb-4 rounded-3xl shadow-gold"
+            className="w-32 h-32 mx-auto mb-4 rounded-3xl shadow-gold"
           />
-          <h1 className="text-3xl font-bold text-foreground">Advance</h1>
-          <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
-          <p className="text-primary text-sm mt-1">7 أيام تجربة مجانية!</p>
+          <h1 className="text-4xl font-black text-foreground">Advance</h1>
+          <p className="text-primary text-sm mt-2">7 أيام تجربة مجانية!</p>
         </div>
 
         {/* Auth Buttons */}
@@ -75,8 +74,11 @@ const Landing = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-muted-foreground text-sm mt-8">
-          ابدأ الآن واحصل على أرباحك اليومية
+        <p className="text-foreground text-lg font-bold mt-8">
+          ابدأ الآن
+        </p>
+        <p className="text-muted-foreground text-sm mt-4">
+          جميع الحقوق محفوظة لـ Advance 2025©
         </p>
       </motion.div>
     </div>
