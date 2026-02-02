@@ -143,7 +143,7 @@ const Auth = () => {
         if (isPhoneNumber) {
           const foundEmail = await findEmailByPhone(identifier);
           if (!foundEmail) {
-            toast.error("رقم الهاتف غير مسجل");
+            toast.error("رقم الهاتف المحمول غير مسجل في النظام");
             setIsLoading(false);
             return;
           }
@@ -153,9 +153,9 @@ const Auth = () => {
         const { error } = await signIn(loginEmail, password);
         if (error) {
           if (error.message.includes("Invalid login")) {
-            toast.error("البريد الإلكتروني/رقم الهاتف أو كلمة المرور غير صحيحة");
+            toast.error("البريد الإلكتروني أو رقم الهاتف أو كلمة المرور غير صحيحة");
           } else {
-            toast.error(error.message);
+            toast.error("حدث خطأ في تسجيل الدخول");
           }
         } else {
           toast.success("تم تسجيل الدخول بنجاح");
