@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Users, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,6 @@ const signUpSchema = z.object({
   phone: z.string().min(11, "رقم الهاتف يجب أن يكون 11 رقم").max(15, "رقم الهاتف غير صحيح"),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   confirmPassword: z.string(),
-  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "كلمات المرور غير متطابقة",
   path: ["confirmPassword"],
@@ -37,21 +36,23 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null); // Hidden from user
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [registeredViaReferral, setRegisteredViaReferral] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // Check for referral link
+  // Check for referral link - automatically store it (hidden from user)
   useEffect(() => {
     const ref = searchParams.get("ref");
     if (ref) {
       setReferralCode(ref);
-      setIsLogin(false);
+      setIsLogin(false); // Show registration form when coming from referral link
+      setRegisteredViaReferral(true);
     }
   }, [searchParams]);
 
@@ -136,8 +137,10 @@ const Auth = () => {
 
         let loginEmail = identifier;
         
-        // Check if identifier is a phone number (starts with 0 or +)
-        if (/^[0+]/.test(identifier)) {
+        // Check if identifier is a phone number (starts with 0 or + or is numeric)
+        const isPhoneNumber = /^[0+]/.test(identifier) || /^\d{10,15}$/.test(identifier);
+        
+        if (isPhoneNumber) {
           const foundEmail = await findEmailByPhone(identifier);
           if (!foundEmail) {
             toast.error("رقم الهاتف غير مسجل");
@@ -164,8 +167,7 @@ const Auth = () => {
           email, 
           phone, 
           password, 
-          confirmPassword,
-          referralCode 
+          confirmPassword
         });
         if (!validation.success) {
           toast.error(validation.error.errors[0].message);
@@ -173,14 +175,11 @@ const Auth = () => {
           return;
         }
 
+        // Validate referral code silently if present (never reject registration due to referral)
         let referredBy: string | null = null;
-        if (referralCode.trim()) {
+        if (referralCode) {
           referredBy = await validateReferralCode(referralCode);
-          if (!referredBy) {
-            toast.error("كود الإحالة غير صحيح");
-            setIsLoading(false);
-            return;
-          }
+          // If referral code is invalid, we simply proceed without it (don't show error)
         }
 
         const { error } = await signUp(email, password, fullName, phone, referredBy);
@@ -191,7 +190,12 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
+          // Show special message if registered via referral link
+          if (registeredViaReferral && referredBy) {
+            toast.success("تم التسجيل عبر رابط دعوة! 🎉 لديك 7 أيام تجربة مجانية");
+          } else {
+            toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
+          }
           navigate("/app?onboarding=true");
         }
       }
@@ -203,23 +207,22 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md flex-1 flex flex-col justify-center"
       >
-        {/* Logo */}
+        {/* Logo - Larger */}
         <div className="text-center mb-8">
           <img 
             src={appIcon} 
             alt="Advance" 
-            className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-gold"
+            className="w-32 h-32 mx-auto mb-4 rounded-3xl shadow-gold"
           />
-          <h1 className="text-3xl font-bold text-foreground">Advance</h1>
-          <p className="text-muted-foreground mt-2">اربح يومياً من المهام البسيطة</p>
+          <h1 className="text-4xl font-black text-foreground">Advance</h1>
           {!isLogin && (
-            <p className="text-primary text-sm mt-1">7 أيام تجربة مجانية!</p>
+            <p className="text-primary text-sm mt-2">7 أيام تجربة مجانية!</p>
           )}
         </div>
 
@@ -317,72 +320,55 @@ const Auth = () => {
             </div>
 
             {!isLogin && (
-              <>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="تأكيد كلمة المرور"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pr-10 pl-10 text-right"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-
-                <div className="relative">
-                  <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="كود الإحالة من صديق (اختياري)"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    className="pr-10 text-right"
-                    dir="ltr"
-                  />
-                </div>
-              </>
+              <div className="relative">
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="تأكيد كلمة المرور"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10 pl-10 text-right"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
             )}
+
+            {/* No referral code input field - it's handled automatically */}
 
             <Button
               type="submit"
-              className="w-full bg-gradient-gold text-primary-foreground shadow-gold"
+              className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12"
               disabled={isLoading}
             >
               {isLoading ? (
                 <span className="animate-spin">⏳</span>
               ) : (
                 <>
-                  {isLogin ? "دخول" : "إنشاء حساب"}
+                  {isLogin ? "دخول" : "ابدأ الآن"}
                   <ArrowRight className="w-5 h-5 mr-2" />
                 </>
               )}
             </Button>
           </form>
         </div>
-
-        {/* Back to Landing */}
-        <div className="text-center mt-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 ml-2" />
-            العودة للصفحة الرئيسية
-          </Button>
-        </div>
       </motion.div>
+
+      {/* Copyright Footer */}
+      <div className="py-4 text-center">
+        <p className="text-muted-foreground text-sm">
+          جميع الحقوق محفوظة لـ Advance 2025©
+        </p>
+      </div>
 
       <PrivacyPolicyModal 
         isOpen={showPrivacyPolicy} 

@@ -101,22 +101,7 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
               })}
             </div>
 
-            {/* Admin Link */}
-            {isAdmin && (
-              <div className="px-4 mt-4">
-                <button
-                  onClick={() => {
-                    navigate("/admin");
-                    setIsOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-vip-gold/10 text-vip-gold hover:bg-vip-gold/20 transition-all"
-                >
-                  <Shield className="w-5 h-5" />
-                  <span className="font-medium">لوحة التحكم</span>
-                  <ChevronLeft className="w-4 h-4 mr-auto" />
-                </button>
-              </div>
-            )}
+            {/* Admin Link removed - moved to Profile Section */}
 
             {/* Logout */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
