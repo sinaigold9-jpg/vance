@@ -278,7 +278,7 @@ const Index = () => {
       case "tasks":
         return (
           <motion.div key="tasks" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح يومياً" onBack={() => setActiveTab("home")} />
+            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح" onBack={() => setActiveTab("home")} />
             {!appSettings.tasksEnabled ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
