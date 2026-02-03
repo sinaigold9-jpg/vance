@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
+import { lovable } from "@/integrations/lovable/index";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -62,50 +63,70 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  const validateReferralCode = async (code: string): Promise<string | null> => {
-    if (!code.trim()) return null;
-    
-    const cleanCode = code.trim();
-    
-    // Check if it's a valid UUID format (user ID from referral link)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
-    if (uuidRegex.test(cleanCode)) {
-      // It's a UUID, check if user exists
-      const { data: profileById } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", cleanCode)
-        .maybeSingle();
-      
-      if (profileById) return profileById.id;
+  const normalizePhone = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+
+    // Common Egyptian formats:
+    // 010xxxxxxxxx (11)
+    // 1xxxxxxxxx (10)  -> prefix 0
+    // 2010xxxxxxxxx (13) -> strip 20
+    if (digits.startsWith("20") && digits.length > 11) {
+      const rest = digits.slice(2);
+      if (rest.length === 11 && rest.startsWith("0")) return rest;
+      if (rest.length === 10 && rest.startsWith("1")) return `0${rest}`;
+      return rest;
     }
 
-    // Check if it's a referral code (8 character hex string)
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("referral_code", cleanCode)
-      .maybeSingle();
-    
-    if (!error && data) {
-      return data.id;
-    }
-    
-    return null;
+    if (digits.length === 10 && digits.startsWith("1")) return `0${digits}`;
+    return digits;
   };
 
-  const findEmailByPhone = async (phoneNumber: string): Promise<string | null> => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("phone", phoneNumber)
-      .maybeSingle();
-    
-    if (error || !data || !data.email) {
-      return null;
+  const validateReferralSilently = async (ref: string): Promise<string | null> => {
+    const clean = ref.trim();
+    if (!clean) return null;
+    const { data, error } = await supabase.functions.invoke("referral-validate", {
+      body: { ref: clean },
+    });
+    if (error) return null;
+    return data?.referredBy ?? null;
+  };
+
+  const signInWithPhone = async (rawPhone: string, pw: string) => {
+    const phoneToSend = normalizePhone(rawPhone) || rawPhone;
+    const { data, error } = await supabase.functions.invoke("phone-login", {
+      body: { phone: phoneToSend, password: pw },
+    });
+    if (error) throw new Error(error.message);
+
+    const access_token = data?.access_token as string | undefined;
+    const refresh_token = data?.refresh_token as string | undefined;
+    if (!access_token || !refresh_token) {
+      throw new Error("تعذر إكمال تسجيل الدخول برقم الهاتف");
     }
-    return data.email;
+
+    await supabase.auth.setSession({ access_token, refresh_token });
+  };
+
+  const handleOAuth = async (provider: "google" | "apple") => {
+    setIsLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result?.error) {
+        toast.error("فشل تسجيل الدخول");
+        return;
+      }
+      if (!result?.redirected) {
+        toast.success("تم تسجيل الدخول بنجاح");
+        navigate("/app");
+      }
+    } catch {
+      toast.error("فشل تسجيل الدخول");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignupClick = (e: React.FormEvent) => {
@@ -135,32 +156,35 @@ const Auth = () => {
           return;
         }
 
-        let loginEmail = identifier;
-        
-        // Check if identifier is a phone number (starts with 0 or + or is numeric)
-        const isPhoneNumber = /^[0+]/.test(identifier) || /^\d{10,15}$/.test(identifier);
-        
+        // Check if identifier is a phone number (starts with 0/+ or mostly digits)
+        const isPhoneNumber = /^[+0]/.test(identifier.trim()) || /^\d{10,15}$/.test(identifier.trim());
+
         if (isPhoneNumber) {
-          const foundEmail = await findEmailByPhone(identifier);
-          if (!foundEmail) {
-            toast.error("رقم الهاتف المحمول غير مسجل في النظام");
-            setIsLoading(false);
-            return;
+          try {
+            await signInWithPhone(identifier, password);
+            toast.success("تم تسجيل الدخول بنجاح");
+            navigate("/app");
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "حدث خطأ في تسجيل الدخول";
+            toast.error(msg.includes("غير مسجل") ? msg : "رقم الهاتف أو كلمة المرور غير صحيحة");
           }
-          loginEmail = foundEmail;
+          setIsLoading(false);
+          return;
         }
 
-        const { error } = await signIn(loginEmail, password);
+        const { error } = await signIn(identifier, password);
         if (error) {
           if (error.message.includes("Invalid login")) {
-            toast.error("البريد الإلكتروني أو رقم الهاتف أو كلمة المرور غير صحيحة");
+            toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
           } else {
             toast.error("حدث خطأ في تسجيل الدخول");
           }
-        } else {
-          toast.success("تم تسجيل الدخول بنجاح");
-          navigate("/app");
+          setIsLoading(false);
+          return;
         }
+
+        toast.success("تم تسجيل الدخول بنجاح");
+        navigate("/app");
       } else {
         const validation = signUpSchema.safeParse({ 
           fullName, 
@@ -178,8 +202,7 @@ const Auth = () => {
         // Validate referral code silently if present (never reject registration due to referral)
         let referredBy: string | null = null;
         if (referralCode) {
-          referredBy = await validateReferralCode(referralCode);
-          // If referral code is invalid, we simply proceed without it (don't show error)
+          referredBy = await validateReferralSilently(referralCode);
         }
 
         const { error } = await signUp(email, password, fullName, phone, referredBy);
@@ -192,7 +215,7 @@ const Auth = () => {
         } else {
           // Show special message if registered via referral link
           if (registeredViaReferral && referredBy) {
-            toast.success("تم التسجيل عبر رابط دعوة! 🎉 لديك 7 أيام تجربة مجانية");
+            toast.success("تم التسجيل عبر رابط دعوة");
           } else {
             toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
           }
@@ -359,6 +382,39 @@ const Auth = () => {
                 </>
               )}
             </Button>
+
+            {isLogin && (
+              <>
+                <div className="relative py-2">
+                  <div className="h-px bg-border" />
+                  <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-card px-3 text-xs text-muted-foreground">
+                    أو
+                  </span>
+                </div>
+                <div className="grid gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => handleOAuth("google")}
+                    disabled={isLoading}
+                  >
+                    <Chrome className="w-5 h-5" />
+                    الدخول عبر Google
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => handleOAuth("apple")}
+                    disabled={isLoading}
+                  >
+                    <Apple className="w-5 h-5" />
+                    الدخول عبر Apple
+                  </Button>
+                </div>
+              </>
+            )}
           </form>
         </div>
       </motion.div>
