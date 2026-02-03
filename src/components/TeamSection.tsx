@@ -126,7 +126,7 @@ export const TeamSection = ({
       try {
         await navigator.share({
           title: "انضم لتطبيق Advance",
-          text: "انضم لتطبيق Advance واربح يومياً!",
+          text: "انضم لتطبيق Advance الآن!",
           url: referralLink,
         });
       } catch (error) {
