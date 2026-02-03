@@ -406,7 +406,9 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
               <img src={appIcon} alt="Advance" className="w-10 h-10 rounded-xl" />
-              <div><h1 className="text-lg font-bold text-foreground">Advance</h1><p className="text-xs text-muted-foreground">اربح يومياً</p></div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">Advance</h1>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {user && <NotificationBell />}
