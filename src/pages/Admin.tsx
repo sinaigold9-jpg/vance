@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
-  Megaphone, Bell
+  Megaphone, Bell, Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +23,7 @@ import { AdminAppSettingsTab } from "@/components/admin/AdminAppSettingsTab";
 import { AdminChatTab } from "@/components/admin/AdminChatTab";
 import { AdminAdsTab } from "@/components/admin/AdminAdsTab";
 import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
+import { AdminPromotionsTab } from "@/components/admin/AdminPromotionsTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -207,6 +208,10 @@ const Admin = () => {
               <Bell className="w-4 h-4 ml-1" />
               الإشعارات
             </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex-1 min-w-[80px]">
+              <Gift className="w-4 h-4 ml-1" />
+              العروض
+            </TabsTrigger>
             <TabsTrigger value="support" className="flex-1 min-w-[80px]">
               <HeadphonesIcon className="w-4 h-4 ml-1" />
               الدعم
@@ -251,6 +256,10 @@ const Admin = () => {
 
           <TabsContent value="notifications" className="mt-6">
             <AdminNotificationsTab />
+          </TabsContent>
+
+          <TabsContent value="promotions" className="mt-6">
+            <AdminPromotionsTab />
           </TabsContent>
 
           <TabsContent value="support" className="mt-6">

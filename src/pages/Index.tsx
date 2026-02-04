@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BalanceCard } from "@/components/BalanceCard";
 import { PackageCard } from "@/components/PackageCard";
@@ -24,9 +24,10 @@ import { ProfileSection } from "@/components/profile/ProfileSection";
 import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
+import { PromotionBanner } from "@/components/PromotionBanner";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { LogIn, LogOut, AlertTriangle, Lock, ArrowRight } from "lucide-react";
+import { AlertTriangle, Lock, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,15 +54,51 @@ const getVipLevel = (accountType: string): number => {
     case "vip1": return 1;
     case "vip2": return 2;
     case "vip3": return 3;
-    default: return 4; // Custom packages
+    default: return 4;
   }
+};
+
+// Map URL paths to tab names
+const pathToTab: Record<string, string> = {
+  "/app": "home",
+  "/app/tasks": "tasks",
+  "/app/wallet": "wallet",
+  "/app/team": "team",
+  "/app/packages": "packages",
+  "/app/earnings": "earnings",
+  "/app/ads": "ads",
+  "/app/offers": "offers",
+  "/app/profile": "profile",
+  "/app/sponsor": "sponsor",
+  "/app/support": "support",
+};
+
+const tabToPath: Record<string, string> = {
+  home: "/app",
+  tasks: "/app/tasks",
+  wallet: "/app/wallet",
+  team: "/app/team",
+  packages: "/app/packages",
+  earnings: "/app/earnings",
+  ads: "/app/ads",
+  offers: "/app/offers",
+  profile: "/app/profile",
+  sponsor: "/app/sponsor",
+  support: "/app/support",
 };
 
 const Index = () => {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("home");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Derive active tab from URL
+  const getTabFromPath = () => pathToTab[location.pathname] || "home";
+  const [activeTab, setActiveTab] = useState(getTabFromPath);
+  
   const [accountType, setAccountType] = useState<AccountType>("beginner");
   const [balance, setBalance] = useState(0);
+  const [points, setPoints] = useState(0);
   const [todayEarnings, setTodayEarnings] = useState(0);
   const [canSpinWheel, setCanSpinWheel] = useState(true);
   const [luckyWheelUsed, setLuckyWheelUsed] = useState(false);
@@ -79,8 +116,15 @@ const Index = () => {
   const [packagesData, setPackagesData] = useState<PackageFromDB[]>([]);
   
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   const { settings: appSettings } = useAppSettings();
+
+  // Sync URL with active tab
+  useEffect(() => {
+    const currentTab = getTabFromPath();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.pathname]);
 
   // Check if trial has expired
   const isTrialExpired = () => {
@@ -97,7 +141,6 @@ const Index = () => {
       }
     }
 
-    // Real-time subscription for packages
     const channel = supabase
       .channel("packages-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "packages" }, () => {
@@ -119,6 +162,7 @@ const Index = () => {
     if (data) {
       setAccountType(data.account_type as AccountType);
       setBalance(data.balance || 0);
+      setPoints((data as { points?: number }).points || 0);
       setLuckyWheelUsed(data.lucky_wheel_used || false);
       setMembershipId(data.membership_id || "");
       setReferralCode(data.referral_code || "");
@@ -162,19 +206,17 @@ const Index = () => {
   const handleDeposit = () => { setShowDepositDialog(true); };
 
   const handleOpenWallet = () => {
-    // Check if PIN is set first
     if (!withdrawalPin) {
       setShowPinSetup(true);
       return;
     }
     
-    // If PIN is set but balance not revealed, show reveal dialog
     if (!isBalanceRevealed) {
       setShowBalanceReveal(true);
       return;
     }
     
-    setActiveTab("wallet");
+    handleTabChange("wallet");
   };
 
   const handleOpenWithdraw = () => {
@@ -194,10 +236,13 @@ const Index = () => {
   const handleBalanceRevealSuccess = () => {
     setIsBalanceRevealed(true);
     setShowBalanceReveal(false);
-    setActiveTab("wallet");
+    handleTabChange("wallet");
   };
 
   const trialExpired = isTrialExpired();
+
+  // Points to EGP conversion
+  const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
 
   // Check if app is disabled
   if (!appSettings.appEnabled) {
@@ -230,7 +275,10 @@ const Index = () => {
                 </div>
               </motion.div>
             )}
-            <BalanceCard balance={isBalanceRevealed ? balance : null} todayEarnings={todayEarnings} accountType={accountType} onRevealClick={() => !withdrawalPin ? setShowPinSetup(true) : setShowBalanceReveal(true)} isRevealed={isBalanceRevealed} />
+            
+            {/* Promotion Banner */}
+            <PromotionBanner />
+            
             <SocialLinks />
             
             {/* Navigation Grid */}
@@ -243,9 +291,9 @@ const Index = () => {
       case "packages":
         return (
           <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
-            <PageHeader title="الباقات" subtitle="كلما زادت الباقة، زادت الأرباح" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الباقات" subtitle="كلما زادت الباقة، زادت الأرباح" onBack={() => handleTabChange("home")} />
             <div className="grid gap-4">
-              {packagesData.map((pkg, index) => {
+              {packagesData.map((pkg) => {
                 const vipLevel = getVipLevel(pkg.account_type);
                 return (
                   <PackageCard
@@ -271,14 +319,14 @@ const Index = () => {
       case "earnings":
         return (
           <motion.div key="earnings" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الأرباح" subtitle="حاسبة أرباح الباقات" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الأرباح" subtitle="حاسبة أرباح الباقات" onBack={() => handleTabChange("home")} />
             <EarningsInfo />
           </motion.div>
         );
       case "tasks":
         return (
           <motion.div key="tasks" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح" onBack={() => setActiveTab("home")} />
+            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح" onBack={() => handleTabChange("home")} />
             {!appSettings.tasksEnabled ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -290,7 +338,7 @@ const Index = () => {
                 <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">انتهت فترة التجربة</h3>
                 <p className="text-muted-foreground mb-4">قم بترقية باقتك للاستمرار في إنجاز المهام</p>
-                <Button onClick={() => setActiveTab("packages")} className="bg-gradient-gold text-primary-foreground">ترقية الباقة</Button>
+                <Button onClick={() => handleTabChange("packages")} className="bg-gradient-gold text-primary-foreground">ترقية الباقة</Button>
               </div>
             ) : user ? (
               <DailyTasks userId={user.id} accountType={accountType} onBalanceUpdate={handleBalanceUpdate} />
@@ -311,14 +359,47 @@ const Index = () => {
       case "team":
         return (
           <motion.div key="team" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الفريق" subtitle="ادعُ أصدقاءك واربح" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الفريق" subtitle="ادعُ أصدقاءك واربح" onBack={() => handleTabChange("home")} />
             {user && <TeamSection userId={user.id} referralCode={referralCode} isTrialExpired={trialExpired} teamEnabled={appSettings.teamEnabled} teamDisabledMessage={appSettings.teamDisabledMessage} />}
           </motion.div>
         );
       case "wallet":
         return (
           <motion.div key="wallet" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            <PageHeader title="المحفظة" subtitle="إيداع وسحب الأموال" onBack={() => setActiveTab("home")} />
+            <PageHeader title="المحفظة" subtitle="إيداع وسحب الأموال" onBack={() => handleTabChange("home")} />
+            
+            {/* Balance Card - Moved here from home */}
+            <BalanceCard 
+              balance={isBalanceRevealed ? balance : null} 
+              todayEarnings={todayEarnings} 
+              accountType={accountType} 
+              onRevealClick={() => !withdrawalPin ? setShowPinSetup(true) : setShowBalanceReveal(true)} 
+              isRevealed={isBalanceRevealed} 
+            />
+            
+            {/* Points Section */}
+            <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Coins className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">نقاط الأرباح</h3>
+                  <p className="text-sm text-muted-foreground">كل 1000 نقطة = 165 جنيه</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-primary">{points.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">نقاطك الحالية</p>
+                </div>
+                <div className="bg-secondary/30 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-accent">{pointsToEgp(points)} جنيه</p>
+                  <p className="text-xs text-muted-foreground">قيمة النقاط</p>
+                </div>
+              </div>
+            </div>
+            
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="text-center mb-6">
                 <p className="text-muted-foreground text-sm">رصيدك الحالي</p>
@@ -337,21 +418,21 @@ const Index = () => {
       case "support":
         return (
           <motion.div key="support" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمساعدة" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمساعدة" onBack={() => handleTabChange("home")} />
             <SupportSection />
           </motion.div>
         );
       case "ads":
         return (
           <motion.div key="ads" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الإعلانات" subtitle="تصفح وأنشئ إعلاناتك" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الإعلانات" subtitle="تصفح وأنشئ إعلاناتك" onBack={() => handleTabChange("home")} />
             <AdsPage userBalance={balance} />
           </motion.div>
         );
       case "profile":
         return (
           <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الملف الشخصي" subtitle="إعدادات حسابك" onBack={() => setActiveTab("home")} />
+            <PageHeader title="الملف الشخصي" subtitle="إعدادات حسابك" onBack={() => handleTabChange("home")} />
             {user && userProfile && (
               <ProfileSection 
                 userProfile={{
@@ -362,7 +443,7 @@ const Index = () => {
                   total_earnings: todayEarnings
                 }} 
                 onRefresh={fetchUserProfile}
-                onNavigateToAds={() => setActiveTab("ads")}
+                onNavigateToAds={() => handleTabChange("ads")}
               />
             )}
           </motion.div>
@@ -370,17 +451,17 @@ const Index = () => {
       case "offers":
         return (
           <motion.div key="offers" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="العروض والمسابقات" subtitle="ترقبوا المفاجآت" onBack={() => setActiveTab("home")} />
+            <PageHeader title="العروض والمسابقات" subtitle="ترقبوا المفاجآت" onBack={() => handleTabChange("home")} />
             <OffersPage />
           </motion.div>
         );
       case "sponsor":
         return (
           <motion.div key="sponsor" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="ممول" subtitle="إنشاء صفحة ممول وإدارة إعلاناتك" onBack={() => setActiveTab("home")} />
+            <PageHeader title="ممول" subtitle="إنشاء صفحة ممول وإدارة إعلاناتك" onBack={() => handleTabChange("home")} />
             <SponsorPage 
               userBalance={balance}
-              onNavigateToAds={() => setActiveTab("ads")}
+              onNavigateToAds={() => handleTabChange("ads")}
             />
           </motion.div>
         );
@@ -391,10 +472,20 @@ const Index = () => {
 
   const handleTabChange = (tab: string) => {
     if (tab === "wallet") {
-      handleOpenWallet();
-    } else {
-      setActiveTab(tab);
+      if (!withdrawalPin) {
+        setShowPinSetup(true);
+        return;
+      }
+      if (!isBalanceRevealed) {
+        setShowBalanceReveal(true);
+        return;
+      }
     }
+    
+    // Update URL
+    const path = tabToPath[tab] || "/app";
+    navigate(path);
+    setActiveTab(tab);
   };
 
   return (
@@ -404,7 +495,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+              <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
               <img src={appIcon} alt="Advance" className="w-10 h-10 rounded-xl" />
               <div>
                 <h1 className="text-lg font-bold text-foreground">Advance</h1>
@@ -412,7 +503,6 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               {user && <NotificationBell />}
-              {user ? <Button variant="outline" size="sm" onClick={signOut} className="gap-2"><LogOut className="w-4 h-4" />خروج</Button> : <Button variant="default" size="sm" onClick={() => navigate("/auth")} className="gap-2 bg-gradient-gold text-primary-foreground"><LogIn className="w-4 h-4" />دخول</Button>}
             </div>
           </div>
         </div>

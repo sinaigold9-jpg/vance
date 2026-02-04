@@ -25,6 +25,7 @@ interface Notification {
   type: string;
   is_read: boolean;
   created_at: string;
+  link?: string | null;
   profiles?: { full_name: string; membership_id: string };
 }
 
@@ -40,6 +41,7 @@ export const AdminNotificationsTab = () => {
   const [targetUser, setTargetUser] = useState("");
   const [notifTitle, setNotifTitle] = useState("");
   const [notifMessage, setNotifMessage] = useState("");
+  const [notifLink, setNotifLink] = useState("");
   const [notifType, setNotifType] = useState("general");
   const [isSending, setIsSending] = useState(false);
 
@@ -97,7 +99,8 @@ export const AdminNotificationsTab = () => {
           user_id: user.id,
           title: notifTitle,
           message: notifMessage,
-          type: notifType
+          type: notifType,
+          link: notifLink || null
         }));
 
         const { error } = await supabase.from("notifications").insert(notifications);
@@ -110,7 +113,8 @@ export const AdminNotificationsTab = () => {
           user_id: targetUser,
           title: notifTitle,
           message: notifMessage,
-          type: notifType
+          type: notifType,
+          link: notifLink || null
         });
 
         if (error) throw error;
@@ -120,6 +124,7 @@ export const AdminNotificationsTab = () => {
 
       setNotifTitle("");
       setNotifMessage("");
+      setNotifLink("");
       fetchNotifications();
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ");
@@ -269,6 +274,16 @@ export const AdminNotificationsTab = () => {
                 rows={3}
               />
             </div>
+
+            <div>
+              <Label>الرابط (اختياري)</Label>
+              <Input
+                value={notifLink}
+                onChange={e => setNotifLink(e.target.value)}
+                placeholder="/app/wallet أو https://example.com"
+              />
+            </div>
+
 
             <Button
               onClick={handleSendNotification}

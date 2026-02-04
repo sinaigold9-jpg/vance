@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -22,6 +22,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/app" element={<Index />} />
+            <Route path="/app/tasks" element={<Index />} />
+            <Route path="/app/wallet" element={<Index />} />
+            <Route path="/app/team" element={<Index />} />
+            <Route path="/app/packages" element={<Index />} />
+            <Route path="/app/earnings" element={<Index />} />
+            <Route path="/app/ads" element={<Index />} />
+            <Route path="/app/offers" element={<Index />} />
+            <Route path="/app/profile" element={<Index />} />
+            <Route path="/app/sponsor" element={<Index />} />
+            <Route path="/app/support" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/landing" element={<Landing />} />
