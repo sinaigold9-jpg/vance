@@ -505,6 +505,7 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          link: string | null
           message: string
           related_id: string | null
           title: string
@@ -515,6 +516,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message: string
           related_id?: string | null
           title: string
@@ -525,6 +527,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message?: string
           related_id?: string | null
           title?: string
@@ -655,6 +658,7 @@ export type Database = {
           lucky_wheel_used: boolean
           membership_id: string | null
           phone: string | null
+          points: number | null
           referral_code: string | null
           referred_by: string | null
           team_code: string | null
@@ -679,6 +683,7 @@ export type Database = {
           lucky_wheel_used?: boolean
           membership_id?: string | null
           phone?: string | null
+          points?: number | null
           referral_code?: string | null
           referred_by?: string | null
           team_code?: string | null
@@ -703,6 +708,7 @@ export type Database = {
           lucky_wheel_used?: boolean
           membership_id?: string | null
           phone?: string | null
+          points?: number | null
           referral_code?: string | null
           referred_by?: string | null
           team_code?: string | null
@@ -717,6 +723,65 @@ export type Database = {
           {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          content: string
+          content_style: Json | null
+          created_at: string | null
+          created_by: string | null
+          display_order: number | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_type: string | null
+          link_url: string | null
+          starts_at: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          content_style?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_type?: string | null
+          link_url?: string | null
+          starts_at?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          content_style?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_type?: string | null
+          link_url?: string | null
+          starts_at?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
