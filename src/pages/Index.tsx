@@ -25,6 +25,10 @@ import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
 import { PromotionBanner } from "@/components/PromotionBanner";
+import { FAQ } from "@/components/FAQ";
+import { WithdrawalHistory } from "@/components/WithdrawalHistory";
+import { PointsConverter } from "@/components/PointsConverter";
+import { ProfileCompletion } from "@/components/ProfileCompletion";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";
@@ -71,6 +75,7 @@ const pathToTab: Record<string, string> = {
   "/app/profile": "profile",
   "/app/sponsor": "sponsor",
   "/app/support": "support",
+  "/app/faq": "faq",
 };
 
 const tabToPath: Record<string, string> = {
@@ -85,6 +90,7 @@ const tabToPath: Record<string, string> = {
   profile: "/app/profile",
   sponsor: "/app/sponsor",
   support: "/app/support",
+  faq: "/app/faq",
 };
 
 const Index = () => {
@@ -107,7 +113,9 @@ const Index = () => {
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showBalanceReveal, setShowBalanceReveal] = useState(false);
-  const [isBalanceRevealed, setIsBalanceRevealed] = useState(false);
+  const [isBalanceRevealed, setIsBalanceRevealed] = useState(true); // Always show balance now
+  const [showPointsConverter, setShowPointsConverter] = useState(false);
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
   const [withdrawalPin, setWithdrawalPin] = useState<string | null>(null);
   const [trialEndDate, setTrialEndDate] = useState<string | null>(null);
   const [membershipId, setMembershipId] = useState("");
@@ -170,6 +178,11 @@ const Index = () => {
       setTrialEndDate(data.trial_end_date);
       setUserProfile({ full_name: data.full_name, email: data.email, phone: data.phone });
       
+      // Check if profile needs completion (for social login users)
+      if (!data.full_name || data.full_name === "" || !data.phone || data.phone === "") {
+        setShowProfileCompletion(true);
+      }
+      
       if (data.account_type === "beginner") { 
         setCanSpinWheel(!data.lucky_wheel_used); 
       } else {
@@ -206,16 +219,6 @@ const Index = () => {
   const handleDeposit = () => { setShowDepositDialog(true); };
 
   const handleOpenWallet = () => {
-    if (!withdrawalPin) {
-      setShowPinSetup(true);
-      return;
-    }
-    
-    if (!isBalanceRevealed) {
-      setShowBalanceReveal(true);
-      return;
-    }
-    
     handleTabChange("wallet");
   };
 
@@ -225,18 +228,7 @@ const Index = () => {
       return;
     }
     
-    if (!isBalanceRevealed) {
-      setShowBalanceReveal(true);
-      return;
-    }
-    
     setShowWithdrawDialog(true);
-  };
-
-  const handleBalanceRevealSuccess = () => {
-    setIsBalanceRevealed(true);
-    setShowBalanceReveal(false);
-    handleTabChange("wallet");
   };
 
   const trialExpired = isTrialExpired();
@@ -370,11 +362,11 @@ const Index = () => {
             
             {/* Balance Card - Moved here from home */}
             <BalanceCard 
-              balance={isBalanceRevealed ? balance : null} 
+              balance={balance} 
               todayEarnings={todayEarnings} 
               accountType={accountType} 
-              onRevealClick={() => !withdrawalPin ? setShowPinSetup(true) : setShowBalanceReveal(true)} 
-              isRevealed={isBalanceRevealed} 
+              onRevealClick={() => {}} 
+              isRevealed={true} 
             />
             
             {/* Points Section */}
@@ -385,7 +377,7 @@ const Index = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-foreground">نقاط الأرباح</h3>
-                  <p className="text-sm text-muted-foreground">كل 1000 نقطة = 165 جنيه</p>
+                  <p className="text-sm text-muted-foreground">يمكنك تحويلها إلى رصيد</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -398,13 +390,23 @@ const Index = () => {
                   <p className="text-xs text-muted-foreground">قيمة النقاط</p>
                 </div>
               </div>
+              {points >= 100 && (
+                <Button 
+                  onClick={() => setShowPointsConverter(true)} 
+                  variant="outline" 
+                  className="w-full mt-4 border-primary text-primary hover:bg-primary/10"
+                >
+                  <Coins className="w-4 h-4 ml-2" />
+                  تحويل النقاط إلى رصيد
+                </Button>
+              )}
             </div>
             
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="text-center mb-6">
                 <p className="text-muted-foreground text-sm">رصيدك الحالي</p>
                 <p className="text-3xl font-black text-gradient-gold">
-                  {isBalanceRevealed ? `${balance.toLocaleString()} جنيه` : "••••••"}
+                  {balance.toLocaleString()} جنيه
                 </p>
               </div>
               <div className="flex gap-3">
@@ -412,6 +414,10 @@ const Index = () => {
                 <Button variant="outline" onClick={handleDeposit} className="flex-1 h-12">إيداع</Button>
               </div>
             </div>
+            
+            {/* Withdrawal History */}
+            <WithdrawalHistory />
+            
             <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
           </motion.div>
         );
@@ -465,23 +471,19 @@ const Index = () => {
             />
           </motion.div>
         );
+      case "faq":
+        return (
+          <motion.div key="faq" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الأسئلة الشائعة" subtitle="دليل استخدام التطبيق" onBack={() => handleTabChange("home")} />
+            <FAQ />
+          </motion.div>
+        );
       default:
         return null;
     }
   };
 
   const handleTabChange = (tab: string) => {
-    if (tab === "wallet") {
-      if (!withdrawalPin) {
-        setShowPinSetup(true);
-        return;
-      }
-      if (!isBalanceRevealed) {
-        setShowBalanceReveal(true);
-        return;
-      }
-    }
-    
     // Update URL
     const path = tabToPath[tab] || "/app";
     navigate(path);
@@ -517,7 +519,26 @@ const Index = () => {
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
       {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
-      {user && withdrawalPin && <BalanceReveal isOpen={showBalanceReveal} onClose={() => setShowBalanceReveal(false)} withdrawalPin={withdrawalPin} onSuccess={handleBalanceRevealSuccess} />}
+      {user && showPointsConverter && (
+        <PointsConverter
+          isOpen={showPointsConverter}
+          onClose={() => setShowPointsConverter(false)}
+          userId={user.id}
+          currentPoints={points}
+          onConvert={(newBalance, newPoints) => {
+            setBalance(newBalance);
+            setPoints(newPoints);
+          }}
+        />
+      )}
+      {user && showProfileCompletion && (
+        <ProfileCompletion
+          isOpen={showProfileCompletion}
+          onClose={() => setShowProfileCompletion(false)}
+          userId={user.id}
+          onComplete={fetchUserProfile}
+        />
+      )}
       
       {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
       <BotWidget />

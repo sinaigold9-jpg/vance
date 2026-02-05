@@ -135,7 +135,14 @@ export const NotificationBell = () => {
           <>
             <div
               className="fixed inset-0 z-40"
-              onClick={() => setIsOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
             />
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}

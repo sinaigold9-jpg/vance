@@ -132,10 +132,21 @@ export const AdminUsersTab = () => {
         if (error) throw error;
       }
 
-      // Update password if provided (requires admin API)
+      // Update password if provided
       if (newPassword && newPassword.length >= 6) {
-        // Note: Password update requires service role key via edge function
-        toast.info("تحديث كلمة المرور يتطلب صلاحيات إضافية");
+        const { data: passwordResult, error: passwordError } = await supabase.functions.invoke(
+          "update-user-password",
+          {
+            body: { userId: selectedUser.id, newPassword },
+          }
+        );
+        
+        if (passwordError) {
+          toast.error("فشل في تحديث كلمة المرور");
+          console.error("Password update error:", passwordError);
+        } else {
+          toast.success("تم تحديث كلمة المرور بنجاح");
+        }
       }
 
       if (Object.keys(updates).length > 0) {
