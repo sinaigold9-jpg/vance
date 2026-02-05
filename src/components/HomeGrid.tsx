@@ -10,7 +10,8 @@ import {
   Megaphone,
   User,
   Trophy,
-  Tag
+  Tag,
+  HelpCircle
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
 
@@ -104,6 +105,13 @@ const gridItems: GridItem[] = [
     label: "الدعم", 
     description: "تواصل معنا للمساعدة",
     gradient: "from-indigo-500 to-blue-600"
+  },
+  { 
+    id: "faq", 
+    icon: HelpCircle, 
+    label: "الأسئلة الشائعة", 
+    description: "دليل استخدام التطبيق",
+    gradient: "from-teal-500 to-cyan-500"
   },
 ];
 
