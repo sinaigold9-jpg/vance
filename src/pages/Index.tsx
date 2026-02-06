@@ -369,7 +369,7 @@ const Index = () => {
               isRevealed={true} 
             />
             
-            {/* Points Section */}
+            {/* Points Section - Without value display */}
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -380,15 +380,9 @@ const Index = () => {
                   <p className="text-sm text-muted-foreground">يمكنك تحويلها إلى رصيد</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-primary">{points.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">نقاطك الحالية</p>
-                </div>
-                <div className="bg-secondary/30 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-accent">{pointsToEgp(points)} جنيه</p>
-                  <p className="text-xs text-muted-foreground">قيمة النقاط</p>
-                </div>
+              <div className="bg-secondary/30 rounded-xl p-4 text-center">
+                <p className="text-3xl font-bold text-primary">{points.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground mt-1">نقاطك الحالية</p>
               </div>
               {points >= 100 && (
                 <Button 

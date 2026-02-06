@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Plus, Trash2, Edit2, Eye, EyeOff, 
-  ExternalLink, Link, Image, ArrowUpDown, Save
+  ExternalLink, Link, Image, ArrowUpDown, Save, Upload, Loader2
 } from "lucide-react";
 
 interface Promotion {
@@ -34,6 +34,8 @@ export const AdminPromotionsTab = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -85,6 +87,49 @@ export const AdminPromotionsTab = () => {
     const style = promo.content_style || {};
     setIsBold((style as { fontWeight?: string }).fontWeight === "bold");
     setTextColor((style as { color?: string }).color || "#ffffff");
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("يرجى اختيار ملف صورة");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("حجم الصورة يجب أن يكون أقل من 5 ميغابايت");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `promo_${Date.now()}.${fileExt}`;
+      const filePath = `promotions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('ad-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('ad-images')
+        .getPublicUrl(filePath);
+
+      setImageUrl(publicUrl);
+      toast.success("تم رفع الصورة بنجاح");
+    } catch (error) {
+      toast.error("فشل في رفع الصورة");
+      console.error(error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -240,13 +285,53 @@ export const AdminPromotionsTab = () => {
             <div>
               <Label className="flex items-center gap-1">
                 <Image className="w-4 h-4" />
-                رابط الصورة
+                صورة العرض
               </Label>
-              <Input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
               />
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full gap-2"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      جارٍ الرفع...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      رفع صورة من الجهاز
+                    </>
+                  )}
+                </Button>
+                {imageUrl && (
+                  <div className="relative">
+                    <img 
+                      src={imageUrl} 
+                      alt="Preview" 
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-1 right-1 h-6 w-6 p-0"
+                      onClick={() => setImageUrl("")}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
