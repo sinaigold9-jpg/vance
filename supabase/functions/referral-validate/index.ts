@@ -50,7 +50,17 @@ serve(async (req) => {
       });
     }
 
-    // 2) Referral code (8-hex) fallback
+    // 2) Membership ID (9 digits starting with 6)
+    const membershipIdRegex = /^6\d{8}$/;
+    if (membershipIdRegex.test(ref)) {
+      const { data } = await admin.from("profiles").select("id").eq("membership_id", ref).maybeSingle();
+      return new Response(JSON.stringify({ referredBy: data?.id ?? null }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 3) Referral code (8-hex) fallback
     const { data } = await admin.from("profiles").select("id").eq("referral_code", ref).maybeSingle();
     return new Response(JSON.stringify({ referredBy: data?.id ?? null }), {
       status: 200,

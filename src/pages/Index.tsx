@@ -352,7 +352,7 @@ const Index = () => {
         return (
           <motion.div key="team" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="الفريق" subtitle="ادعُ أصدقاءك واربح" onBack={() => handleTabChange("home")} />
-            {user && <TeamSection userId={user.id} referralCode={referralCode} isTrialExpired={trialExpired} teamEnabled={appSettings.teamEnabled} teamDisabledMessage={appSettings.teamDisabledMessage} />}
+            {user && <TeamSection userId={user.id} referralCode={referralCode} membershipId={membershipId} isTrialExpired={trialExpired} teamEnabled={appSettings.teamEnabled} teamDisabledMessage={appSettings.teamDisabledMessage} />}
           </motion.div>
         );
       case "wallet":

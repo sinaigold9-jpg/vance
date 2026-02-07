@@ -37,7 +37,8 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [referralCode, setReferralCode] = useState<string | null>(null); // Hidden from user
+  const [referralCode, setReferralCode] = useState(""); // Visible input for referral code
+  const [referralFromUrl, setReferralFromUrl] = useState<string | null>(null); // Hidden from user
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +48,12 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // Check for referral link - automatically store it (hidden from user)
+  // Check for referral link - automatically store it
   useEffect(() => {
     const ref = searchParams.get("ref");
     if (ref) {
-      setReferralCode(ref);
+      setReferralFromUrl(ref);
+      setReferralCode(ref); // Pre-fill the referral code input
       setIsLogin(false); // Show registration form when coming from referral link
       setRegisteredViaReferral(true);
     }
@@ -82,9 +84,11 @@ const Auth = () => {
     return digits;
   };
 
-  const validateReferralSilently = async (ref: string): Promise<string | null> => {
-    const clean = ref.trim();
+  const validateReferralCode = async (code: string): Promise<string | null> => {
+    const clean = code.trim();
     if (!clean) return null;
+    
+    // Try to validate as membership_id first, then as user_id
     const { data, error } = await supabase.functions.invoke("referral-validate", {
       body: { ref: clean },
     });
@@ -199,10 +203,12 @@ const Auth = () => {
           return;
         }
 
-        // Validate referral code silently if present (never reject registration due to referral)
+        // Validate referral code if present
         let referredBy: string | null = null;
-        if (referralCode) {
-          referredBy = await validateReferralSilently(referralCode);
+        if (referralCode.trim()) {
+          referredBy = await validateReferralCode(referralCode.trim());
+        } else if (referralFromUrl) {
+          referredBy = await validateReferralCode(referralFromUrl);
         }
 
         const { error } = await signUp(email, password, fullName, phone, referredBy);
@@ -213,9 +219,9 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          // Show special message if registered via referral link
-          if (registeredViaReferral && referredBy) {
-            toast.success("تم التسجيل عبر رابط دعوة");
+          // Show special message if registered via referral
+          if ((registeredViaReferral || referralCode.trim()) && referredBy) {
+            toast.success("تم التسجيل عبر كود الإحالة بنجاح!");
           } else {
             toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
           }
@@ -300,6 +306,19 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pr-10 text-right"
+                    dir="ltr"
+                  />
+                </div>
+                
+                {/* Referral Code Input */}
+                <div className="relative">
+                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="كود الإحالة (اختياري)"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    className="pr-10 text-right font-mono"
                     dir="ltr"
                   />
                 </div>

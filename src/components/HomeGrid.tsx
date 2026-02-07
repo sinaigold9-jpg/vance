@@ -117,7 +117,15 @@ const gridItems: GridItem[] = [
 
 export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
   return (
-    <div className="grid grid-cols-3 gap-3 md:gap-4">
+    <div className="space-y-4">
+      {/* Welcome Message */}
+      <div className="text-center py-3 bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 rounded-2xl border border-primary/30">
+        <h2 className="text-2xl font-black text-primary" style={{ fontFamily: 'Tajawal, sans-serif' }}>
+          🌙 أهلاً رمضان 🌙
+        </h2>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
       {gridItems.map((item, index) => {
         const isActive = activeTab === item.id;
         const IconComponent = item.icon;
@@ -165,6 +173,7 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
           </motion.button>
         );
       })}
+      </div>
     </div>
   );
 };

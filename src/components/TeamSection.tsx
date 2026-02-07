@@ -39,9 +39,19 @@ const getRankColor = (rank: string) => {
   }
 };
 
+interface TeamSectionProps {
+  userId: string;
+  referralCode: string;
+  membershipId?: string;
+  isTrialExpired?: boolean;
+  teamEnabled?: boolean;
+  teamDisabledMessage?: string;
+}
+
 export const TeamSection = ({
   userId,
   referralCode,
+  membershipId = "",
   isTrialExpired = false,
   teamEnabled = true,
   teamDisabledMessage = "",
@@ -52,14 +62,15 @@ export const TeamSection = ({
   const [userRank, setUserRank] = useState("member");
   const [loading, setLoading] = useState(true);
 
-  // Generate referral link - use the current origin for production
+  // Generate share text with membership ID
   const getBaseUrl = () => {
-    // Check if we're on a custom domain or production
     const origin = window.location.origin;
     return origin;
   };
   
-  const referralLink = `${getBaseUrl()}/auth?ref=${userId}`;
+  const shareLink = `${getBaseUrl()}/auth`;
+  const shareText = `انضم لتطبيق Advance الآن واستخدم كود الإحالة: ${membershipId || referralCode}
+${shareLink}`;
 
   useEffect(() => {
     if (userId) {
@@ -111,29 +122,28 @@ export const TeamSection = ({
     setLoading(false);
   };
 
-  const copyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
+  const copyReferralCode = () => {
+    navigator.clipboard.writeText(membershipId || referralCode);
     setCopied(true);
     toast({
       title: "✓ تم النسخ",
-      description: "تم نسخ رابط الإحالة بنجاح",
+      description: "تم نسخ كود الإحالة بنجاح",
     });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareReferralLink = async () => {
+  const shareReferral = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: "انضم لتطبيق Advance",
-          text: "انضم لتطبيق Advance الآن!",
-          url: referralLink,
+          text: shareText,
         });
       } catch (error) {
-        copyReferralLink();
+        copyReferralCode();
       }
     } else {
-      copyReferralLink();
+      copyReferralCode();
     }
   };
 
@@ -258,27 +268,31 @@ export const TeamSection = ({
           )}
         </div>
 
-        {/* Referral Link */}
+        {/* Referral Code */}
         <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
-          <p className="text-sm text-muted-foreground mb-2">رابط الإحالة الخاص بك</p>
-          <div className="flex gap-2">
-            <div className="flex-1 px-3 py-2 rounded-lg bg-background/50 text-foreground text-sm overflow-hidden">
-              <span className="truncate block">{referralLink}</span>
+          <p className="text-sm text-muted-foreground mb-2">كود الإحالة الخاص بك</p>
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1 px-4 py-3 rounded-lg bg-background/50 text-foreground text-lg font-bold text-center font-mono">
+              {membershipId || referralCode}
             </div>
             <Button
-              onClick={copyReferralLink}
+              onClick={copyReferralCode}
               variant="outline"
               size="icon"
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             </Button>
-            <Button
-              onClick={shareReferralLink}
-              className="bg-gradient-gold text-primary-foreground hover:opacity-90"
-            >
-              <Share2 className="w-5 h-5" />
-            </Button>
           </div>
+          <Button
+            onClick={shareReferral}
+            className="w-full bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
+          >
+            <Share2 className="w-5 h-5" />
+            مشاركة الكود مع رابط التطبيق
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            شارك كود الإحالة مع أصدقائك ليستخدموه عند التسجيل
+          </p>
         </div>
       </div>
 

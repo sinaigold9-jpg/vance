@@ -57,7 +57,7 @@ export const SocialLinks = () => {
           <ExternalLink className="w-4 h-4 text-[#0088CC] opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
 
-        {/* Telegram Bot */}
+        {/* Telegram Bot - Support */}
         <a
           href="http://t.me/Advance0bot"
           target="_blank"
@@ -67,7 +67,7 @@ export const SocialLinks = () => {
           <div className="text-[#9333EA]">
             <Bot className="w-6 h-6" />
           </div>
-          <span className="font-bold text-[#9333EA]">البوت</span>
+          <span className="font-bold text-[#9333EA]">دعم تليجرام</span>
           <ExternalLink className="w-4 h-4 text-[#9333EA] opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
 

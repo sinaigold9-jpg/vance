@@ -7,15 +7,26 @@ import appIcon from "@/assets/app-icon.png";
 
 export const DownloadPage = () => {
   const [downloadCount, setDownloadCount] = useState(7328);
+  const [displayCount, setDisplayCount] = useState(7328);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Simulate incremental download count
+  // Animate count upward smoothly
   useEffect(() => {
     const interval = setInterval(() => {
-      setDownloadCount(prev => prev + Math.floor(Math.random() * 3));
-    }, 30000);
+      setDownloadCount(prev => prev + Math.floor(Math.random() * 3) + 1);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Smooth animation for display count
+  useEffect(() => {
+    if (displayCount < downloadCount) {
+      const timer = setTimeout(() => {
+        setDisplayCount(prev => Math.min(prev + 1, downloadCount));
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [displayCount, downloadCount]);
 
   const handleDownload = () => {
     setIsDownloading(true);
@@ -74,12 +85,12 @@ export const DownloadPage = () => {
               <span className="text-muted-foreground">عدد التنزيلات</span>
             </div>
             <motion.p
-              key={downloadCount}
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
+              key={displayCount}
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
               className="text-4xl font-black text-gradient-gold"
             >
-              {downloadCount.toLocaleString()}
+              {displayCount.toLocaleString()}+
             </motion.p>
             <div className="flex items-center justify-center gap-4 pt-2">
               {features.map((feature, index) => (
@@ -117,22 +128,6 @@ export const DownloadPage = () => {
             )}
           </Button>
 
-          {/* Download Notice */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-bold text-foreground text-sm">
-                  Advance يريد تنزيل الملف
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  ملف APK آمن وخالٍ من الفيروسات. حجم الملف: 12 MB
-                </p>
-              </div>
-            </div>
-          </div>
         </motion.div>
 
         {/* Features List */}
