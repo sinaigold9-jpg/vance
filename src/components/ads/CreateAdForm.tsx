@@ -346,13 +346,7 @@ export const CreateAdForm = ({ onSuccess, onCancel, userBalance }: CreateAdFormP
                     {userBalance} جنيه
                   </span>
                 </div>
-              </motion.div>
-            )}
-
-            {!isPaid && (
-              <p className="text-sm text-muted-foreground">
-                الإعلان المجاني يظهر لـ {maxFreeViews} مستخدمين كحد أقصى
-              </p>
+            </motion.div>
             )}
           </div>
 

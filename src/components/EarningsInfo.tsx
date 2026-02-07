@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Calendar, Crown, Coins, Calculator, Loader2, Target, Percent, Gift, Clock } from "lucide-react";
+import { TrendingUp, Calendar, Crown, Coins, Calculator, Loader2, Target, Gift, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { BackButton } from "./BackButton";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,13 +28,6 @@ const getVipLevel = (accountType: string): number => {
   }
 };
 
-const vipColors: Record<number, string> = {
-  0: "border-beginner/50 bg-gradient-to-br from-beginner/5 to-beginner/10",
-  1: "border-vip1/50 bg-gradient-to-br from-vip1/5 to-vip1/10",
-  2: "border-vip2/50 bg-gradient-to-br from-vip2/5 to-vip2/10",
-  3: "border-vip3/50 bg-gradient-to-br from-vip3/5 to-vip3/10",
-};
-
 const vipGradients: Record<number, string> = {
   0: "from-gray-500 to-gray-600",
   1: "from-amber-500 to-orange-500",
@@ -43,15 +36,16 @@ const vipGradients: Record<number, string> = {
 };
 
 const vipTextColors: Record<number, string> = {
-  0: "text-beginner",
-  1: "text-vip1",
-  2: "text-vip2",
-  3: "text-vip3",
+  0: "text-gray-500",
+  1: "text-amber-500",
+  2: "text-purple-500",
+  3: "text-emerald-500",
 };
 
 export const EarningsInfo = () => {
   const [packages, setPackages] = useState<PackageEarnings[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedPackage, setExpandedPackage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -117,92 +111,127 @@ export const EarningsInfo = () => {
         <p className="text-muted-foreground">تفاصيل الأرباح لجميع الباقات</p>
       </div>
 
-      {/* Earnings Cards Grid */}
-      <div className="grid gap-5 md:grid-cols-2">
-        {packages.map((pkg, index) => (
-          <motion.div
-            key={pkg.id || index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`rounded-2xl border-2 ${vipColors[pkg.vipLevel]} overflow-hidden shadow-lg`}
-          >
-            {/* Package Header */}
-            <div className={`p-4 bg-gradient-to-l ${vipGradients[pkg.vipLevel]} text-white`}>
-              <div className="flex items-center justify-between">
+      {/* Combined Packages Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-card rounded-2xl border border-border/50 overflow-hidden shadow-lg"
+      >
+        {/* Header */}
+        <div className="p-4 bg-gradient-to-l from-primary/20 to-primary/10 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground">جميع الباقات</h3>
+              <p className="text-sm text-muted-foreground">اضغط على أي باقة لعرض التفاصيل</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Packages List */}
+        <div className="divide-y divide-border/50">
+          {packages.map((pkg, index) => (
+            <motion.div
+              key={pkg.id || index}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              {/* Package Header - Clickable */}
+              <button
+                onClick={() => setExpandedPackage(expandedPackage === pkg.id ? null : pkg.id || null)}
+                className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${vipGradients[pkg.vipLevel]} flex items-center justify-center`}>
                     {pkg.isVip ? (
-                      <Crown className="w-6 h-6 text-white" />
+                      <Crown className="w-5 h-5 text-white" />
                     ) : (
-                      <Target className="w-6 h-6 text-white" />
+                      <Target className="w-5 h-5 text-white" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold">{pkg.name}</h3>
-                    <p className="text-white/80 text-sm">{pkg.price} جنيه</p>
+                  <div className="text-right">
+                    <h4 className={`font-bold ${vipTextColors[pkg.vipLevel]}`}>{pkg.name}</h4>
+                    <p className="text-xs text-muted-foreground">{pkg.price} جنيه</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-white/70">العائد السنوي</div>
-                  <div className="text-xl font-black">
-                    {Math.round((pkg.yearlyEarnings / pkg.price) * 100)}%
+                <div className="flex items-center gap-4">
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-emerald">{pkg.dailyEarnings} ج/يوم</p>
+                    <p className="text-xs text-muted-foreground">{pkg.yearlyEarnings.toLocaleString()} ج/سنة</p>
                   </div>
+                  {expandedPackage === pkg.id ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
                 </div>
-              </div>
-            </div>
+              </button>
 
-            {/* Earnings Grid - Box System */}
-            <div className="p-4 bg-card space-y-3">
-              {/* Quick Stats Row */}
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <Gift className="w-5 h-5 mx-auto mb-1 text-primary" />
-                  <p className="text-xs text-muted-foreground">ربح المهمة</p>
-                  <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.rewardPerTask} ج</p>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <Clock className="w-5 h-5 mx-auto mb-1 text-primary" />
-                  <p className="text-xs text-muted-foreground">المهام/يوم</p>
-                  <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.dailyTasks}</p>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <Coins className="w-5 h-5 mx-auto mb-1 text-primary" />
-                  <p className="text-xs text-muted-foreground">أقل سحب</p>
-                  <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.minWithdraw} ج</p>
-                </div>
-              </div>
+              {/* Expanded Details */}
+              {expandedPackage === pkg.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="px-4 pb-4"
+                >
+                  {/* Earnings Grid */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
+                      <Calendar className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                      <p className="text-xs text-muted-foreground">يومياً</p>
+                      <p className="text-lg font-black text-blue-600">{pkg.dailyEarnings}</p>
+                      <p className="text-[10px] text-muted-foreground">جنيه</p>
+                    </div>
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+                      <TrendingUp className="w-5 h-5 mx-auto mb-1 text-emerald-500" />
+                      <p className="text-xs text-muted-foreground">شهرياً</p>
+                      <p className="text-lg font-black text-emerald">{pkg.monthlyEarnings}</p>
+                      <p className="text-[10px] text-muted-foreground">جنيه</p>
+                    </div>
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center">
+                      <Crown className="w-5 h-5 mx-auto mb-1 text-amber-500" />
+                      <p className="text-xs text-muted-foreground">سنوياً</p>
+                      <p className="text-lg font-black text-amber-600">{pkg.yearlyEarnings.toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground">جنيه</p>
+                    </div>
+                  </div>
 
-              {/* Earnings Boxes - Main Grid */}
-              <div className="grid grid-cols-3 gap-2">
-                {/* Daily */}
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
-                  <Calendar className="w-5 h-5 mx-auto mb-2 text-blue-500" />
-                  <p className="text-xs text-muted-foreground mb-1">يومياً</p>
-                  <p className="text-lg font-black text-blue-600">{pkg.dailyEarnings}</p>
-                  <p className="text-[10px] text-muted-foreground">جنيه</p>
-                </div>
-                
-                {/* Monthly */}
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-                  <TrendingUp className="w-5 h-5 mx-auto mb-2 text-emerald-500" />
-                  <p className="text-xs text-muted-foreground mb-1">شهرياً</p>
-                  <p className="text-lg font-black text-emerald">{pkg.monthlyEarnings}</p>
-                  <p className="text-[10px] text-muted-foreground">جنيه</p>
-                </div>
-                
-                {/* Yearly */}
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center">
-                  <Crown className="w-5 h-5 mx-auto mb-2 text-amber-500" />
-                  <p className="text-xs text-muted-foreground mb-1">سنوياً</p>
-                  <p className="text-lg font-black text-amber-600">{pkg.yearlyEarnings.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">جنيه</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-muted/40 rounded-xl p-2 text-center">
+                      <Gift className="w-4 h-4 mx-auto mb-1 text-primary" />
+                      <p className="text-[10px] text-muted-foreground">ربح المهمة</p>
+                      <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.rewardPerTask} ج</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-2 text-center">
+                      <Clock className="w-4 h-4 mx-auto mb-1 text-primary" />
+                      <p className="text-[10px] text-muted-foreground">المهام/يوم</p>
+                      <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.dailyTasks}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl p-2 text-center">
+                      <Coins className="w-4 h-4 mx-auto mb-1 text-primary" />
+                      <p className="text-[10px] text-muted-foreground">أقل سحب</p>
+                      <p className={`font-bold text-sm ${vipTextColors[pkg.vipLevel]}`}>{pkg.minWithdraw} ج</p>
+                    </div>
+                  </div>
+
+                  {/* ROI */}
+                  <div className="mt-3 p-2 bg-primary/10 rounded-xl text-center">
+                    <p className="text-xs text-muted-foreground">العائد السنوي</p>
+                    <p className="text-xl font-black text-primary">
+                      {Math.round((pkg.yearlyEarnings / pkg.price) * 100)}%
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Note */}
       <div className="bg-muted/50 rounded-xl p-4 border border-border">
