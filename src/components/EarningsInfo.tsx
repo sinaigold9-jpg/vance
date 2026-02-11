@@ -80,7 +80,6 @@ export const EarningsInfo = () => {
 
     fetchPackages();
 
-    // Real-time subscription for packages
     const channel = supabase
       .channel("packages-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "packages" }, () => {
