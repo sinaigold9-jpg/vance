@@ -500,6 +500,30 @@ export type Database = {
           },
         ]
       }
+      download_counter: {
+        Row: {
+          count: number
+          daily_increment_used: number
+          id: string
+          last_increment_date: string
+          last_updated_at: string
+        }
+        Insert: {
+          count?: number
+          daily_increment_used?: number
+          id?: string
+          last_increment_date?: string
+          last_updated_at?: string
+        }
+        Update: {
+          count?: number
+          daily_increment_used?: number
+          id?: string
+          last_increment_date?: string
+          last_updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -731,6 +755,7 @@ export type Database = {
       }
       promotions: {
         Row: {
+          buttons: Json | null
           content: string
           content_style: Json | null
           created_at: string | null
@@ -742,11 +767,13 @@ export type Database = {
           is_active: boolean | null
           link_type: string | null
           link_url: string | null
+          offer_type: string | null
           starts_at: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          buttons?: Json | null
           content: string
           content_style?: Json | null
           created_at?: string | null
@@ -758,11 +785,13 @@ export type Database = {
           is_active?: boolean | null
           link_type?: string | null
           link_url?: string | null
+          offer_type?: string | null
           starts_at?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          buttons?: Json | null
           content?: string
           content_style?: Json | null
           created_at?: string | null
@@ -774,6 +803,7 @@ export type Database = {
           is_active?: boolean | null
           link_type?: string | null
           link_url?: string | null
+          offer_type?: string | null
           starts_at?: string | null
           title?: string
           updated_at?: string | null
