@@ -35,6 +35,7 @@ import { AlertTriangle, Lock, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { registerPushNotifications } from "@/lib/pushNotifications";
 import appIcon from "@/assets/app-icon.png";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
@@ -144,6 +145,8 @@ const Index = () => {
     fetchPackages();
     if (user) {
       fetchUserProfile();
+      // Register push notifications
+      registerPushNotifications(user.id).catch(console.error);
       if (searchParams.get("onboarding") === "true") {
         setShowOnboarding(true);
       }
