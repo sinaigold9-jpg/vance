@@ -106,6 +106,13 @@ export const AdminNotificationsTab = () => {
         const { error } = await supabase.from("notifications").insert(notifications);
         if (error) throw error;
 
+        // Send push notifications to all users
+        for (const u of users) {
+          supabase.functions.invoke("send-push", {
+            body: { user_id: u.id, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+          }).catch(() => {});
+        }
+
         toast.success(`تم إرسال الإشعار إلى ${users.length} مستخدم`);
       } else {
         // Send to single user
@@ -118,6 +125,11 @@ export const AdminNotificationsTab = () => {
         });
 
         if (error) throw error;
+
+        // Send push notification
+        supabase.functions.invoke("send-push", {
+          body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+        }).catch(() => {});
 
         toast.success("تم إرسال الإشعار");
       }
