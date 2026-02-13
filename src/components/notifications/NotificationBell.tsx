@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,10 +18,12 @@ interface Notification {
   is_read: boolean;
   created_at: string;
   related_id: string | null;
+  link: string | null;
 }
 
 export const NotificationBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -176,7 +179,17 @@ export const NotificationBell = () => {
                         className={`p-4 hover:bg-secondary/50 transition-colors cursor-pointer ${
                           !notification.is_read ? 'bg-primary/5' : ''
                         }`}
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => {
+                          markAsRead(notification.id);
+                          if (notification.link) {
+                            setIsOpen(false);
+                            if (notification.link.startsWith('http')) {
+                              window.open(notification.link, '_blank');
+                            } else {
+                              navigate(notification.link);
+                            }
+                          }
+                        }}
                       >
                         <div className="flex gap-3">
                           <div className="mt-1">
