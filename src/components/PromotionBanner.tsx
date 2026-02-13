@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,25 +19,57 @@ interface Promotion {
   link_type: string;
   offer_type: string;
   buttons: PromotionButton[];
+  ends_at: string | null;
+  display_location: string;
 }
 
-export const PromotionBanner = () => {
+interface PromotionBannerProps {
+  location?: "home" | "offers";
+}
+
+export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [countdowns, setCountdowns] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchPromotions();
     
     const channel = supabase
-      .channel("promotions-realtime")
+      .channel(`promotions-realtime-${location}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "promotions" }, () => {
         fetchPromotions();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [location]);
+
+  // Countdown timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newCountdowns: Record<string, string> = {};
+      promotions.forEach(p => {
+        if (p.ends_at) {
+          const diff = new Date(p.ends_at).getTime() - Date.now();
+          if (diff > 0) {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            newCountdowns[p.id] = days > 0 
+              ? `${days}ي ${hours}س ${mins}د`
+              : `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+          } else {
+            newCountdowns[p.id] = "انتهى";
+          }
+        }
+      });
+      setCountdowns(newCountdowns);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [promotions]);
 
   useEffect(() => {
     if (promotions.length <= 1) return;
@@ -54,12 +86,22 @@ export const PromotionBanner = () => {
       .eq("is_active", true)
       .order("display_order", { ascending: true });
 
-    if (data) setPromotions(data.map(p => ({
-      ...p,
-      content_style: (p.content_style || {}) as Record<string, unknown>,
-      offer_type: (p as any).offer_type || "personal",
-      buttons: Array.isArray((p as any).buttons) ? (p as any).buttons : [],
-    })));
+    if (data) {
+      const filtered = data
+        .map(p => ({
+          ...p,
+          content_style: (p.content_style || {}) as Record<string, unknown>,
+          offer_type: (p as any).offer_type || "personal",
+          buttons: Array.isArray((p as any).buttons) ? (p as any).buttons : [],
+          display_location: (p as any).display_location || "home_only",
+        }))
+        .filter(p => {
+          if (location === "home") return p.display_location === "home_only" || p.display_location === "both";
+          if (location === "offers") return p.display_location === "offers_only" || p.display_location === "both";
+          return true;
+        });
+      setPromotions(filtered);
+    }
   };
 
   const handleClick = (promo: Promotion) => {
@@ -97,6 +139,12 @@ export const PromotionBanner = () => {
               <div className="absolute bottom-0 left-0 right-0 p-4">
                 <h3 className="font-bold text-foreground text-lg">{currentPromo.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-1">{currentPromo.content}</p>
+                {countdowns[currentPromo.id] && (
+                  <div className="flex items-center gap-1 text-amber-400 text-xs mt-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{countdowns[currentPromo.id]}</span>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -105,6 +153,12 @@ export const PromotionBanner = () => {
               <p className="text-muted-foreground" style={currentPromo.content_style as React.CSSProperties}>
                 {currentPromo.content}
               </p>
+              {countdowns[currentPromo.id] && (
+                <div className="flex items-center gap-1 text-amber-400 text-sm mt-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{countdowns[currentPromo.id]}</span>
+                </div>
+              )}
               {currentPromo.link_url && (
                 <div className="flex items-center gap-1 text-primary text-sm mt-2">
                   <span>المزيد</span>
@@ -116,7 +170,6 @@ export const PromotionBanner = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Buttons for current promo */}
       {currentPromo.buttons?.length > 0 && (
         <div className="flex gap-2 px-4 pb-3 flex-wrap">
           {currentPromo.buttons.map((btn, i) => (

@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Plus, Trash2, Edit2, Eye, EyeOff, 
-  ExternalLink, Link, Image, ArrowUpDown, Save, Upload, Loader2
+  Link, Image, ArrowUpDown, Save, Upload, Loader2, Clock
 } from "lucide-react";
 
 interface Promotion {
@@ -29,25 +30,21 @@ interface Promotion {
   created_at: string;
   offer_type: string;
   buttons: { label: string }[];
+  ends_at: string | null;
+  display_location: string;
 }
 
 const OFFER_TYPES: Record<string, { label: string; defaultButtons: string[] }> = {
-  personal: {
-    label: "عرض شخصي",
-    defaultButtons: ["اربح", "استلم", "فعّل", "تفاصيل"],
-  },
-  marketing: {
-    label: "عرض تسويقي",
-    defaultButtons: ["شارك", "ادعُ", "سوّق", "احصل"],
-  },
-  discount: {
-    label: "عرض خصم",
-    defaultButtons: ["احجز", "استخدم", "فعّل الآن", "اعرف أكثر"],
-  },
-  limited: {
-    label: "عرض محدود الوقت",
-    defaultButtons: ["اضغط الآن", "استغل العرض", "ابدأ", "تفاصيل"],
-  },
+  personal: { label: "عرض شخصي", defaultButtons: ["اربح", "استلم", "فعّل", "تفاصيل"] },
+  marketing: { label: "عرض تسويقي", defaultButtons: ["شارك", "ادعُ", "سوّق", "احصل"] },
+  discount: { label: "عرض خصم", defaultButtons: ["احجز", "استخدم", "فعّل الآن", "اعرف أكثر"] },
+  limited: { label: "عرض محدود الوقت", defaultButtons: ["اضغط الآن", "استغل العرض", "ابدأ", "تفاصيل"] },
+};
+
+const DISPLAY_LOCATIONS: Record<string, string> = {
+  home_only: "الصفحة الرئيسية فقط",
+  offers_only: "صفحة العروض والمسابقات فقط",
+  both: "الصفحة الرئيسية + صفحة العروض",
 };
 
 export const AdminPromotionsTab = () => {
@@ -69,10 +66,10 @@ export const AdminPromotionsTab = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [offerType, setOfferType] = useState("personal");
   const [buttons, setButtons] = useState<string[]>(OFFER_TYPES.personal.defaultButtons);
+  const [endsAt, setEndsAt] = useState("");
+  const [displayLocation, setDisplayLocation] = useState("home_only");
 
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
+  useEffect(() => { fetchPromotions(); }, []);
 
   const fetchPromotions = async () => {
     setIsLoading(true);
@@ -86,6 +83,7 @@ export const AdminPromotionsTab = () => {
       content_style: (p.content_style || {}) as Record<string, unknown>,
       offer_type: (p as any).offer_type || "personal",
       buttons: Array.isArray((p as any).buttons) ? (p as any).buttons : [],
+      display_location: (p as any).display_location || "home_only",
     })));
     setIsLoading(false);
   };
@@ -94,8 +92,8 @@ export const AdminPromotionsTab = () => {
     setTitle(""); setContent(""); setImageUrl(""); setLinkUrl("");
     setLinkType("internal"); setIsBold(false); setTextColor("#ffffff");
     setDisplayOrder(0); setEditingId(null);
-    setOfferType("personal");
-    setButtons(OFFER_TYPES.personal.defaultButtons);
+    setOfferType("personal"); setButtons(OFFER_TYPES.personal.defaultButtons);
+    setEndsAt(""); setDisplayLocation("home_only");
   };
 
   const handleEdit = (promo: Promotion) => {
@@ -108,6 +106,8 @@ export const AdminPromotionsTab = () => {
     setTextColor((style as any).color || "#ffffff");
     setOfferType(promo.offer_type || "personal");
     setButtons(promo.buttons?.map(b => b.label) || OFFER_TYPES[promo.offer_type || "personal"]?.defaultButtons || []);
+    setEndsAt(promo.ends_at || "");
+    setDisplayLocation(promo.display_location || "home_only");
   };
 
   const handleOfferTypeChange = (type: string) => {
@@ -136,11 +136,8 @@ export const AdminPromotionsTab = () => {
       const { data: { publicUrl } } = supabase.storage.from('ad-images').getPublicUrl(filePath);
       setImageUrl(publicUrl);
       toast.success("تم رفع الصورة بنجاح");
-    } catch (error) {
-      toast.error("فشل في رفع الصورة");
-    } finally {
-      setIsUploading(false);
-    }
+    } catch { toast.error("فشل في رفع الصورة"); }
+    finally { setIsUploading(false); }
   };
 
   const handleSave = async () => {
@@ -156,6 +153,8 @@ export const AdminPromotionsTab = () => {
       created_by: user?.id,
       offer_type: offerType,
       buttons: buttons.map(label => ({ label })),
+      ends_at: endsAt || null,
+      display_location: displayLocation,
     };
     try {
       if (editingId) {
@@ -168,11 +167,8 @@ export const AdminPromotionsTab = () => {
         toast.success("تم إضافة العرض");
       }
       resetForm(); fetchPromotions();
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ");
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (error: any) { toast.error(error.message || "حدث خطأ"); }
+    finally { setIsSaving(false); }
   };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
@@ -190,7 +186,6 @@ export const AdminPromotionsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-border/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{promotions.length}</p><p className="text-xs text-muted-foreground">إجمالي العروض</p></CardContent></Card>
         <Card className="border-border/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-accent">{promotions.filter(p => p.is_active).length}</p><p className="text-xs text-muted-foreground">نشط</p></CardContent></Card>
@@ -198,7 +193,6 @@ export const AdminPromotionsTab = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Add/Edit Form */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -207,16 +201,9 @@ export const AdminPromotionsTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>العنوان</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان العرض" />
-            </div>
-            <div>
-              <Label>المحتوى</Label>
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="نص العرض" rows={3} />
-            </div>
+            <div><Label>العنوان</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان العرض" /></div>
+            <div><Label>المحتوى</Label><Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="نص العرض" rows={3} /></div>
 
-            {/* Offer Type */}
             <div>
               <Label>نوع العرض</Label>
               <Select value={offerType} onValueChange={handleOfferTypeChange}>
@@ -229,7 +216,27 @@ export const AdminPromotionsTab = () => {
               </Select>
             </div>
 
-            {/* Buttons */}
+            {/* Time for limited offers */}
+            {offerType === "limited" && (
+              <div>
+                <Label className="flex items-center gap-1"><Clock className="w-4 h-4" />وقت انتهاء العرض</Label>
+                <Input type="datetime-local" value={endsAt ? endsAt.slice(0, 16) : ""} onChange={(e) => setEndsAt(e.target.value ? new Date(e.target.value).toISOString() : "")} />
+              </div>
+            )}
+
+            {/* Display Location */}
+            <div>
+              <Label>مكان ظهور العرض</Label>
+              <RadioGroup value={displayLocation} onValueChange={setDisplayLocation} className="mt-2 space-y-2">
+                {Object.entries(DISPLAY_LOCATIONS).map(([key, label]) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <RadioGroupItem value={key} id={`loc-${key}`} />
+                    <Label htmlFor={`loc-${key}`} className="cursor-pointer text-sm">{label}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
             <div>
               <Label>أزرار العرض (يمكنك تعديل الأسماء)</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
@@ -240,14 +247,8 @@ export const AdminPromotionsTab = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={isBold} onCheckedChange={setIsBold} />
-                <Label>خط عريض</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label>اللون</Label>
-                <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-              </div>
+              <div className="flex items-center gap-2"><Switch checked={isBold} onCheckedChange={setIsBold} /><Label>خط عريض</Label></div>
+              <div className="flex items-center gap-2"><Label>اللون</Label><input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" /></div>
             </div>
 
             <div>
@@ -266,24 +267,15 @@ export const AdminPromotionsTab = () => {
               </div>
             </div>
 
-            <div>
-              <Label className="flex items-center gap-1"><Link className="w-4 h-4" />الرابط</Label>
-              <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="/app/wallet أو https://..." />
-            </div>
+            <div><Label className="flex items-center gap-1"><Link className="w-4 h-4" />الرابط</Label><Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="/app/wallet أو https://..." /></div>
             <div>
               <Label>نوع الرابط</Label>
               <Select value={linkType} onValueChange={setLinkType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal">داخلي</SelectItem>
-                  <SelectItem value="external">خارجي</SelectItem>
-                </SelectContent>
+                <SelectContent><SelectItem value="internal">داخلي</SelectItem><SelectItem value="external">خارجي</SelectItem></SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="flex items-center gap-1"><ArrowUpDown className="w-4 h-4" />ترتيب العرض</Label>
-              <Input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)} />
-            </div>
+            <div><Label className="flex items-center gap-1"><ArrowUpDown className="w-4 h-4" />ترتيب العرض</Label><Input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)} /></div>
 
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={isSaving} className="flex-1 gap-2 bg-gradient-gold text-primary-foreground">
@@ -294,7 +286,6 @@ export const AdminPromotionsTab = () => {
           </CardContent>
         </Card>
 
-        {/* Promotions List */}
         <Card className="border-border/50 lg:col-span-2">
           <CardHeader><CardTitle className="text-lg">قائمة العروض</CardTitle></CardHeader>
           <CardContent>
@@ -309,12 +300,19 @@ export const AdminPromotionsTab = () => {
                     <div className="flex items-start gap-4">
                       {promo.image_url && <img src={promo.image_url} alt={promo.title} className="w-20 h-20 rounded-lg object-cover" />}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="font-bold">{promo.title}</h3>
                           {promo.is_active ? <Badge className="bg-accent">نشط</Badge> : <Badge variant="secondary">متوقف</Badge>}
                           <Badge variant="outline" className="text-xs">{OFFER_TYPES[promo.offer_type]?.label || promo.offer_type}</Badge>
+                          <Badge variant="outline" className="text-xs">{DISPLAY_LOCATIONS[promo.display_location] || promo.display_location}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">{promo.content}</p>
+                        {promo.ends_at && (
+                          <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            ينتهي: {new Date(promo.ends_at).toLocaleString("ar-EG")}
+                          </p>
+                        )}
                         {promo.buttons?.length > 0 && (
                           <div className="flex gap-1 mt-2 flex-wrap">
                             {promo.buttons.map((btn, i) => (

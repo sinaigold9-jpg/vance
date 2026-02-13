@@ -11,12 +11,27 @@ import appIcon from "@/assets/app-icon.png";
 export const DownloadPage = () => {
   const [displayCount, setDisplayCount] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [hasDownloaded, setHasDownloaded] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchCounter();
     maybeIncrement();
-  }, []);
+    checkIfDownloaded();
+  }, [user]);
+
+  const checkIfDownloaded = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("activity_logs")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("action", "مكافأة تنزيل التطبيق")
+      .limit(1);
+    if (data && data.length > 0) {
+      setHasDownloaded(true);
+    }
+  };
 
   const fetchCounter = async () => {
     const { data } = await supabase
@@ -24,10 +39,7 @@ export const DownloadPage = () => {
       .select("*")
       .eq("id", "main")
       .maybeSingle();
-
-    if (data) {
-      setDisplayCount(data.count);
-    }
+    if (data) setDisplayCount(data.count);
   };
 
   const maybeIncrement = async () => {
@@ -36,19 +48,14 @@ export const DownloadPage = () => {
       .select("*")
       .eq("id", "main")
       .maybeSingle();
-
     if (!data) return;
 
     const today = new Date().toISOString().split("T")[0];
     const lastDate = data.last_increment_date;
     let dailyUsed = data.daily_increment_used;
 
-    // Reset daily counter if new day
-    if (lastDate !== today) {
-      dailyUsed = 0;
-    }
+    if (lastDate !== today) dailyUsed = 0;
 
-    // Max 7 increments per day, random 1-3
     if (dailyUsed < 7) {
       const increment = Math.min(Math.floor(Math.random() * 3) + 1, 7 - dailyUsed);
       await supabase
@@ -60,7 +67,6 @@ export const DownloadPage = () => {
           last_updated_at: new Date().toISOString(),
         })
         .eq("id", "main");
-
       setDisplayCount(data.count + increment);
     } else {
       setDisplayCount(data.count);
@@ -70,7 +76,6 @@ export const DownloadPage = () => {
   const handleDownload = async () => {
     setIsDownloading(true);
 
-    // Trigger actual download
     const link = document.createElement("a");
     link.href = "/downloads/app-release.apk";
     link.download = "Advance.apk";
@@ -78,8 +83,8 @@ export const DownloadPage = () => {
     link.click();
     document.body.removeChild(link);
 
-    // Give user 20 EGP reward
-    if (user) {
+    // One-time 20 EGP reward
+    if (user && !hasDownloaded) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("balance, total_earnings")
@@ -102,6 +107,7 @@ export const DownloadPage = () => {
         });
 
         toast.success("تم إضافة 20 جنيه إلى محفظتك!");
+        setHasDownloaded(true);
       }
     }
 
@@ -119,24 +125,18 @@ export const DownloadPage = () => {
       <div className="max-w-lg mx-auto space-y-6">
         <BackButton />
 
-        {/* App Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-4"
         >
-          <img
-            src={appIcon}
-            alt="Advance"
-            className="w-28 h-28 mx-auto rounded-3xl shadow-gold"
-          />
+          <img src={appIcon} alt="Advance" className="w-28 h-28 mx-auto rounded-3xl shadow-gold" />
           <div>
             <h1 className="text-3xl font-black text-foreground">Advance</h1>
             <p className="text-muted-foreground">تطبيق الربح الأول في مصر</p>
           </div>
         </motion.div>
 
-        {/* Download Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -162,33 +162,44 @@ export const DownloadPage = () => {
           </div>
         </motion.div>
 
-        {/* Download Button */}
+        {/* Download Button with red badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
-          <Button
-            onClick={handleDownload}
-            disabled={isDownloading}
-            className="w-full h-16 text-xl font-bold bg-gradient-gold text-primary-foreground shadow-gold hover:opacity-90 rounded-2xl"
-          >
-            {isDownloading ? (
-              <span className="flex items-center gap-2">
-                <CheckCircle className="w-6 h-6 animate-pulse" />
-                جارٍ التنزيل...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Download className="w-6 h-6" />
-                تنزيل التطبيق (+20 ج.م)
-              </span>
+          <div className="relative">
+            <Button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="w-full h-16 text-xl font-bold bg-gradient-gold text-primary-foreground shadow-gold hover:opacity-90 rounded-2xl"
+            >
+              {isDownloading ? (
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 animate-pulse" />
+                  جارٍ التنزيل...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Download className="w-6 h-6" />
+                  تنزيل التطبيق
+                </span>
+              )}
+            </Button>
+            {/* Red badge showing 20 EGP - only if not downloaded yet */}
+            {!hasDownloaded && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg"
+              >
+                20ج.م
+              </motion.span>
             )}
-          </Button>
+          </div>
         </motion.div>
 
-        {/* Features List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
