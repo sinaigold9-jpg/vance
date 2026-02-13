@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import appIcon from "@/assets/app-icon.png";
@@ -61,6 +61,26 @@ const Landing = () => {
           </Button>
 
           {/* Admin access - only show for logged in admins */}
+          {/* Download Button with 20 EGP badge */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full text-lg py-6 border-primary/50 text-primary hover:bg-primary/10"
+              onClick={() => navigate("/download")}
+            >
+              <Download className="w-5 h-5 ml-2" />
+              تنزيل التطبيق
+            </Button>
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse"
+            >
+              20ج.م
+            </motion.span>
+          </div>
+
           {isAdmin && (
             <Button
               variant="ghost"

@@ -330,6 +330,7 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pr-10 pl-10 text-right"
+                autoComplete={isLogin ? "current-password" : "new-password"}
               />
               <button
                 type="button"
@@ -353,6 +354,7 @@ const Auth = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pr-10 pl-10 text-right"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"

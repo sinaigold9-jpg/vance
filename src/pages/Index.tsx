@@ -29,6 +29,7 @@ import { FAQ } from "@/components/FAQ";
 import { WithdrawalHistory } from "@/components/WithdrawalHistory";
 import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
+import { InstallPWA } from "@/components/InstallPWA";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";
@@ -539,6 +540,7 @@ const Index = () => {
       
       {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
       <BotWidget />
+      <InstallPWA />
     </div>
   );
 };
