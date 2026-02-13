@@ -30,15 +30,15 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(searchParams.get("mode") === "login");
-  const [identifier, setIdentifier] = useState(""); // Can be email or phone
+  const [isLogin, setIsLogin] = useState(true); // Default to login
+  const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [referralCode, setReferralCode] = useState(""); // Visible input for referral code
-  const [referralFromUrl, setReferralFromUrl] = useState<string | null>(null); // Hidden from user
+  const [referralCode, setReferralCode] = useState("");
+  const [referralFromUrl, setReferralFromUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,14 +48,16 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // Check for referral link - automatically store it
   useEffect(() => {
     const ref = searchParams.get("ref");
+    const mode = searchParams.get("mode");
     if (ref) {
       setReferralFromUrl(ref);
-      setReferralCode(ref); // Pre-fill the referral code input
-      setIsLogin(false); // Show registration form when coming from referral link
+      setReferralCode(ref);
+      setIsLogin(false);
       setRegisteredViaReferral(true);
+    } else if (mode === "register") {
+      setIsLogin(false);
     }
   }, [searchParams]);
 
@@ -68,18 +70,12 @@ const Auth = () => {
   const normalizePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
     if (!digits) return "";
-
-    // Common Egyptian formats:
-    // 010xxxxxxxxx (11)
-    // 1xxxxxxxxx (10)  -> prefix 0
-    // 2010xxxxxxxxx (13) -> strip 20
     if (digits.startsWith("20") && digits.length > 11) {
       const rest = digits.slice(2);
       if (rest.length === 11 && rest.startsWith("0")) return rest;
       if (rest.length === 10 && rest.startsWith("1")) return `0${rest}`;
       return rest;
     }
-
     if (digits.length === 10 && digits.startsWith("1")) return `0${digits}`;
     return digits;
   };
@@ -87,8 +83,6 @@ const Auth = () => {
   const validateReferralCode = async (code: string): Promise<string | null> => {
     const clean = code.trim();
     if (!clean) return null;
-    
-    // Try to validate as membership_id first, then as user_id
     const { data, error } = await supabase.functions.invoke("referral-validate", {
       body: { ref: clean },
     });
@@ -102,13 +96,11 @@ const Auth = () => {
       body: { phone: phoneToSend, password: pw },
     });
     if (error) throw new Error(error.message);
-
     const access_token = data?.access_token as string | undefined;
     const refresh_token = data?.refresh_token as string | undefined;
     if (!access_token || !refresh_token) {
       throw new Error("تعذر إكمال تسجيل الدخول برقم الهاتف");
     }
-
     await supabase.auth.setSession({ access_token, refresh_token });
   };
 
@@ -160,7 +152,6 @@ const Auth = () => {
           return;
         }
 
-        // Check if identifier is a phone number (starts with 0/+ or mostly digits)
         const isPhoneNumber = /^[+0]/.test(identifier.trim()) || /^\d{10,15}$/.test(identifier.trim());
 
         if (isPhoneNumber) {
@@ -191,11 +182,7 @@ const Auth = () => {
         navigate("/app");
       } else {
         const validation = signUpSchema.safeParse({ 
-          fullName, 
-          email, 
-          phone, 
-          password, 
-          confirmPassword
+          fullName, email, phone, password, confirmPassword
         });
         if (!validation.success) {
           toast.error(validation.error.errors[0].message);
@@ -203,7 +190,6 @@ const Auth = () => {
           return;
         }
 
-        // Validate referral code if present
         let referredBy: string | null = null;
         if (referralCode.trim()) {
           referredBy = await validateReferralCode(referralCode.trim());
@@ -219,7 +205,6 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          // Show special message if registered via referral
           if ((registeredViaReferral || referralCode.trim()) && referredBy) {
             toast.success("تم التسجيل عبر كود الإحالة بنجاح!");
           } else {
@@ -242,7 +227,7 @@ const Auth = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md flex-1 flex flex-col justify-center"
       >
-        {/* Logo - Larger */}
+        {/* Logo */}
         <div className="text-center mb-8">
           <img 
             src={appIcon} 
@@ -255,7 +240,7 @@ const Auth = () => {
           )}
         </div>
 
-        {/* Auth Form */}
+        {/* Auth Form Card */}
         <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
           <div className="flex gap-2 mb-6">
             <Button
@@ -309,8 +294,6 @@ const Auth = () => {
                     dir="ltr"
                   />
                 </div>
-                
-                {/* Referral Code Input */}
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -385,8 +368,6 @@ const Auth = () => {
               </div>
             )}
 
-            {/* No referral code input field - it's handled automatically */}
-
             <Button
               type="submit"
               className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12"
@@ -438,7 +419,6 @@ const Auth = () => {
         </div>
       </motion.div>
 
-      {/* Copyright Footer */}
       <div className="py-4 text-center">
         <p className="text-muted-foreground text-sm">
           جميع الحقوق محفوظة لـ Advance 2025©

@@ -760,6 +760,7 @@ export type Database = {
           content_style: Json | null
           created_at: string | null
           created_by: string | null
+          display_location: string
           display_order: number | null
           ends_at: string | null
           id: string
@@ -778,6 +779,7 @@ export type Database = {
           content_style?: Json | null
           created_at?: string | null
           created_by?: string | null
+          display_location?: string
           display_order?: number | null
           ends_at?: string | null
           id?: string
@@ -796,6 +798,7 @@ export type Database = {
           content_style?: Json | null
           created_at?: string | null
           created_by?: string | null
+          display_location?: string
           display_order?: number | null
           ends_at?: string | null
           id?: string
