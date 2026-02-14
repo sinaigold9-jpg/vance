@@ -8,10 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import appIcon from "@/assets/app-icon.png";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export const DownloadPage = () => {
   const [displayCount, setDisplayCount] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -19,6 +26,15 @@ export const DownloadPage = () => {
     maybeIncrement();
     checkIfDownloaded();
   }, [user]);
+
+  // PWA install prompt
+  useEffect(() => {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) { setIsInstalled(true); return; }
+    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   const checkIfDownloaded = async () => {
     if (!user) return;
@@ -76,12 +92,18 @@ export const DownloadPage = () => {
   const handleDownload = async () => {
     setIsDownloading(true);
 
-    const link = document.createElement("a");
-    link.href = "/downloads/app-release.apk";
-    link.download = "Advance.apk";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Try PWA install first
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+        toast.success("تم تثبيت التطبيق بنجاح! 🎉");
+      }
+    } else {
+      toast.info("يمكنك تثبيت التطبيق من خلال إعدادات المتصفح > إضافة إلى الشاشة الرئيسية");
+    }
 
     // One-time 20 EGP reward
     if (user && !hasDownloaded) {
@@ -178,12 +200,17 @@ export const DownloadPage = () => {
               {isDownloading ? (
                 <span className="flex items-center gap-2">
                   <CheckCircle className="w-6 h-6 animate-pulse" />
-                  جارٍ التنزيل...
+                  جارٍ التثبيت...
+                </span>
+              ) : isInstalled ? (
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6" />
+                  تم تثبيت التطبيق ✓
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <Download className="w-6 h-6" />
-                  تنزيل التطبيق
+                  <Smartphone className="w-6 h-6" />
+                  تثبيت التطبيق
                 </span>
               )}
             </Button>
