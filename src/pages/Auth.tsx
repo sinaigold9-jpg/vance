@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
 import { lovable } from "@/integrations/lovable/index";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -45,6 +50,8 @@ const Auth = () => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [registeredViaReferral, setRegisteredViaReferral] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -66,6 +73,22 @@ const Auth = () => {
       navigate("/app");
     }
   }, [user, navigate]);
+
+  // PWA install prompt
+  useEffect(() => {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) { setIsInstalled(true); return; }
+    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") { setIsInstalled(true); setDeferredPrompt(null); }
+  };
 
   const normalizePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -419,6 +442,28 @@ const Auth = () => {
             )}
           </form>
         </div>
+
+        {/* PWA Install Button */}
+        {!isInstalled && (
+          <div className="relative mt-4">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full text-lg py-6 border-primary/50 text-primary hover:bg-primary/10"
+              onClick={deferredPrompt ? handleInstall : () => navigate("/download")}
+            >
+              <Smartphone className="w-5 h-5 ml-2" />
+              {deferredPrompt ? "تثبيت التطبيق" : "تنزيل التطبيق"}
+            </Button>
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse"
+            >
+              20ج.م
+            </motion.span>
+          </div>
+        )}
       </motion.div>
 
       <div className="py-4 text-center">
