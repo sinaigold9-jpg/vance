@@ -524,6 +524,83 @@ export type Database = {
         }
         Relationships: []
       }
+      export_access_keys: {
+        Row: {
+          access_key: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_revoked: boolean
+          is_used: boolean
+          revoked_at: string | null
+          used_at: string | null
+          used_ip: string | null
+        }
+        Insert: {
+          access_key: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          is_revoked?: boolean
+          is_used?: boolean
+          revoked_at?: string | null
+          used_at?: string | null
+          used_ip?: string | null
+        }
+        Update: {
+          access_key?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_revoked?: boolean
+          is_used?: boolean
+          revoked_at?: string | null
+          used_at?: string | null
+          used_ip?: string | null
+        }
+        Relationships: []
+      }
+      export_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          key_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          key_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          key_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_logs_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "export_access_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
