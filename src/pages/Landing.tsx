@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import appIcon from "@/assets/app-icon.png";
+import appIcon from "@/assets/app-icon-optimized.webp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -64,6 +64,9 @@ const Landing = () => {
           <img 
             src={appIcon} 
             alt="Advance" 
+            width={128}
+            height={128}
+            fetchPriority="high"
             className="w-32 h-32 mx-auto mb-4 rounded-3xl shadow-gold"
           />
           <h1 className="text-4xl font-black text-foreground">Advance</h1>
