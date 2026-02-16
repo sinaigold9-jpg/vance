@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { ProfileSettings } from "./ProfileSettings";
 import { 
   User, Mail, Phone, CreditCard, 
-  Gift, Crown, Clock, Lock, Shield
+  Gift, Crown, Clock, Lock, Shield, Settings
 } from "lucide-react";
 
 interface ProfileSectionProps {
@@ -29,6 +30,7 @@ interface ProfileSectionProps {
 export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   const getAccountTypeBadge = (type: string) => {
     switch (type) {
@@ -50,10 +52,20 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
       {/* Main Profile Card */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            الملف الشخصي
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              الملف الشخصي
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSettings(true)}
+              className="rounded-full"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Profile Info */}
@@ -148,6 +160,8 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
           </Badge>
         </CardContent>
       </Card>
+      {/* Settings Dialog */}
+      <ProfileSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 };

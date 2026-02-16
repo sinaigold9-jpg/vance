@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
-  Megaphone, Bell, Gift, Key
+  Megaphone, Bell, Gift, Key, Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,7 @@ import { AdminAdsTab } from "@/components/admin/AdminAdsTab";
 import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
 import { AdminPromotionsTab } from "@/components/admin/AdminPromotionsTab";
 import { AdminExportTab } from "@/components/admin/AdminExportTab";
+import { AdminChangeRequestsTab } from "@/components/admin/AdminChangeRequestsTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -237,6 +238,10 @@ const Admin = () => {
               <Key className="w-4 h-4 ml-1" />
               التصدير
             </TabsTrigger>
+            <TabsTrigger value="change-requests" className="flex-1 min-w-[80px]">
+              <Edit className="w-4 h-4 ml-1" />
+              طلبات التعديل
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
@@ -289,6 +294,10 @@ const Admin = () => {
 
           <TabsContent value="export" className="mt-6">
             <AdminExportTab />
+          </TabsContent>
+
+          <TabsContent value="change-requests" className="mt-6">
+            <AdminChangeRequestsTab />
           </TabsContent>
         </Tabs>
       </div>
