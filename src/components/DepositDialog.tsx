@@ -87,7 +87,7 @@ export const DepositDialog = ({ isOpen, onClose, userProfile }: DepositDialogPro
     try {
       // Upload receipt image
       const fileExt = receiptFile.name.split(".").pop();
-      const fileName = `${user.id}-deposit-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("receipts")
         .upload(fileName, receiptFile);

@@ -98,37 +98,33 @@ export const AdminUsersTab = () => {
     setIsUpdating(true);
 
     try {
-      const updates: any = {};
-      
+      // Use secure RPC for profile updates
+      const rpcParams: any = { _user_id: selectedUser.id };
+
       if (newAccountType && newAccountType !== selectedUser.account_type) {
-        updates.account_type = newAccountType;
+        rpcParams._new_account_type = newAccountType;
       }
-      
+
       if (newBalance !== "" && parseFloat(newBalance) !== selectedUser.balance) {
-        updates.balance = parseFloat(newBalance);
-        if (selectedUser.account_type === "beginner" && parseFloat(newBalance) >= 100) {
-          updates.is_package_activated = true;
-        }
+        rpcParams._new_balance = parseFloat(newBalance);
       }
-      
+
       if (newTotalEarnings !== "" && parseFloat(newTotalEarnings) !== selectedUser.total_earnings) {
-        updates.total_earnings = parseFloat(newTotalEarnings);
+        rpcParams._new_earnings = parseFloat(newTotalEarnings);
       }
 
       if (newEmail && newEmail !== selectedUser.email) {
-        updates.email = newEmail;
+        rpcParams._new_email = newEmail;
       }
 
       if (newPhone && newPhone !== selectedUser.phone) {
-        updates.phone = newPhone;
+        rpcParams._new_phone = newPhone;
       }
 
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
-          .from("profiles")
-          .update(updates)
-          .eq("id", selectedUser.id);
+      const hasProfileChanges = Object.keys(rpcParams).length > 1; // more than just _user_id
 
+      if (hasProfileChanges) {
+        const { error } = await supabase.rpc('admin_update_user_balance', rpcParams);
         if (error) throw error;
       }
 
@@ -149,17 +145,7 @@ export const AdminUsersTab = () => {
         }
       }
 
-      if (Object.keys(updates).length > 0) {
-        await supabase.from("activity_logs").insert({
-          user_id: selectedUser.id,
-          action: "تعديل بيانات المستخدم من الإدارة",
-          details: { 
-            changes: updates,
-            admin_action: true 
-          },
-          amount: updates.balance || updates.total_earnings || null,
-        });
-
+      if (hasProfileChanges) {
         toast.success("تم تحديث البيانات بنجاح");
         fetchUsers();
       }
