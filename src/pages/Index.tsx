@@ -502,7 +502,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {user && <NotificationBell />}
+              {user && activeTab === "home" && <NotificationBell />}
             </div>
           </div>
         </div>
