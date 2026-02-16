@@ -40,12 +40,14 @@ export const WithdrawalPinSetup = ({ isOpen, onClose, userId, onSuccess }: Withd
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ withdrawal_pin: pin })
-        .eq("id", userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-      if (error) throw error;
+      const response = await supabase.functions.invoke('set-withdrawal-pin', {
+        body: { pin },
+      });
+
+      if (response.error) throw response.error;
 
       toast.success("تم إنشاء كلمة مرور السحب بنجاح");
       onSuccess();

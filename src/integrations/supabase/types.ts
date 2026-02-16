@@ -1074,6 +1074,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user_balance: {
+        Args: {
+          _new_account_type?: string
+          _new_balance?: number
+          _new_earnings?: number
+          _new_email?: string
+          _new_phone?: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       generate_membership_id: { Args: never; Returns: string }
       generate_transaction_number: { Args: never; Returns: string }
       has_role: {

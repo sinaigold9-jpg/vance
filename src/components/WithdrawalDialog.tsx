@@ -71,14 +71,25 @@ export const WithdrawalDialog = ({
       return;
     }
 
-    if (pin !== withdrawalPin) {
-      toast.error("كلمة مرور السحب غير صحيحة");
+    if (!pin || pin.length !== 6) {
+      toast.error("يرجى إدخال كلمة مرور السحب");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // Verify PIN server-side
+      const { data: pinResult, error: pinError } = await supabase.functions.invoke('verify-withdrawal-pin', {
+        body: { pin },
+      });
+
+      if (pinError || !pinResult?.valid) {
+        toast.error("كلمة مرور السحب غير صحيحة");
+        setIsLoading(false);
+        return;
+      }
+
       // Deduct balance immediately
       const newBalance = balance - parsedAmount;
       
