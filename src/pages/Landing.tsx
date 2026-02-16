@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import appIcon from "@/assets/app-icon-optimized.webp";
+const appIcon = "/app-icon-optimized.webp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
