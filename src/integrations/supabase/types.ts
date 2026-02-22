@@ -240,6 +240,44 @@ export type Database = {
           },
         ]
       }
+      admin_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          recipient_type: string
+          recipient_user_id: string | null
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          recipient_type?: string
+          recipient_user_id?: string | null
+          sender_id: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          recipient_type?: string
+          recipient_user_id?: string | null
+          sender_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_messages_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advertisements: {
         Row: {
           ad_type: Database["public"]["Enums"]["ad_type"]
@@ -524,6 +562,38 @@ export type Database = {
         }
         Relationships: []
       }
+      email_subscriptions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          reward_claimed: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          reward_claimed?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          reward_claimed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       export_access_keys: {
         Row: {
           access_key: string
@@ -798,6 +868,7 @@ export type Database = {
           full_name: string
           id: string
           is_package_activated: boolean | null
+          last_active_at: string | null
           last_attempt_date: string | null
           last_wheel_spin: string | null
           lucky_wheel_used: boolean
@@ -823,6 +894,7 @@ export type Database = {
           full_name: string
           id: string
           is_package_activated?: boolean | null
+          last_active_at?: string | null
           last_attempt_date?: string | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
@@ -848,6 +920,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_package_activated?: boolean | null
+          last_active_at?: string | null
           last_attempt_date?: string | null
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
