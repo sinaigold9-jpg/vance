@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Package, User, Phone, Mail, CheckCircle, XCircle, Clock, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ export const AdminUpgradeRequestsTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<UpgradeRequest | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
 
   useEffect(() => {
     fetchRequests();
@@ -300,7 +303,7 @@ export const AdminUpgradeRequestsTab = () => {
                 )}
               </div>
 
-              {selectedRequest.status === "pending" && (
+              {selectedRequest.status === "pending" && !showRejectInput && (
                 <div className="flex gap-2 pt-4">
                   <Button
                     className="flex-1 bg-emerald-500 hover:bg-emerald-600"
@@ -317,16 +320,61 @@ export const AdminUpgradeRequestsTab = () => {
                   <Button
                     variant="destructive"
                     className="flex-1"
-                    onClick={() => handleUpdateStatus(
-                      selectedRequest.id, 
-                      "rejected",
-                      selectedRequest.user_id,
-                      selectedRequest.requested_package
-                    )}
+                    onClick={() => setShowRejectInput(true)}
                   >
                     <XCircle className="w-4 h-4 ml-2" />
                     رفض
                   </Button>
+                </div>
+              )}
+
+              {selectedRequest.status === "pending" && showRejectInput && (
+                <div className="space-y-3 pt-4">
+                  <Textarea
+                    placeholder="اكتب سبب الرفض للمستخدم..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={async () => {
+                        if (!rejectReason.trim()) {
+                          toast.error("يرجى كتابة سبب الرفض");
+                          return;
+                        }
+                        
+                        // Send notification to user
+                        await supabase.from("notifications").insert({
+                          user_id: selectedRequest.user_id,
+                          title: "تم رفض طلب الترقية",
+                          message: `سبب الرفض: ${rejectReason}`,
+                          type: "upgrade_rejected",
+                        });
+
+                        await handleUpdateStatus(
+                          selectedRequest.id,
+                          "rejected",
+                          selectedRequest.user_id,
+                          selectedRequest.requested_package
+                        );
+                        setShowRejectInput(false);
+                        setRejectReason("");
+                      }}
+                    >
+                      <XCircle className="w-4 h-4 ml-2" />
+                      تأكيد الرفض
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
+                    >
+                      إلغاء
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

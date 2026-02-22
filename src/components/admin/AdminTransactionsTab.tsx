@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -43,6 +45,9 @@ export const AdminTransactionsTab = () => {
   const [statusFilter, setStatusFilter] = useState<TransactionStatus | "all">("all");
   const [typeFilter, setTypeFilter] = useState<"deposit" | "withdrawal" | "all">("all");
   const [loading, setLoading] = useState(true);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     fetchTransactions();
@@ -88,13 +93,17 @@ export const AdminTransactionsTab = () => {
     setLoading(false);
   };
 
-  const handleUpdateStatus = async (transactionId: string, newStatus: TransactionStatus) => {
+  const handleUpdateStatus = async (transactionId: string, newStatus: TransactionStatus, reason?: string) => {
+    const updateData: any = { 
+      status: newStatus,
+      processed_at: new Date().toISOString()
+    };
+    if (reason) {
+      updateData.notes = reason;
+    }
     const { error } = await supabase
       .from("transactions")
-      .update({ 
-        status: newStatus,
-        processed_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq("id", transactionId);
 
     if (error) {
@@ -103,6 +112,34 @@ export const AdminTransactionsTab = () => {
       toast.success(newStatus === "approved" ? "تم قبول المعاملة" : "تم رفض المعاملة");
       fetchTransactions();
     }
+  };
+
+  const openRejectDialog = (id: string) => {
+    setRejectingId(id);
+    setRejectReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectingId) return;
+    if (!rejectReason.trim()) {
+      toast.error("يرجى كتابة سبب الرفض");
+      return;
+    }
+    // Find the transaction to get user_id
+    const transaction = transactions.find(t => t.id === rejectingId);
+    if (transaction) {
+      await supabase.from("notifications").insert({
+        user_id: transaction.user_id,
+        title: "تم رفض طلب الإيداع",
+        message: `سبب الرفض: ${rejectReason}`,
+        type: "deposit_rejected",
+      });
+    }
+    await handleUpdateStatus(rejectingId, "rejected", rejectReason);
+    setRejectDialogOpen(false);
+    setRejectingId(null);
+    setRejectReason("");
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -208,7 +245,7 @@ export const AdminTransactionsTab = () => {
               {transaction.status === "pending" && (
                 <div className="flex flex-col gap-2">
                   <Button size="sm" className="bg-emerald hover:bg-emerald/90" onClick={() => handleUpdateStatus(transaction.id, "approved")}><CheckCircle className="w-4 h-4 ml-1" />قبول</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleUpdateStatus(transaction.id, "rejected")}><XCircle className="w-4 h-4 ml-1" />رفض</Button>
+                  <Button size="sm" variant="destructive" onClick={() => openRejectDialog(transaction.id)}><XCircle className="w-4 h-4 ml-1" />رفض</Button>
                 </div>
               )}
             </div>
@@ -216,6 +253,32 @@ export const AdminTransactionsTab = () => {
         ))}
         {filteredTransactions.length === 0 && <div className="text-center py-12 text-muted-foreground">لا يوجد معاملات</div>}
       </div>
+
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>سبب رفض المعاملة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="اكتب سبب الرفض للمستخدم..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <Button variant="destructive" className="flex-1" onClick={confirmReject}>
+                <XCircle className="w-4 h-4 ml-2" />
+                تأكيد الرفض
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setRejectDialogOpen(false)}>
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
