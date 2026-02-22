@@ -30,6 +30,7 @@ import { WithdrawalHistory } from "@/components/WithdrawalHistory";
 import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { InstallPWA } from "@/components/InstallPWA";
+import { EmailSubscription } from "@/components/EmailSubscription";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";
@@ -146,6 +147,8 @@ const Index = () => {
     fetchPackages();
     if (user) {
       fetchUserProfile();
+      // Track user activity
+      supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", user.id).then(() => {});
       // Register push notifications
       registerPushNotifications(user.id).catch(console.error);
       if (searchParams.get("onboarding") === "true") {
@@ -276,6 +279,9 @@ const Index = () => {
             <PromotionBanner />
             
             <SocialLinks />
+
+            {/* Email Subscription */}
+            <EmailSubscription />
             
             {/* Navigation Grid */}
             <div className="pt-4">

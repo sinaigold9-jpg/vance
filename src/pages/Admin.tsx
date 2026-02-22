@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
-  Megaphone, Bell, Gift, Key, Edit
+  Megaphone, Bell, Gift, Key, Edit, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +26,7 @@ import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab"
 import { AdminPromotionsTab } from "@/components/admin/AdminPromotionsTab";
 import { AdminExportTab } from "@/components/admin/AdminExportTab";
 import { AdminChangeRequestsTab } from "@/components/admin/AdminChangeRequestsTab";
+import { AdminEmailTab } from "@/components/admin/AdminEmailTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -242,6 +243,10 @@ const Admin = () => {
               <Edit className="w-4 h-4 ml-1" />
               طلبات التعديل
             </TabsTrigger>
+            <TabsTrigger value="email-management" className="flex-1 min-w-[80px]">
+              <Mail className="w-4 h-4 ml-1" />
+              البريد
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
@@ -298,6 +303,10 @@ const Admin = () => {
 
           <TabsContent value="change-requests" className="mt-6">
             <AdminChangeRequestsTab />
+          </TabsContent>
+
+          <TabsContent value="email-management" className="mt-6">
+            <AdminEmailTab />
           </TabsContent>
         </Tabs>
       </div>

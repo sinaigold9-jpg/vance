@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Phone, Mail, DollarSign, Edit, Crown, Calendar, Target, Key, Loader2 } from "lucide-react";
+import { Search, User, Phone, Mail, DollarSign, Edit, Crown, Calendar, Target, Key, Loader2, CircleDot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ interface UserProfile {
   created_at: string;
   daily_attempts_count: number;
   last_attempt_date: string | null;
+  last_active_at: string | null;
 }
 
 interface PackageOption {
@@ -169,6 +170,14 @@ export const AdminUsersTab = () => {
     }
   };
 
+  // User is "active" if last_active_at is within last 3 days
+  const isUserActive = (lastActiveAt: string | null) => {
+    if (!lastActiveAt) return false;
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    return new Date(lastActiveAt) > threeDaysAgo;
+  };
+
   const getAccountTypeBadgeClass = (type: string) => {
     switch (type) {
       case "vip1": return "bg-vip-gold/20 text-vip-gold";
@@ -257,6 +266,10 @@ export const AdminUsersTab = () => {
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       آخر محاولة: {user.last_attempt_date || "لا يوجد"}
+                    </span>
+                    <span className={`flex items-center gap-1 ${isUserActive(user.last_active_at) ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                      <CircleDot className="w-3 h-3" />
+                      {isUserActive(user.last_active_at) ? 'نشط' : 'غير نشط'}
                     </span>
                   </div>
                 </div>
