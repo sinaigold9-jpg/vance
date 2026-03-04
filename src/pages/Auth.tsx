@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple, Smartphone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,11 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
 import { lovable } from "@/integrations/lovable/index";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -35,7 +30,7 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(true); // Default to login
+  const [isLogin, setIsLogin] = useState(true);
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,8 +45,6 @@ const Auth = () => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [registeredViaReferral, setRegisteredViaReferral] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -73,22 +66,6 @@ const Auth = () => {
       navigate("/app");
     }
   }, [user, navigate]);
-
-  // PWA install prompt
-  useEffect(() => {
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    if (isStandalone) { setIsInstalled(true); return; }
-    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") { setIsInstalled(true); setDeferredPrompt(null); }
-  };
 
   const normalizePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -244,158 +221,195 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-primary/5">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md flex-1 flex flex-col justify-center"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
       >
         {/* Logo */}
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+        >
           <img 
             src={appIcon} 
             alt="Advance" 
-            className="w-32 h-32 mx-auto mb-4 rounded-3xl shadow-gold"
+            className="w-24 h-24 mx-auto mb-3 rounded-2xl shadow-gold"
           />
-          <h1 className="text-4xl font-black text-foreground">Advance</h1>
-          {!isLogin && (
-            <p className="text-primary text-sm mt-2">7 أيام تجربة مجانية!</p>
-          )}
-        </div>
+          <h1 className="text-3xl font-black text-foreground">Advance</h1>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={isLogin ? "login-sub" : "signup-sub"}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="text-muted-foreground text-sm mt-1"
+            >
+              {isLogin ? "مرحباً بعودتك!" : "7 أيام تجربة مجانية!"}
+            </motion.p>
+          </AnimatePresence>
+        </motion.div>
 
-        {/* Auth Form Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={isLogin ? "default" : "outline"}
-              className="flex-1"
+        {/* Auth Card */}
+        <motion.div 
+          className="bg-card border border-border/60 rounded-3xl p-6 shadow-2xl backdrop-blur-sm"
+          layout
+          transition={{ layout: { duration: 0.3, type: "spring", stiffness: 300, damping: 30 } }}
+        >
+          {/* Mode Toggle */}
+          <div className="relative flex bg-muted/50 rounded-xl p-1 mb-6">
+            <motion.div
+              className="absolute top-1 bottom-1 rounded-lg bg-primary shadow-md"
+              layout
+              style={{ width: "calc(50% - 4px)" }}
+              animate={{ x: isLogin ? 0 : "calc(100% + 4px)" }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+            <button
+              type="button"
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg relative z-10 transition-colors ${isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}
               onClick={() => setIsLogin(true)}
             >
               تسجيل الدخول
-            </Button>
-            <Button
-              variant={!isLogin ? "default" : "outline"}
-              className="flex-1"
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg relative z-10 transition-colors ${!isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}
               onClick={() => setIsLogin(false)}
             >
               حساب جديد
-            </Button>
+            </button>
           </div>
 
-          <form onSubmit={isLogin ? handleSubmit : handleSignupClick} className="space-y-4">
-            {!isLogin && (
-              <>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="الاسم الكامل"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pr-10 text-right"
-                  />
-                </div>
-                <div className="relative">
-                  <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="tel"
-                    placeholder="رقم الهاتف المحمول"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pr-10 text-right"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="البريد الإلكتروني"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pr-10 text-right"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="كود الإحالة (اختياري)"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    className="pr-10 text-right font-mono"
-                    dir="ltr"
-                  />
-                </div>
-              </>
-            )}
-
-            {isLogin && (
-              <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="البريد الإلكتروني أو رقم الهاتف"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  className="pr-10 text-right"
-                  dir="ltr"
-                />
-              </div>
-            )}
-
-            <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="كلمة المرور"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pr-10 pl-10 text-right"
-                autoComplete={isLogin ? "current-password" : "new-password"}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
+          <form onSubmit={isLogin ? handleSubmit : handleSignupClick} className="space-y-3">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isLogin ? "login-fields" : "signup-fields"}
+                initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
+                {!isLogin && (
+                  <>
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="الاسم الكامل"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="tel"
+                        placeholder="رقم الهاتف المحمول"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="البريد الإلكتروني"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="كود الإحالة (اختياري)"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50 font-mono"
+                        dir="ltr"
+                      />
+                    </div>
+                  </>
                 )}
-              </button>
-            </div>
 
-            {!isLogin && (
-              <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="تأكيد كلمة المرور"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pr-10 pl-10 text-right"
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <Eye className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </button>
-              </div>
-            )}
+                {isLogin && (
+                  <div className="relative">
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="البريد الإلكتروني أو رقم الهاتف"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                      dir="ltr"
+                    />
+                  </div>
+                )}
+
+                <div className="relative">
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="كلمة المرور"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-10 pl-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                {!isLogin && (
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="تأكيد كلمة المرور"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pr-10 pl-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
             <Button
               type="submit"
-              className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12"
+              className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12 rounded-xl mt-2"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -410,9 +424,9 @@ const Auth = () => {
 
             {isLogin && (
               <>
-                <div className="relative py-2">
-                  <div className="h-px bg-border" />
-                  <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-card px-3 text-xs text-muted-foreground">
+                <div className="relative py-3">
+                  <div className="h-px bg-border/60" />
+                  <span className="absolute left-1/2 -translate-x-1/2 -top-1 bg-card px-3 text-xs text-muted-foreground">
                     أو
                   </span>
                 </div>
@@ -420,7 +434,7 @@ const Auth = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full gap-2"
+                    className="w-full gap-2 h-11 rounded-xl border-border/60"
                     onClick={() => handleOAuth("google")}
                     disabled={isLoading}
                   >
@@ -430,7 +444,7 @@ const Auth = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full gap-2"
+                    className="w-full gap-2 h-11 rounded-xl border-border/60"
                     onClick={() => handleOAuth("apple")}
                     disabled={isLoading}
                   >
@@ -441,41 +455,19 @@ const Auth = () => {
               </>
             )}
           </form>
+        </motion.div>
+
+        <div className="py-4 text-center">
+          <p className="text-muted-foreground text-xs">
+            جميع الحقوق محفوظة لـ Advance 2025©
+          </p>
         </div>
 
-        {/* PWA Install Button */}
-        {!isInstalled && (
-          <div className="relative mt-4">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full text-lg py-6 border-primary/50 text-primary hover:bg-primary/10"
-              onClick={deferredPrompt ? handleInstall : () => navigate("/download")}
-            >
-              <Smartphone className="w-5 h-5 ml-2" />
-              {deferredPrompt ? "تثبيت التطبيق" : "تنزيل التطبيق"}
-            </Button>
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse"
-            >
-              20ج.م
-            </motion.span>
-          </div>
-        )}
+        <PrivacyPolicyModal 
+          isOpen={showPrivacyPolicy} 
+          onAccept={handlePrivacyAccept}
+        />
       </motion.div>
-
-      <div className="py-4 text-center">
-        <p className="text-muted-foreground text-sm">
-          جميع الحقوق محفوظة لـ Advance 2025©
-        </p>
-      </div>
-
-      <PrivacyPolicyModal 
-        isOpen={showPrivacyPolicy} 
-        onAccept={handlePrivacyAccept}
-      />
     </div>
   );
 };

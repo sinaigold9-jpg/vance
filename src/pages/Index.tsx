@@ -209,14 +209,15 @@ const Index = () => {
 
   const handleSpinWheel = async (prize: number) => {
     if (!user) return;
-    setBalance((prev) => prev + prize);
+    const newBalance = balance + prize;
+    setBalance(newBalance);
     setTodayEarnings((prev) => prev + prize);
     if (accountType === "beginner") {
-      await supabase.from("profiles").update({ lucky_wheel_used: true, balance: balance + prize }).eq("id", user.id);
+      await supabase.from("profiles").update({ lucky_wheel_used: true, balance: newBalance }).eq("id", user.id);
       setCanSpinWheel(false);
       setLuckyWheelUsed(true);
     } else {
-      await supabase.from("profiles").update({ last_wheel_spin: new Date().toISOString(), balance: balance + prize }).eq("id", user.id);
+      await supabase.from("profiles").update({ last_wheel_spin: new Date().toISOString(), balance: newBalance }).eq("id", user.id);
       setCanSpinWheel(false);
     }
     await supabase.from("activity_logs").insert({ user_id: user.id, action: "أرباح عجلة الحظ", amount: prize });
