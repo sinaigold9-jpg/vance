@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS disabled_features jsonb DEFAULT '{}'::jsonb;

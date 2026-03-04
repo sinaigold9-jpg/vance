@@ -65,9 +65,11 @@ export const LuckyWheel = ({
     const prizeIndex = Math.floor(Math.random() * wheelPrizes.length);
     const segmentAngle = 360 / wheelPrizes.length;
     
-    const spins = 5 + Math.random() * 3;
+    // Calculate target angle so the pointer (at top) lands on the correct segment
     const targetAngle = 360 - (prizeIndex * segmentAngle + segmentAngle / 2);
-    const finalRotation = rotation + spins * 360 + targetAngle;
+    // Ensure final rotation modulo 360 equals targetAngle exactly
+    const fullSpins = Math.floor(rotation / 360) + 5 + Math.floor(Math.random() * 3);
+    const finalRotation = fullSpins * 360 + targetAngle;
 
     setRotation(finalRotation);
 

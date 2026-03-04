@@ -864,6 +864,7 @@ export type Database = {
           balance: number
           created_at: string
           daily_attempts_count: number
+          disabled_features: Json | null
           email: string | null
           full_name: string
           id: string
@@ -890,6 +891,7 @@ export type Database = {
           balance?: number
           created_at?: string
           daily_attempts_count?: number
+          disabled_features?: Json | null
           email?: string | null
           full_name: string
           id: string
@@ -916,6 +918,7 @@ export type Database = {
           balance?: number
           created_at?: string
           daily_attempts_count?: number
+          disabled_features?: Json | null
           email?: string | null
           full_name?: string
           id?: string
