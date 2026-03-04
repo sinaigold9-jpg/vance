@@ -1,310 +1,72 @@
 
-# خطة التطوير الشاملة لتطبيق Advance
 
-## نظرة عامة
-هذه الخطة تتضمن 13 تحديثاً رئيسياً للتطبيق تشمل: تحسين نظام الباقات، إعادة هيكلة واجهة المستخدم، إضافة نظام العروض الترويجية، تحسين التوجيه، وإصلاح أخطاء تسجيل الدخول.
+## Plan: Multiple App Updates
 
----
+### 1. Remove Download Button from Auth Page
+Remove the PWA install/download button section (lines 446-466) from `src/pages/Auth.tsx`. Also remove related PWA state and handler code (lines 53-54, 77-91) since they're no longer needed on this page.
 
-## 1. إصلاح خطأ تسجيل الدخول برقم الهاتف (أولوية عليا)
+### 2. Remove Download Counter from Download Page
+Remove the download counter card section from `src/pages/Download.tsx` (the card showing `displayCount.toLocaleString()+`). Keep the rest of the page intact. Remove the `fetchCounter`, `maybeIncrement` functions and related state.
 
-**المشكلة**: الـ Edge Function `phone-login` يتطلب secret باسم `SUPABASE_PUBLISHABLE_KEY` غير موجود.
+### 3. Fix Lucky Wheel Prize Bug
+**Root cause**: In `src/pages/Index.tsx` lines 215 and 219, `balance + prize` uses the stale `balance` state value instead of the updated one. When `setBalance(prev => prev + prize)` runs on line 212, `balance` still holds the old value.
 
-**الحل**:
-- تعديل Edge Function لاستخدام `SUPABASE_ANON_KEY` بدلاً من `SUPABASE_PUBLISHABLE_KEY` (متوفر تلقائياً)
+**Fix**: Change lines 215 and 219 to use a Supabase RPC increment or compute `balance + prize` correctly. The simplest fix is to use `balance + prize` consistently -- but the issue is that `balance` is already the old value and `setBalance` already added `prize`. So the DB update should also be `balance + prize`. Wait -- actually re-reading: `setBalance(prev => prev + prize)` updates React state, then `balance + prize` on line 215 also adds prize to the OLD balance value. So the DB should get `balance + prize` which is correct. 
 
-**الملفات المتأثرة**:
-- `supabase/functions/phone-login/index.ts`
+Let me re-examine: the user says they win 10 but get 5. This could be the wheel animation landing on one segment but the code picking a different one. Looking at the wheel logic:
 
----
+- `prizeIndex = Math.floor(Math.random() * 6)` picks the prize
+- `targetAngle = 360 - (prizeIndex * segmentAngle + segmentAngle / 2)` controls where the wheel stops
+- The pointer is at the TOP of the wheel
 
-## 2. إيقاف باقة المبتدئ تلقائياً بعد 7 أيام
+The segments are drawn starting at `-90` degrees (top). Segment 0 starts at top. The pointer is at the top. So when the wheel rotates by `targetAngle`, the segment that ends up at the top should be `prizeIndex`.
 
-**التفاصيل**:
-- المهام اليومية وعجلة الحظ فقط تتوقف تلقائياً
-- باقي الميزات تبقى متاحة
-- يمكن للإدارة إعادة التفعيل يدوياً
+Let me check: if `prizeIndex = 4` (10 جنيه), `targetAngle = 360 - (4 * 60 + 30) = 360 - 270 = 90`. The wheel rotates 90 degrees clockwise, meaning segment index 1 (إعادة) would be at the top... This mapping seems wrong.
 
-**التنفيذ**:
-- تعديل `DailyTasks.tsx` للتحقق من `trial_end_date`
-- تعديل `LuckyWheel` للتحقق من انتهاء التجربة
-- إضافة رسالة توضيحية للمستخدم
+The issue is the wheel rotation vs segment positioning. The segments are drawn with SVG starting at -90 degrees. When the wheel rotates clockwise by `targetAngle`, the segment at position `prizeIndex` should align with the pointer.
 
-**الملفات المتأثرة**:
-- `src/components/DailyTasks.tsx`
-- `src/pages/Index.tsx` (قسم المهام وعجلة الحظ)
+Actually the formula `360 - (prizeIndex * segmentAngle + segmentAngle / 2)` makes the wheel stop so that segment `prizeIndex` is at the pointer position -- but only if the segments and pointer are aligned. Since segments start at -90° (top) and the pointer is also at top, the formula should work. But the cumulative rotation may cause issues.
 
----
+The real problem: `finalRotation = rotation + spins * 360 + targetAngle`. Since `rotation` accumulates across spins, and `targetAngle` is absolute (not relative to current position), the modular position `finalRotation % 360` should equal `(rotation % 360) + targetAngle` mod 360. This doesn't necessarily align `prizeIndex` correctly after multiple spins because `rotation` keeps accumulating.
 
-## 3. نقل بطاقة الرصيد من الرئيسية إلى المحفظة
+**Fix**: Compute `targetAngle` relative to make `finalRotation % 360 === targetAngle`. Use: `finalRotation = Math.ceil((rotation + 1) / 360) * 360 * spins + targetAngle` to ensure the final modular position is exactly `targetAngle`.
 
-**التفاصيل**:
-- إزالة `BalanceCard` من الشاشة الرئيسية
-- إضافتها في قسم المحفظة فقط
+### 4. Admin Feature: Disable Features per User
+Add a new admin capability to disable specific features (tasks, wheel, wallet, etc.) for individual users or in bulk. This requires:
+- **Database**: Add a `disabled_features` JSONB column to `profiles` table (default `{}`)
+- **Admin UI**: Add controls in AdminUsersTab to toggle features per user, and a bulk action option
+- **App logic**: Check `disabled_features` in DailyTasks, LuckyWheel, WalletSection, etc.
 
-**الملفات المتأثرة**:
-- `src/pages/Index.tsx`
+### 5. Redesign Auth Page as Card Form
+Improve the auth page styling to look more like a polished card-based form with smooth transitions between login and signup modes. The current structure already has a card -- enhance it with better spacing, animations for mode switching, and cleaner visual hierarchy.
 
----
+### 6. Google/Apple OAuth Issues
+The OAuth code in `handleOAuth` looks correct using `lovable.auth.signInWithOAuth`. The issue may be configuration-related. I'll check if the `navigateFallbackDenylist` for `/~oauth` is configured in the PWA settings.
 
-## 4. نظام إرسال روابط عبر الإشعارات (لوحة الإدارة)
+### 7. Hide Lovable Badge
+The Lovable badge can be hidden via project settings (Settings > "Hide 'Lovable' Badge"). This is a project setting, not a code change. I cannot hide it programmatically for a timed duration -- it's either on or off in project settings.
 
-**التفاصيل**:
-- إضافة حقل اختياري للرابط في نموذج إرسال الإشعارات
-- الرابط يظهر كزر قابل للنقر في الإشعار
-- دعم الروابط الداخلية والخارجية
-
-**الملفات المتأثرة**:
-- `src/components/admin/AdminNotificationsTab.tsx`
-- `src/components/notifications/NotificationBell.tsx`
-
-**تحديث قاعدة البيانات**:
-- إضافة عمود `link` إلى جدول `notifications`
+### 8. Project Deletion Question
+I cannot send messages on your behalf to Lovable support. You need to contact them directly. Stopping project transfers may help, but if the project was already flagged, you should still contact support for clarification.
 
 ---
 
-## 5. قسم العروض في لوحة التحكم + واجهة المستخدم
+### Files to Modify
 
-**التفاصيل**:
-- إنشاء جدول `promotions` جديد في قاعدة البيانات
-- تبويب جديد في لوحة الإدارة لإدارة العروض
-- دعم الخط العريض والعادي والألوان
-- أزرار تشغيل/إيقاف/حذف لكل عرض
-- عرض العروض النشطة فقط في واجهة المستخدم
+| File | Changes |
+|------|---------|
+| `src/pages/Auth.tsx` | Remove download button, clean up PWA code, polish card UI |
+| `src/pages/Download.tsx` | Remove download counter section |
+| `src/components/LuckyWheel.tsx` | Fix wheel rotation-to-prize alignment |
+| `src/pages/Index.tsx` | Fix stale balance in handleSpinWheel |
+| `src/components/admin/AdminUsersTab.tsx` | Add per-user feature disable controls |
+| `vite.config.ts` | Add `/~oauth` to navigateFallbackDenylist for PWA |
 
-**الملفات الجديدة**:
-- `src/components/admin/AdminPromotionsTab.tsx`
+### Database Migration
+- Add `disabled_features` JSONB column to `profiles` table
 
-**الملفات المتأثرة**:
-- `src/pages/Admin.tsx`
-- `src/components/OffersPage.tsx`
+### Important Notes
+- **Lovable badge**: Go to Settings > "Hide 'Lovable' Badge" toggle to hide it. This cannot be done with a 1-hour timer via code.
+- **Project deletion**: Contact Lovable support directly at https://lovable.dev/support or via Discord. I cannot send messages on your behalf.
+- **OAuth**: Will ensure PWA config doesn't block the OAuth callback route.
 
-**تحديث قاعدة البيانات**:
-```sql
-CREATE TABLE promotions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  content_style JSONB DEFAULT '{}',
-  image_url TEXT,
-  link_url TEXT,
-  link_type TEXT DEFAULT 'internal',
-  is_active BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  created_by UUID REFERENCES profiles(id)
-);
-```
-
----
-
-## 6. بانرات ترويجية في الصفحة الرئيسية
-
-**التفاصيل**:
-- كاروسيل للعروض الترويجية في أعلى الصفحة الرئيسية
-- يعرض العروض النشطة فقط
-- كل عرض قابل للنقر مع رابط مخصص
-- التحكم الكامل من لوحة الإدارة
-
-**الملفات الجديدة**:
-- `src/components/PromotionBanner.tsx`
-
-**الملفات المتأثرة**:
-- `src/pages/Index.tsx`
-
----
-
-## 7. تبسيط القائمة الجانبية
-
-**التفاصيل**:
-- حذف جميع الأزرار ما عدا زر تسجيل الخروج
-- إزالة زر تسجيل الدخول/الخروج من أعلى يسار الشاشة
-- نقل زر الإشعارات إلى مكانه
-
-**الملفات المتأثرة**:
-- `src/components/AppSidebar.tsx`
-- `src/pages/Index.tsx`
-
----
-
-## 8. نظام توجيه ذكي (URL Routing)
-
-**التفاصيل**:
-- مسار URL منفصل لكل صفحة:
-  - `/app` - الرئيسية
-  - `/app/tasks` - المهام
-  - `/app/wallet` - المحفظة
-  - `/app/team` - الفريق
-  - `/app/packages` - الباقات
-  - `/app/ads` - الإعلانات
-  - `/app/offers` - العروض
-  - `/app/profile` - الملف الشخصي
-  - `/app/sponsor` - ممول
-  - `/app/support` - الدعم
-- تحديث الرابط تلقائياً عند التنقل
-- حماية الصفحات للمستخدمين غير المسجلين
-- دعم المشاركة المباشرة للصفحات
-
-**الملفات المتأثرة**:
-- `src/App.tsx`
-- `src/pages/Index.tsx` (تحويل لـ layout مع outlet)
-
-**الملفات الجديدة**:
-- `src/components/ProtectedRoute.tsx`
-- `src/pages/app/Home.tsx`
-- `src/pages/app/Tasks.tsx`
-- `src/pages/app/Wallet.tsx`
-- (وهكذا لكل صفحة)
-
----
-
-## 9. نظام النقاط في المحفظة
-
-**التفاصيل**:
-- عرض عدد النقاط للمستخدم
-- كل 1000 نقطة = 165 جنيه
-- توضيح هذه المعادلة للمستخدم بشكل واضح
-
-**الملفات المتأثرة**:
-- `src/pages/Index.tsx` (قسم المحفظة)
-
-**تحديث قاعدة البيانات**:
-- إضافة عمود `points` إلى جدول `profiles`
-
----
-
-## 10. تحسين أزرار مراجعة الإعلانات (لوحة الإدارة)
-
-**التفاصيل**:
-- إضافة أزرار واضحة: قيد المراجعة، منشور، مرفوض، حذف
-- تحسين واجهة المراجعة
-
-**الملفات المتأثرة**:
-- `src/components/admin/AdminAdsTab.tsx`
-
----
-
-## 11. تحديث الألوان لتكون أكثر إشراقاً
-
-**التفاصيل**:
-- تحسين ألوان CSS مع الحفاظ على الهوية الحالية
-- زيادة التباين والحيوية
-
-**الملفات المتأثرة**:
-- `src/index.css`
-- `tailwind.config.ts`
-
----
-
-## 12. تحسين الخطوط والنصوص
-
-**التفاصيل**:
-- تكبير العناوين الرئيسية
-- تحسين قراءة النصوص الصغيرة
-- توحيد أحجام الخطوط
-
-**الملفات المتأثرة**:
-- `src/index.css`
-- مكونات UI المختلفة
-
----
-
-## 13. إغلاق الإشعارات عند لمس أطراف الشاشة
-
-**التفاصيل**:
-- تحسين UX لقائمة الإشعارات
-- الإغلاق عند النقر خارج القائمة
-
-**الملفات المتأثرة**:
-- `src/components/notifications/NotificationBell.tsx`
-
----
-
-## التفاصيل التقنية
-
-### تحديثات قاعدة البيانات المطلوبة
-
-```sql
--- 1. إضافة عمود الرابط للإشعارات
-ALTER TABLE notifications ADD COLUMN link TEXT;
-
--- 2. إضافة عمود النقاط للملفات الشخصية
-ALTER TABLE profiles ADD COLUMN points INTEGER DEFAULT 0;
-
--- 3. جدول العروض الترويجية
-CREATE TABLE promotions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  content_style JSONB DEFAULT '{}',
-  image_url TEXT,
-  link_url TEXT,
-  link_type TEXT DEFAULT 'internal',
-  is_active BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  starts_at TIMESTAMPTZ,
-  ends_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  created_by UUID REFERENCES profiles(id)
-);
-
--- سياسات الأمان
-ALTER TABLE promotions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can view active promotions"
-  ON promotions FOR SELECT
-  USING (is_active = true);
-
-CREATE POLICY "Admins can manage promotions"
-  ON promotions FOR ALL
-  USING (public.has_role(auth.uid(), 'admin'));
-
--- تفعيل Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE promotions;
-```
-
-### هيكل الملفات الجديد
-
-```text
-src/
-├── components/
-│   ├── PromotionBanner.tsx (جديد)
-│   └── admin/
-│       └── AdminPromotionsTab.tsx (جديد)
-├── pages/
-│   └── app/
-│       ├── Home.tsx (جديد)
-│       ├── Tasks.tsx (جديد)
-│       ├── Wallet.tsx (جديد)
-│       ├── Team.tsx (جديد)
-│       ├── Packages.tsx (جديد)
-│       ├── Ads.tsx (جديد)
-│       ├── Offers.tsx (جديد)
-│       ├── Profile.tsx (جديد)
-│       ├── Sponsor.tsx (جديد)
-│       └── Support.tsx (جديد)
-```
-
----
-
-## ترتيب التنفيذ المقترح
-
-1. **إصلاح تسجيل الدخول** (أولوية قصوى - يمنع استخدام التطبيق)
-2. **تحديثات قاعدة البيانات** (أساس للميزات الجديدة)
-3. **نظام التوجيه الذكي** (إعادة هيكلة كبيرة)
-4. **تبسيط القائمة الجانبية ونقل الإشعارات**
-5. **نقل الرصيد للمحفظة وإضافة النقاط**
-6. **نظام العروض الترويجية**
-7. **البانرات الترويجية**
-8. **تحسين الألوان والخطوط**
-9. **باقي التحسينات**
-
----
-
-## ملاحظات مهمة
-
-- جميع التغييرات متوافقة مع شاشات الهاتف والكمبيوتر
-- الحفاظ على استقرار التطبيق الحالي
-- دعم التوسع المستقبلي
