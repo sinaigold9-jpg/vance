@@ -39,6 +39,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications } from "@/lib/pushNotifications";
 import appIcon from "@/assets/app-icon.png";
+import { toast } from "sonner";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 
@@ -125,6 +126,7 @@ const Index = () => {
   const [referralCode, setReferralCode] = useState("");
   const [userProfile, setUserProfile] = useState<{ full_name: string; email: string | null; phone: string | null; } | null>(null);
   const [packagesData, setPackagesData] = useState<PackageFromDB[]>([]);
+  const [disabledFeatures, setDisabledFeatures] = useState<Record<string, boolean>>({});
   
   const { user, signOut } = useAuth();
   const { settings: appSettings } = useAppSettings();
@@ -184,6 +186,7 @@ const Index = () => {
       setWithdrawalPin(data.withdrawal_pin);
       setTrialEndDate(data.trial_end_date);
       setUserProfile({ full_name: data.full_name, email: data.email, phone: data.phone });
+      setDisabledFeatures((data.disabled_features as Record<string, boolean> | null) || {});
       
       // Check if profile needs completion (for social login users)
       if (!data.full_name || data.full_name === "" || !data.phone || data.phone === "") {
@@ -231,6 +234,10 @@ const Index = () => {
   };
 
   const handleOpenWithdraw = () => {
+    if (disabledFeatures.withdrawal) {
+      toast.error("ميزة السحب معطلة لحسابك");
+      return;
+    }
     if (!withdrawalPin) { 
       setShowPinSetup(true); 
       return;
@@ -240,6 +247,20 @@ const Index = () => {
   };
 
   const trialExpired = isTrialExpired();
+  const tabFeatureMap: Record<string, string> = {
+    tasks: "tasks",
+    wallet: "wallet",
+    team: "team",
+    ads: "ads",
+  };
+
+  useEffect(() => {
+    const featureKey = tabFeatureMap[activeTab];
+    if (featureKey && disabledFeatures[featureKey]) {
+      setActiveTab("home");
+      if (location.pathname !== "/app") navigate("/app", { replace: true });
+    }
+  }, [activeTab, disabledFeatures, location.pathname, navigate]);
 
   // Points to EGP conversion
   const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
@@ -348,14 +369,14 @@ const Index = () => {
             ) : (
               <div className="bg-gradient-card rounded-2xl p-6 text-center"><p className="text-muted-foreground">يرجى تسجيل الدخول</p></div>
             )}
-            {!appSettings.luckyWheelEnabled ? (
+            {!appSettings.luckyWheelEnabled || disabledFeatures.wheel ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">عجلة الحظ متوقفة</h3>
-                <p className="text-muted-foreground">{appSettings.luckyWheelDisabledMessage}</p>
+                <p className="text-muted-foreground">{disabledFeatures.wheel ? "عجلة الحظ معطلة لحسابك" : appSettings.luckyWheelDisabledMessage}</p>
               </div>
             ) : (
-              <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} trialExpired={trialExpired} />
+              <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} trialExpired={trialExpired} />
             )}
           </motion.div>
         );
@@ -489,6 +510,14 @@ const Index = () => {
   };
 
   const handleTabChange = (tab: string) => {
+    const featureKey = tabFeatureMap[tab];
+    if (featureKey && disabledFeatures[featureKey]) {
+      toast.error("هذا القسم معطل لحسابك");
+      navigate("/app");
+      setActiveTab("home");
+      return;
+    }
+
     // Update URL
     const path = tabToPath[tab] || "/app";
     navigate(path);
