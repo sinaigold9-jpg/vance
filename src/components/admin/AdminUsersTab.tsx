@@ -440,10 +440,12 @@ export const AdminUsersTab = () => {
                 <p className="text-sm text-muted-foreground">إيقاف/تشغيل ميزات محددة لهذا المستخدم</p>
                 <div className="space-y-3">
                   {FEATURE_LIST.map((feature) => (
-                    <div key={feature.key} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                      <Label className="text-sm font-medium">{feature.label}</Label>
+                    <div key={feature.key} className={`flex items-center justify-between p-3 rounded-xl ${
+                      (feature as any).isGlobal ? 'bg-destructive/10 border border-destructive/30' : 'bg-muted/30'
+                    }`}>
+                      <Label className={`text-sm font-medium ${(feature as any).isGlobal ? 'text-destructive' : ''}`}>{feature.label}</Label>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
+                        <span className={`text-xs ${disabledFeatures[feature.key] ? 'text-destructive' : 'text-muted-foreground'}`}>
                           {disabledFeatures[feature.key] ? "معطل" : "مفعل"}
                         </span>
                         <Switch
