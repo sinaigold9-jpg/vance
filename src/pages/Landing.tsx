@@ -62,7 +62,7 @@ const Landing = () => {
         {/* Logo */}
         <div className="mb-8">
           <img 
-            src={appIcon} 
+            src="/icon-192.png" 
             alt="Advance" 
             width={128}
             height={128}
