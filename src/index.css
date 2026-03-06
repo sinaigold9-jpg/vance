@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+/* Tajawal font loaded via index.html link tag for performance */
 
 @tailwind base;
 @tailwind components;
