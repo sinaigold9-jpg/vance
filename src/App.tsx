@@ -22,26 +22,28 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/app" element={<Index />} />
-            <Route path="/app/tasks" element={<Index />} />
-            <Route path="/app/wallet" element={<Index />} />
-            <Route path="/app/team" element={<Index />} />
-            <Route path="/app/packages" element={<Index />} />
-            <Route path="/app/earnings" element={<Index />} />
-            <Route path="/app/ads" element={<Index />} />
-            <Route path="/app/offers" element={<Index />} />
-            <Route path="/app/profile" element={<Index />} />
-            <Route path="/app/sponsor" element={<Index />} />
-            <Route path="/app/support" element={<Index />} />
-            <Route path="/app/faq" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/download" element={<DownloadPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/app" element={<Index />} />
+              <Route path="/app/tasks" element={<Index />} />
+              <Route path="/app/wallet" element={<Index />} />
+              <Route path="/app/team" element={<Index />} />
+              <Route path="/app/packages" element={<Index />} />
+              <Route path="/app/earnings" element={<Index />} />
+              <Route path="/app/ads" element={<Index />} />
+              <Route path="/app/offers" element={<Index />} />
+              <Route path="/app/profile" element={<Index />} />
+              <Route path="/app/sponsor" element={<Index />} />
+              <Route path="/app/support" element={<Index />} />
+              <Route path="/app/faq" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/landing" element={<Landing />} />
+              <Route path="/download" element={<DownloadPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
