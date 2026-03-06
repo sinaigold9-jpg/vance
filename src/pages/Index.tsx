@@ -247,6 +247,7 @@ const Index = () => {
   };
 
   const trialExpired = isTrialExpired();
+  const isAppBlocked = !!disabledFeatures.app_blocked;
   const tabFeatureMap: Record<string, string> = {
     tasks: "tasks",
     wallet: "wallet",
@@ -255,12 +256,16 @@ const Index = () => {
   };
 
   useEffect(() => {
+    if (isAppBlocked) {
+      // Don't redirect, we'll show a blocked screen
+      return;
+    }
     const featureKey = tabFeatureMap[activeTab];
     if (featureKey && disabledFeatures[featureKey]) {
       setActiveTab("home");
       if (location.pathname !== "/app") navigate("/app", { replace: true });
     }
-  }, [activeTab, disabledFeatures, location.pathname, navigate]);
+  }, [activeTab, disabledFeatures, location.pathname, navigate, isAppBlocked]);
 
   // Points to EGP conversion
   const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
