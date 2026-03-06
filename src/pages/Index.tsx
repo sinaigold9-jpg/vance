@@ -247,6 +247,7 @@ const Index = () => {
   };
 
   const trialExpired = isTrialExpired();
+  const isAppBlocked = !!disabledFeatures.app_blocked;
   const tabFeatureMap: Record<string, string> = {
     tasks: "tasks",
     wallet: "wallet",
@@ -255,12 +256,16 @@ const Index = () => {
   };
 
   useEffect(() => {
+    if (isAppBlocked) {
+      // Don't redirect, we'll show a blocked screen
+      return;
+    }
     const featureKey = tabFeatureMap[activeTab];
     if (featureKey && disabledFeatures[featureKey]) {
       setActiveTab("home");
       if (location.pathname !== "/app") navigate("/app", { replace: true });
     }
-  }, [activeTab, disabledFeatures, location.pathname, navigate]);
+  }, [activeTab, disabledFeatures, location.pathname, navigate, isAppBlocked]);
 
   // Points to EGP conversion
   const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
@@ -277,6 +282,24 @@ const Index = () => {
           <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-4">التطبيق متوقف مؤقتاً</h1>
           <p className="text-muted-foreground">{appSettings.appDisabledMessage}</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Check if user's app access is blocked by admin
+  if (isAppBlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-card border border-destructive/50 rounded-2xl p-8 text-center max-w-md"
+        >
+          <Lock className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-4 text-destructive">حسابك موقوف</h1>
+          <p className="text-muted-foreground mb-6">تم إيقاف حسابك من قبل الإدارة. يرجى التواصل مع الدعم الفني لمزيد من المعلومات.</p>
+          <Button variant="outline" onClick={() => signOut()}>تسجيل الخروج</Button>
         </motion.div>
       </div>
     );
