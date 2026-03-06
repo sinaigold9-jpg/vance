@@ -44,6 +44,7 @@ interface PackageOption {
 }
 
 const FEATURE_LIST = [
+  { key: "app_blocked", label: "⛔ إيقاف التطبيق بالكامل", isGlobal: true },
   { key: "tasks", label: "المهام اليومية" },
   { key: "wheel", label: "عجلة الحظ" },
   { key: "wallet", label: "المحفظة" },

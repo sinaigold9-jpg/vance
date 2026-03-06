@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Chrome, Apple, UserPlus, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -220,6 +220,8 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  const inputClass = "pr-10 text-right h-12 rounded-lg border-2 border-border bg-muted/30 focus:border-primary focus:bg-background transition-all duration-200";
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-primary/5">
       <motion.div
@@ -230,7 +232,7 @@ const Auth = () => {
       >
         {/* Logo */}
         <motion.div 
-          className="text-center mb-8"
+          className="text-center mb-6"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
@@ -238,223 +240,230 @@ const Auth = () => {
           <img 
             src={appIcon} 
             alt="Advance" 
-            className="w-24 h-24 mx-auto mb-3 rounded-2xl shadow-gold"
+            className="w-20 h-20 mx-auto mb-2 rounded-2xl shadow-gold"
           />
-          <h1 className="text-3xl font-black text-foreground">Advance</h1>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={isLogin ? "login-sub" : "signup-sub"}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="text-muted-foreground text-sm mt-1"
-            >
-              {isLogin ? "مرحباً بعودتك!" : "7 أيام تجربة مجانية!"}
-            </motion.p>
-          </AnimatePresence>
+          <h1 className="text-2xl font-black text-foreground">Advance</h1>
         </motion.div>
 
         {/* Auth Card */}
         <motion.div 
-          className="bg-card border border-border/60 rounded-3xl p-6 shadow-2xl backdrop-blur-sm"
+          className="bg-card border-2 border-border rounded-2xl overflow-hidden shadow-2xl"
           layout
           transition={{ layout: { duration: 0.3, type: "spring", stiffness: 300, damping: 30 } }}
         >
-          {/* Mode Toggle */}
-          <div className="relative flex bg-muted/50 rounded-xl p-1 mb-6">
-            <motion.div
-              className="absolute top-1 bottom-1 rounded-lg bg-primary shadow-md"
-              layout
-              style={{ width: "calc(50% - 4px)" }}
-              animate={{ x: isLogin ? 0 : "calc(100% + 4px)" }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            />
+          {/* Mode Toggle - Tab Style */}
+          <div className="grid grid-cols-2 border-b-2 border-border">
             <button
               type="button"
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg relative z-10 transition-colors ${isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}
+              className={`flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all duration-200 ${
+                isLogin 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              }`}
               onClick={() => setIsLogin(true)}
             >
+              <LogIn className="w-4 h-4" />
               تسجيل الدخول
             </button>
             <button
               type="button"
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg relative z-10 transition-colors ${!isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}
+              className={`flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all duration-200 ${
+                !isLogin 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              }`}
               onClick={() => setIsLogin(false)}
             >
+              <UserPlus className="w-4 h-4" />
               حساب جديد
             </button>
           </div>
 
-          <form onSubmit={isLogin ? handleSubmit : handleSignupClick} className="space-y-3">
+          {/* Form Body */}
+          <div className="p-6">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={isLogin ? "login-fields" : "signup-fields"}
-                initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3"
+              <motion.p
+                key={isLogin ? "login-sub" : "signup-sub"}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="text-muted-foreground text-sm text-center mb-5"
               >
-                {!isLogin && (
-                  <>
-                    <div className="relative">
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="الاسم الكامل"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        type="tel"
-                        placeholder="رقم الهاتف المحمول"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                        dir="ltr"
-                      />
-                    </div>
+                {isLogin ? "مرحباً بعودتك!" : "🎁 7 أيام تجربة مجانية!"}
+              </motion.p>
+            </AnimatePresence>
+
+            <form onSubmit={isLogin ? handleSubmit : handleSignupClick} className="space-y-3">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isLogin ? "login-fields" : "signup-fields"}
+                  initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-3"
+                >
+                  {!isLogin && (
+                    <>
+                      <div className="relative">
+                        <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="الاسم الكامل"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="relative">
+                        <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="tel"
+                          placeholder="رقم الهاتف المحمول"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className={inputClass}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="البريد الإلكتروني"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className={inputClass}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="relative">
+                        <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="كود الإحالة (اختياري)"
+                          value={referralCode}
+                          onChange={(e) => setReferralCode(e.target.value)}
+                          className={`${inputClass} font-mono`}
+                          dir="ltr"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {isLogin && (
                     <div className="relative">
                       <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        type="email"
-                        placeholder="البريد الإلكتروني"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="relative">
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
                         type="text"
-                        placeholder="كود الإحالة (اختياري)"
-                        value={referralCode}
-                        onChange={(e) => setReferralCode(e.target.value)}
-                        className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50 font-mono"
+                        placeholder="البريد الإلكتروني أو رقم الهاتف"
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        className={inputClass}
                         dir="ltr"
                       />
                     </div>
-                  </>
-                )}
+                  )}
 
-                {isLogin && (
-                  <div className="relative">
-                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="البريد الإلكتروني أو رقم الهاتف"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      className="pr-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                      dir="ltr"
-                    />
-                  </div>
-                )}
-
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="كلمة المرور"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10 pl-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-
-                {!isLogin && (
                   <div className="relative">
                     <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="تأكيد كلمة المرور"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pr-10 pl-10 text-right h-11 rounded-xl border-border/60 bg-background/50"
-                      autoComplete="new-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="كلمة المرور"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`${inputClass} pl-10`}
+                      autoComplete={isLogin ? "current-password" : "new-password"}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() => setShowPassword(!showPassword)}
                       className="absolute left-3 top-1/2 -translate-y-1/2"
                     >
-                      {showConfirmPassword ? (
+                      {showPassword ? (
                         <EyeOff className="w-4 h-4 text-muted-foreground" />
                       ) : (
                         <Eye className="w-4 h-4 text-muted-foreground" />
                       )}
                     </button>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12 rounded-xl mt-2"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="animate-spin">⏳</span>
-              ) : (
+                  {!isLogin && (
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="تأكيد كلمة المرور"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${inputClass} pl-10`}
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12 rounded-lg mt-4"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <>
+                    {isLogin ? "دخول" : "ابدأ الآن"}
+                    <ArrowRight className="w-5 h-5 mr-2" />
+                  </>
+                )}
+              </Button>
+
+              {isLogin && (
                 <>
-                  {isLogin ? "دخول" : "ابدأ الآن"}
-                  <ArrowRight className="w-5 h-5 mr-2" />
+                  <div className="relative py-3">
+                    <div className="h-px bg-border" />
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-1 bg-card px-3 text-xs text-muted-foreground">
+                      أو
+                    </span>
+                  </div>
+                  <div className="grid gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full gap-2 h-11 rounded-lg border-2 border-border"
+                      onClick={() => handleOAuth("google")}
+                      disabled={isLoading}
+                    >
+                      <Chrome className="w-5 h-5" />
+                      الدخول عبر Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full gap-2 h-11 rounded-lg border-2 border-border"
+                      onClick={() => handleOAuth("apple")}
+                      disabled={isLoading}
+                    >
+                      <Apple className="w-5 h-5" />
+                      الدخول عبر Apple
+                    </Button>
+                  </div>
                 </>
               )}
-            </Button>
-
-            {isLogin && (
-              <>
-                <div className="relative py-3">
-                  <div className="h-px bg-border/60" />
-                  <span className="absolute left-1/2 -translate-x-1/2 -top-1 bg-card px-3 text-xs text-muted-foreground">
-                    أو
-                  </span>
-                </div>
-                <div className="grid gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full gap-2 h-11 rounded-xl border-border/60"
-                    onClick={() => handleOAuth("google")}
-                    disabled={isLoading}
-                  >
-                    <Chrome className="w-5 h-5" />
-                    الدخول عبر Google
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full gap-2 h-11 rounded-xl border-border/60"
-                    onClick={() => handleOAuth("apple")}
-                    disabled={isLoading}
-                  >
-                    <Apple className="w-5 h-5" />
-                    الدخول عبر Apple
-                  </Button>
-                </div>
-              </>
-            )}
-          </form>
+            </form>
+          </div>
         </motion.div>
 
         <div className="py-4 text-center">
