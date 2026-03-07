@@ -248,6 +248,10 @@ const Admin = () => {
               <Mail className="w-4 h-4 ml-1" />
               البريد
             </TabsTrigger>
+            <TabsTrigger value="offers-contests" className="flex-1 min-w-[80px]">
+              <Gift className="w-4 h-4 ml-1" />
+              العروض والمسابقات
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
