@@ -715,6 +715,128 @@ export type Database = {
           },
         ]
       }
+      offer_participations: {
+        Row: {
+          balance_earned: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          offer_id: string
+          points_earned: number | null
+          rewarded_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          balance_earned?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          offer_id: string
+          points_earned?: number | null
+          rewarded_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          balance_earned?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          offer_id?: string
+          points_earned?: number | null
+          rewarded_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_participations_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers_contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_participations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers_contests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          custom_task_description: string | null
+          description: string
+          display_location: string
+          display_order: number | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          max_participants: number | null
+          required_task: string
+          reward_amount: number
+          reward_type: string
+          starts_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          custom_task_description?: string | null
+          description: string
+          display_location?: string
+          display_order?: number | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_participants?: number | null
+          required_task?: string
+          reward_amount?: number
+          reward_type?: string
+          starts_at?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          custom_task_description?: string | null
+          description?: string
+          display_location?: string
+          display_order?: number | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_participants?: number | null
+          required_task?: string
+          reward_amount?: number
+          reward_type?: string
+          starts_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_contests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_upgrade_requests: {
         Row: {
           amount: number | null
