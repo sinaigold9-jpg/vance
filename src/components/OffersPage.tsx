@@ -350,13 +350,14 @@ export const OffersPage = () => {
 
                     {/* Action */}
                     {isCompleted ? (
-                      <div className="flex items-center gap-2 bg-emerald-500/10 rounded-lg px-3 py-2 text-emerald-500">
+                      <div className="flex items-center gap-2 bg-accent/50 rounded-lg px-3 py-2 text-accent-foreground">
                         <CheckCircle2 className="w-5 h-5" />
                         <span className="font-semibold text-sm">تم الحصول على المكافأة ✓</span>
                       </div>
                     ) : participation?.status === "pending" ? (
                       <Button
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                        variant="secondary"
+                        className="w-full"
                         onClick={() => executeTask(item)}
                       >
                         <TaskIcon className="w-4 h-4 ml-2" />
@@ -368,7 +369,7 @@ export const OffersPage = () => {
                       </Button>
                     ) : (
                       <Button
-                        className="w-full bg-gradient-to-l from-primary to-primary/80"
+                        className="w-full"
                         onClick={() => handleParticipate(item)}
                       >
                         <Gift className="w-4 h-4 ml-2" />
