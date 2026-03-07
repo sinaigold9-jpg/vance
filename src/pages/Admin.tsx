@@ -313,6 +313,10 @@ const Admin = () => {
           <TabsContent value="email-management" className="mt-6">
             <AdminEmailTab />
           </TabsContent>
+
+          <TabsContent value="offers-contests" className="mt-6">
+            <AdminOffersContestsTab />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
