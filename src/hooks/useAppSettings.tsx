@@ -20,6 +20,8 @@ export const useAppSettings = () => {
   const [settings, setSettings] = useState<AppSettings>({
     appEnabled: true,
     appDisabledMessage: "",
+    landingEnabled: true,
+    landingDisabledMessage: "",
     tasksEnabled: true,
     tasksDisabledMessage: "",
     luckyWheelEnabled: true,
