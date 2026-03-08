@@ -234,7 +234,7 @@ export const NotificationBell = () => {
               }`}
             >
               <Mail className="w-3.5 h-3.5" />
-              رسائل خاصة
+              الرسائل الواردة
               {messagesUnread > 0 && (
                 <span className="bg-destructive text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                   {messagesUnread > 9 ? "9+" : messagesUnread}
@@ -305,7 +305,7 @@ export const NotificationBell = () => {
                 ) : (
                   <>
                     <Mail className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p>لا توجد رسائل خاصة</p>
+                    <p>لا توجد رسائل واردة</p>
                   </>
                 )}
               </div>
