@@ -14,6 +14,18 @@ interface AppSettings {
   referralDisabledMessage: string;
   teamEnabled: boolean;
   teamDisabledMessage: string;
+  walletEnabled: boolean;
+  walletDisabledMessage: string;
+  adsEnabled: boolean;
+  adsDisabledMessage: string;
+  offersEnabled: boolean;
+  offersDisabledMessage: string;
+  chatEnabled: boolean;
+  chatDisabledMessage: string;
+  depositsEnabled: boolean;
+  depositsDisabledMessage: string;
+  withdrawalsEnabled: boolean;
+  withdrawalsDisabledMessage: string;
 }
 
 export const useAppSettings = () => {
