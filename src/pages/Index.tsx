@@ -24,6 +24,7 @@ import { ProfileSection } from "@/components/profile/ProfileSection";
 import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
+import { HomeOffersPreview } from "@/components/HomeOffersPreview";
 import { PromotionBanner } from "@/components/PromotionBanner";
 import { FloatingLuckyWheel } from "@/components/FloatingLuckyWheel";
 import { FAQ } from "@/components/FAQ";
@@ -325,6 +326,9 @@ const Index = () => {
             
             {/* Promotion Banner */}
             <PromotionBanner />
+
+            {/* Active Offers Preview on Home */}
+            <HomeOffersPreview onViewAll={() => handleTabChange("offers")} />
             
             <SocialLinks />
 
@@ -335,6 +339,11 @@ const Index = () => {
             <div className="pt-4">
               <h2 className="text-lg font-bold text-foreground mb-4">الأقسام</h2>
               <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+
+            {/* Footer */}
+            <div className="text-center py-6 border-t border-border/30 mt-4">
+              <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
             </div>
           </motion.div>
         );

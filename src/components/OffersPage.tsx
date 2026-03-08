@@ -93,14 +93,28 @@ export const OffersPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    // Fetch all offers (including expired, but not archived)
     const { data: offersData } = await supabase
       .from("offers_contests")
       .select("*")
       .neq("display_location", "archived")
       .order("display_order", { ascending: true });
 
-    if (offersData) setItems(offersData as unknown as OfferContest[]);
+    if (offersData) {
+      // Auto-archive expired offers
+      const now = Date.now();
+      const expiredIds = (offersData as unknown as OfferContest[])
+        .filter(o => o.ends_at && new Date(o.ends_at).getTime() < now && o.is_active)
+        .map(o => o.id);
+      
+      if (expiredIds.length > 0) {
+        await supabase
+          .from("offers_contests")
+          .update({ is_active: false, display_location: "archived" })
+          .in("id", expiredIds);
+      }
+
+      setItems((offersData as unknown as OfferContest[]).filter(o => !expiredIds.includes(o.id)));
+    }
 
     if (user) {
       const { data: partData } = await supabase
