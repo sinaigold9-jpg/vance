@@ -131,8 +131,8 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
         </CardContent>
       </Card>
 
-      {/* Admin/Staff Panel Button */}
-      {(isAdmin || isStaff) && (
+      {/* Admin Panel Button - Only for admin */}
+      {isAdmin && (
         <Card 
           className="border-vip-gold/50 bg-vip-gold/5 hover:bg-vip-gold/10 transition-colors cursor-pointer" 
           onClick={() => navigate("/admin")}
