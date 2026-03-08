@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HelpCircle, ChevronDown, ChevronUp, Crown, Wallet, Users, Gift, Target, Shield, MessageSquare, Zap } from "lucide-react";
+import { HelpCircle, ChevronDown, ChevronUp, Crown, Wallet, Users, Gift, Target, Shield, MessageSquare, Zap, Megaphone, IdCard } from "lucide-react";
 import { BackButton } from "./BackButton";
 
 interface FAQItem {
