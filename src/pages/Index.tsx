@@ -592,12 +592,14 @@ const Index = () => {
         <AnimatePresence mode="wait">
           {renderContent()}
         </AnimatePresence>
-        
-        {/* Footer */}
-        <div className="text-center py-4 mt-8 border-t border-border/30">
+      </main>
+
+      {/* Footer - below floating wheel */}
+      <div className="max-w-4xl mx-auto px-4 pb-6">
+        <div className="text-center py-4 border-t border-border/30">
           <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
         </div>
-      </main>
+      </div>
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
