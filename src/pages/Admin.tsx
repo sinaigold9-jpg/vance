@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
-  Megaphone, Bell, Gift, Key, Edit, Mail
+  Megaphone, Bell, Gift, Key, Edit, Mail, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,11 +29,54 @@ import { AdminChangeRequestsTab } from "@/components/admin/AdminChangeRequestsTa
 import { AdminEmailTab } from "@/components/admin/AdminEmailTab";
 import { AdminOffersContestsTab } from "@/components/admin/AdminOffersContestsTab";
 import { AdminInternalLinksTab } from "@/components/admin/AdminInternalLinksTab";
+import { AdminStaffTab } from "@/components/admin/AdminStaffTab";
+
+// All admin tabs definition
+const ALL_TABS = [
+  { key: "users", label: "المستخدمين", icon: Users },
+  { key: "upgrades", label: "الترقيات", icon: FileUp },
+  { key: "transactions", label: "المعاملات", icon: DollarSign },
+  { key: "packages", label: "الباقات", icon: Package },
+  { key: "ads", label: "الإعلانات", icon: Megaphone },
+  { key: "notifications", label: "الإشعارات", icon: Bell },
+  { key: "promotions", label: "العروض", icon: Gift },
+  { key: "support", label: "الدعم", icon: HeadphonesIcon },
+  { key: "chat", label: "المحادثات", icon: MessageCircle },
+  { key: "bot", label: "البوت", icon: Bot },
+  { key: "app-settings", label: "التحكم", icon: Power },
+  { key: "activity", label: "النشاطات", icon: Clock },
+  { key: "export", label: "التصدير", icon: Key },
+  { key: "change-requests", label: "طلبات التعديل", icon: Edit },
+  { key: "email-management", label: "البريد", icon: Mail },
+  { key: "offers-contests", label: "العروض والمسابقات", icon: Gift },
+  { key: "internal-links", label: "الروابط", icon: Key },
+  { key: "staff", label: "الموظفين", icon: Shield },
+];
+
+const TAB_COMPONENTS: Record<string, React.ComponentType> = {
+  users: AdminUsersTab,
+  upgrades: AdminUpgradeRequestsTab,
+  transactions: AdminTransactionsTab,
+  packages: AdminPackagesTab,
+  ads: AdminAdsTab,
+  notifications: AdminNotificationsTab,
+  promotions: AdminPromotionsTab,
+  support: AdminSupportTab,
+  chat: AdminChatTab,
+  bot: AdminBotSettingsTab,
+  "app-settings": AdminAppSettingsTab,
+  activity: AdminActivityTab,
+  export: AdminExportTab,
+  "change-requests": AdminChangeRequestsTab,
+  "email-management": AdminEmailTab,
+  "offers-contests": AdminOffersContestsTab,
+  "internal-links": AdminInternalLinksTab,
+  staff: AdminStaffTab,
+};
 
 const Admin = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, isStaff, staffPermissions, staffRole, loading } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("users");
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalDeposits: 0,
@@ -41,12 +84,30 @@ const Admin = () => {
     pendingTransactions: 0,
   });
 
+  // Determine which tabs to show
+  const visibleTabs = isAdmin
+    ? ALL_TABS // Admin sees everything
+    : ALL_TABS.filter(tab => staffPermissions.includes(tab.key)); // Staff sees only permitted tabs
+
+  const [activeTab, setActiveTab] = useState("");
+
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (visibleTabs.length > 0 && !activeTab) {
+      setActiveTab(visibleTabs[0].key);
+    }
+  }, [visibleTabs, activeTab]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/");
+      toast.error("يرجى تسجيل الدخول أولاً");
+      return;
+    }
+    if (!loading && user && !isAdmin && !isStaff) {
       navigate("/");
       toast.error("ليس لديك صلاحية الوصول لهذه الصفحة");
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [user, isAdmin, isStaff, loading, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -96,7 +157,7 @@ const Admin = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return null;
   }
 
@@ -107,226 +168,117 @@ const Admin = () => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <BackButton to="/" label="العودة للتطبيق" />
-            <h1 className="text-xl font-bold">لوحة التحكم</h1>
-            <Button variant="outline" size="icon" onClick={fetchStats}>
-              <RefreshCw className="w-4 h-4" />
-            </Button>
+            <div className="text-center">
+              <h1 className="text-xl font-bold">لوحة التحكم</h1>
+              {isStaff && !isAdmin && (
+                <p className="text-xs text-muted-foreground">{staffRole}</p>
+              )}
+            </div>
+            {isAdmin && (
+              <Button variant="outline" size="icon" onClick={fetchStats}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            )}
+            {!isAdmin && <div className="w-10" />}
           </div>
         </div>
       </header>
 
-      {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
+        {/* Stats Cards - Only for admin */}
+        {isAdmin && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card border border-border rounded-xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">المستخدمين</p>
+                  <p className="text-xl font-bold">{stats.totalUsers}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">المستخدمين</p>
-                <p className="text-xl font-bold">{stats.totalUsers}</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-card border border-border rounded-xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald/10 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-emerald" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card border border-border rounded-xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald/10 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-emerald" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">الإيداعات</p>
+                  <p className="text-xl font-bold">{stats.totalDeposits} ج</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">الإيداعات</p>
-                <p className="text-xl font-bold">{stats.totalDeposits} ج</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-card border border-border rounded-xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <ArrowUpDown className="w-5 h-5 text-destructive" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-card border border-border rounded-xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <ArrowUpDown className="w-5 h-5 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">السحوبات</p>
+                  <p className="text-xl font-bold">{stats.totalWithdrawals} ج</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">السحوبات</p>
-                <p className="text-xl font-bold">{stats.totalWithdrawals} ج</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-vip-gold/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-vip-gold" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-card border border-border rounded-xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-vip-gold/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-vip-gold" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">معلقة</p>
+                  <p className="text-xl font-bold">{stats.pendingTransactions}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">معلقة</p>
-                <p className="text-xl font-bold">{stats.pendingTransactions}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex-wrap h-auto gap-2 bg-muted/50 p-2 rounded-xl">
-            <TabsTrigger value="users" className="flex-1 min-w-[80px]">
-              <Users className="w-4 h-4 ml-1" />
-              المستخدمين
-            </TabsTrigger>
-            <TabsTrigger value="upgrades" className="flex-1 min-w-[80px]">
-              <FileUp className="w-4 h-4 ml-1" />
-              الترقيات
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex-1 min-w-[80px]">
-              <DollarSign className="w-4 h-4 ml-1" />
-              المعاملات
-            </TabsTrigger>
-            <TabsTrigger value="packages" className="flex-1 min-w-[80px]">
-              <Package className="w-4 h-4 ml-1" />
-              الباقات
-            </TabsTrigger>
-            <TabsTrigger value="ads" className="flex-1 min-w-[80px]">
-              <Megaphone className="w-4 h-4 ml-1" />
-              الإعلانات
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex-1 min-w-[80px]">
-              <Bell className="w-4 h-4 ml-1" />
-              الإشعارات
-            </TabsTrigger>
-            <TabsTrigger value="promotions" className="flex-1 min-w-[80px]">
-              <Gift className="w-4 h-4 ml-1" />
-              العروض
-            </TabsTrigger>
-            <TabsTrigger value="support" className="flex-1 min-w-[80px]">
-              <HeadphonesIcon className="w-4 h-4 ml-1" />
-              الدعم
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="flex-1 min-w-[80px]">
-              <MessageCircle className="w-4 h-4 ml-1" />
-              المحادثات
-            </TabsTrigger>
-            <TabsTrigger value="bot" className="flex-1 min-w-[80px]">
-              <Bot className="w-4 h-4 ml-1" />
-              البوت
-            </TabsTrigger>
-            <TabsTrigger value="app-settings" className="flex-1 min-w-[80px]">
-              <Power className="w-4 h-4 ml-1" />
-              التحكم
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="flex-1 min-w-[80px]">
-              <Clock className="w-4 h-4 ml-1" />
-              النشاطات
-            </TabsTrigger>
-            <TabsTrigger value="export" className="flex-1 min-w-[80px]">
-              <Key className="w-4 h-4 ml-1" />
-              التصدير
-            </TabsTrigger>
-            <TabsTrigger value="change-requests" className="flex-1 min-w-[80px]">
-              <Edit className="w-4 h-4 ml-1" />
-              طلبات التعديل
-            </TabsTrigger>
-            <TabsTrigger value="email-management" className="flex-1 min-w-[80px]">
-              <Mail className="w-4 h-4 ml-1" />
-              البريد
-            </TabsTrigger>
-            <TabsTrigger value="offers-contests" className="flex-1 min-w-[80px]">
-              <Gift className="w-4 h-4 ml-1" />
-              العروض والمسابقات
-            </TabsTrigger>
-            <TabsTrigger value="internal-links" className="flex-1 min-w-[80px]">
-              <Key className="w-4 h-4 ml-1" />
-              الروابط
-            </TabsTrigger>
-          </TabsList>
+        {visibleTabs.length > 0 && activeTab && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full flex-wrap h-auto gap-2 bg-muted/50 p-2 rounded-xl">
+              {visibleTabs.map(tab => (
+                <TabsTrigger key={tab.key} value={tab.key} className="flex-1 min-w-[80px]">
+                  <tab.icon className="w-4 h-4 ml-1" />
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          <TabsContent value="users" className="mt-6">
-            <AdminUsersTab />
-          </TabsContent>
-
-          <TabsContent value="upgrades" className="mt-6">
-            <AdminUpgradeRequestsTab />
-          </TabsContent>
-
-          <TabsContent value="transactions" className="mt-6">
-            <AdminTransactionsTab />
-          </TabsContent>
-
-          <TabsContent value="packages" className="mt-6">
-            <AdminPackagesTab />
-          </TabsContent>
-
-          <TabsContent value="ads" className="mt-6">
-            <AdminAdsTab />
-          </TabsContent>
-
-          <TabsContent value="notifications" className="mt-6">
-            <AdminNotificationsTab />
-          </TabsContent>
-
-          <TabsContent value="promotions" className="mt-6">
-            <AdminPromotionsTab />
-          </TabsContent>
-
-          <TabsContent value="support" className="mt-6">
-            <AdminSupportTab />
-          </TabsContent>
-
-          <TabsContent value="chat" className="mt-6">
-            <AdminChatTab />
-          </TabsContent>
-
-          <TabsContent value="bot" className="mt-6">
-            <AdminBotSettingsTab />
-          </TabsContent>
-
-          <TabsContent value="app-settings" className="mt-6">
-            <AdminAppSettingsTab />
-          </TabsContent>
-
-          <TabsContent value="activity" className="mt-6">
-            <AdminActivityTab />
-          </TabsContent>
-
-          <TabsContent value="export" className="mt-6">
-            <AdminExportTab />
-          </TabsContent>
-
-          <TabsContent value="change-requests" className="mt-6">
-            <AdminChangeRequestsTab />
-          </TabsContent>
-
-          <TabsContent value="email-management" className="mt-6">
-            <AdminEmailTab />
-          </TabsContent>
-
-          <TabsContent value="offers-contests" className="mt-6">
-            <AdminOffersContestsTab />
-          </TabsContent>
-
-          <TabsContent value="internal-links" className="mt-6">
-            <AdminInternalLinksTab />
-          </TabsContent>
-        </Tabs>
+            {visibleTabs.map(tab => {
+              const Component = TAB_COMPONENTS[tab.key];
+              return Component ? (
+                <TabsContent key={tab.key} value={tab.key} className="mt-6">
+                  <Component />
+                </TabsContent>
+              ) : null;
+            })}
+          </Tabs>
+        )}
       </div>
     </div>
   );
