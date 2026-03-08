@@ -8,17 +8,18 @@ export const FloatingLuckyWheel = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
 
-  // Hide on wheel page itself
-  if (!location.pathname.startsWith("/app") || location.pathname === "/app/wheel") return null;
+  const shouldHide = !location.pathname.startsWith("/app") || location.pathname === "/app/wheel";
 
-  // Pulse effect every few seconds
   useEffect(() => {
+    if (shouldHide) return;
     const interval = setInterval(() => {
       setShowPulse(true);
       setTimeout(() => setShowPulse(false), 2000);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldHide]);
+
+  if (shouldHide) return null;
 
   return (
     <motion.div
