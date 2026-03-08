@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Bell, Send, Search, MessageSquare, 
-  Megaphone, DollarSign, Filter, Mail, Sparkles
+  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -47,10 +47,41 @@ export const AdminNotificationsTab = () => {
   const [notifType, setNotifType] = useState("general");
   const [isSending, setIsSending] = useState(false);
 
+  // Welcome message settings
+  const [welcomeTitle, setWelcomeTitle] = useState("");
+  const [welcomeBody, setWelcomeBody] = useState("");
+  const [isSavingWelcome, setIsSavingWelcome] = useState(false);
+
   useEffect(() => {
     fetchNotifications();
     fetchUsers();
+    fetchWelcomeSettings();
   }, [typeFilter]);
+
+  const fetchWelcomeSettings = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["welcome_message_title", "welcome_message_body"]);
+    
+    if (data) {
+      setWelcomeTitle(data.find(s => s.key === "welcome_message_title")?.value || "");
+      setWelcomeBody(data.find(s => s.key === "welcome_message_body")?.value || "");
+    }
+  };
+
+  const handleSaveWelcome = async () => {
+    setIsSavingWelcome(true);
+    try {
+      await supabase.from("app_settings").update({ value: welcomeTitle }).eq("key", "welcome_message_title");
+      await supabase.from("app_settings").update({ value: welcomeBody }).eq("key", "welcome_message_body");
+      toast.success("تم حفظ رسالة الترحيب بنجاح");
+    } catch {
+      toast.error("حدث خطأ أثناء الحفظ");
+    } finally {
+      setIsSavingWelcome(false);
+    }
+  };
 
   const fetchNotifications = async () => {
     setIsLoading(true);
@@ -251,6 +282,45 @@ export const AdminNotificationsTab = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Welcome Message Settings */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <PartyPopper className="w-5 h-5" />
+            رسالة الترحيب للمستخدمين الجدد
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">تظهر تلقائياً في قسم الرسائل الخاصة عند إنشاء حساب جديد</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>عنوان رسالة الترحيب</Label>
+            <Input
+              value={welcomeTitle}
+              onChange={e => setWelcomeTitle(e.target.value)}
+              placeholder="مرحباً بك في Advance! 🎉"
+            />
+          </div>
+          <div>
+            <Label>نص رسالة الترحيب</Label>
+            <Textarea
+              value={welcomeBody}
+              onChange={e => setWelcomeBody(e.target.value)}
+              placeholder="أهلاً وسهلاً بك! نتمنى لك تجربة ممتعة..."
+              rows={3}
+            />
+          </div>
+          <Button
+            onClick={handleSaveWelcome}
+            disabled={isSavingWelcome}
+            className="gap-2"
+            variant="outline"
+          >
+            <Save className="w-4 h-4" />
+            حفظ رسالة الترحيب
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Send Notification Form */}
