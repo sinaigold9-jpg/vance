@@ -131,8 +131,8 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
         </CardContent>
       </Card>
 
-      {/* Admin/Staff Panel Button */}
-      {(isAdmin || isStaff) && (
+      {/* Admin Panel Button - Only for admin */}
+      {isAdmin && (
         <Card 
           className="border-vip-gold/50 bg-vip-gold/5 hover:bg-vip-gold/10 transition-colors cursor-pointer" 
           onClick={() => navigate("/admin")}
@@ -143,9 +143,7 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-vip-gold">لوحة التحكم</h3>
-              <p className="text-sm text-muted-foreground">
-                {isAdmin ? "إدارة التطبيق والمستخدمين" : `${staffRole} - الأقسام المخصصة`}
-              </p>
+              <p className="text-sm text-muted-foreground">إدارة التطبيق والمستخدمين</p>
             </div>
           </CardContent>
         </Card>
