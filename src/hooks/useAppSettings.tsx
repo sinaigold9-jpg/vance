@@ -104,6 +104,18 @@ export const useAppSettings = () => {
         referralDisabledMessage: settingsMap["referral_disabled_message"]?.value || "نظام الإحالة متوقف مؤقتاً",
         teamEnabled: settingsMap["team_enabled"]?.is_active ?? true,
         teamDisabledMessage: settingsMap["team_disabled_message"]?.value || "نظام الفريق متوقف مؤقتاً",
+        walletEnabled: settingsMap["wallet_enabled"]?.is_active ?? true,
+        walletDisabledMessage: settingsMap["wallet_disabled_message"]?.value || "المحفظة متوقفة مؤقتاً",
+        adsEnabled: settingsMap["ads_enabled"]?.is_active ?? true,
+        adsDisabledMessage: settingsMap["ads_disabled_message"]?.value || "نظام الإعلانات متوقف مؤقتاً",
+        offersEnabled: settingsMap["offers_enabled"]?.is_active ?? true,
+        offersDisabledMessage: settingsMap["offers_disabled_message"]?.value || "العروض متوقفة مؤقتاً",
+        chatEnabled: settingsMap["chat_enabled"]?.is_active ?? true,
+        chatDisabledMessage: settingsMap["chat_disabled_message"]?.value || "الدردشة متوقفة مؤقتاً",
+        depositsEnabled: settingsMap["deposits_enabled"]?.is_active ?? true,
+        depositsDisabledMessage: settingsMap["deposits_disabled_message"]?.value || "الإيداعات متوقفة مؤقتاً",
+        withdrawalsEnabled: settingsMap["withdrawals_enabled"]?.is_active ?? true,
+        withdrawalsDisabledMessage: settingsMap["withdrawals_disabled_message"]?.value || "السحوبات متوقفة مؤقتاً",
       });
     }
     setLoading(false);

@@ -22,6 +22,12 @@ const settingsConfig = [
   { key: "lucky_wheel_enabled", label: "عجلة الحظ", icon: Target, messageKey: "lucky_wheel_disabled_message" },
   { key: "referral_enabled", label: "نظام الإحالة", icon: Share2, messageKey: "referral_disabled_message" },
   { key: "team_enabled", label: "نظام الفريق والرتب", icon: Users, messageKey: "team_disabled_message" },
+  { key: "wallet_enabled", label: "المحفظة", icon: Wallet, messageKey: "wallet_disabled_message" },
+  { key: "ads_enabled", label: "نظام الإعلانات", icon: Megaphone, messageKey: "ads_disabled_message" },
+  { key: "offers_enabled", label: "العروض والمسابقات", icon: Gift, messageKey: "offers_disabled_message" },
+  { key: "chat_enabled", label: "الدردشة والدعم", icon: MessageCircle, messageKey: "chat_disabled_message" },
+  { key: "deposits_enabled", label: "الإيداعات", icon: ArrowDownToLine, messageKey: "deposits_disabled_message" },
+  { key: "withdrawals_enabled", label: "السحوبات", icon: ArrowUpFromLine, messageKey: "withdrawals_disabled_message" },
 ];
 
 export const AdminAppSettingsTab = () => {
