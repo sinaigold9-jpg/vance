@@ -28,6 +28,7 @@ import { AdminExportTab } from "@/components/admin/AdminExportTab";
 import { AdminChangeRequestsTab } from "@/components/admin/AdminChangeRequestsTab";
 import { AdminEmailTab } from "@/components/admin/AdminEmailTab";
 import { AdminOffersContestsTab } from "@/components/admin/AdminOffersContestsTab";
+import { AdminInternalLinksTab } from "@/components/admin/AdminInternalLinksTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
