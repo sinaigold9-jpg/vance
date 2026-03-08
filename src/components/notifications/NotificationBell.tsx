@@ -165,11 +165,11 @@ export const NotificationBell = () => {
   if (!user) return null;
 
   return (
-    <div className="relative">
+    <>
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(true)}
         className="relative"
       >
         <Bell className="w-5 h-5" />
@@ -184,153 +184,134 @@ export const NotificationBell = () => {
         )}
       </Button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="absolute left-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50"
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md p-0 gap-0 rounded-xl overflow-hidden">
+          <DialogHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base">الإشعارات</DialogTitle>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="text-xs gap-1 h-7"
+                >
+                  <Check className="w-3 h-3" />
+                  قراءة الكل
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
+
+          {/* Tabs */}
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => setActiveTab("offers")}
+              className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors relative flex items-center justify-center gap-1.5 ${
+                activeTab === "offers"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-3 border-b border-border">
-                <h3 className="font-bold text-sm">الإشعارات</h3>
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="text-xs gap-1 h-7"
+              <Sparkles className="w-3.5 h-3.5" />
+              العروض والتحديثات
+              {offersUnread > 0 && (
+                <span className="bg-destructive text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                  {offersUnread > 9 ? "9+" : offersUnread}
+                </span>
+              )}
+              {activeTab === "offers" && (
+                <motion.div layoutId="notif-tab" className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("messages")}
+              className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors relative flex items-center justify-center gap-1.5 ${
+                activeTab === "messages"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              رسائل خاصة
+              {messagesUnread > 0 && (
+                <span className="bg-destructive text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                  {messagesUnread > 9 ? "9+" : messagesUnread}
+                </span>
+              )}
+              {activeTab === "messages" && (
+                <motion.div layoutId="notif-tab" className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+              )}
+            </button>
+          </div>
+
+          {/* Content */}
+          <ScrollArea className="max-h-[60vh]">
+            {filteredNotifications.length > 0 ? (
+              <div className="divide-y divide-border">
+                {filteredNotifications.map(notification => (
+                  <motion.div
+                    key={notification.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={`p-3 hover:bg-secondary/50 transition-colors cursor-pointer ${
+                      !notification.is_read ? 'bg-primary/5' : ''
+                    }`}
+                    onClick={() => {
+                      markAsRead(notification.id);
+                      if (notification.link) {
+                        setIsOpen(false);
+                        if (notification.link.startsWith('http')) {
+                          window.open(notification.link, '_blank');
+                        } else {
+                          navigate(notification.link);
+                        }
+                      }
+                    }}
                   >
-                    <Check className="w-3 h-3" />
-                    قراءة الكل
-                  </Button>
-                )}
+                    <div className="flex gap-3">
+                      <div className="mt-1">
+                        {getIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm line-clamp-1">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                          {formatDistanceToNow(new Date(notification.created_at), {
+                            addSuffix: true,
+                            locale: ar
+                          })}
+                        </p>
+                      </div>
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0" />
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-
-              {/* Tabs */}
-              <div className="flex border-b border-border">
-                <button
-                  onClick={() => setActiveTab("offers")}
-                  className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors relative flex items-center justify-center gap-1.5 ${
-                    activeTab === "offers"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  العروض والتحديثات
-                  {offersUnread > 0 && (
-                    <span className="bg-destructive text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                      {offersUnread > 9 ? "9+" : offersUnread}
-                    </span>
-                  )}
-                  {activeTab === "offers" && (
-                    <motion.div layoutId="notif-tab" className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("messages")}
-                  className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors relative flex items-center justify-center gap-1.5 ${
-                    activeTab === "messages"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  رسائل خاصة
-                  {messagesUnread > 0 && (
-                    <span className="bg-destructive text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                      {messagesUnread > 9 ? "9+" : messagesUnread}
-                    </span>
-                  )}
-                  {activeTab === "messages" && (
-                    <motion.div layoutId="notif-tab" className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
-                  )}
-                </button>
-              </div>
-
-              {/* Content */}
-              <ScrollArea className="max-h-80">
-                {filteredNotifications.length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {filteredNotifications.map(notification => (
-                      <motion.div
-                        key={notification.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className={`p-3 hover:bg-secondary/50 transition-colors cursor-pointer ${
-                          !notification.is_read ? 'bg-primary/5' : ''
-                        }`}
-                        onClick={() => {
-                          markAsRead(notification.id);
-                          if (notification.link) {
-                            setIsOpen(false);
-                            if (notification.link.startsWith('http')) {
-                              window.open(notification.link, '_blank');
-                            } else {
-                              navigate(notification.link);
-                            }
-                          }
-                        }}
-                      >
-                        <div className="flex gap-3">
-                          <div className="mt-1">
-                            {getIcon(notification.type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm line-clamp-1">
-                              {notification.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1.5">
-                              {formatDistanceToNow(new Date(notification.created_at), {
-                                addSuffix: true,
-                                locale: ar
-                              })}
-                            </p>
-                          </div>
-                          {!notification.is_read && (
-                            <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0" />
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">
+                {activeTab === "offers" ? (
+                  <>
+                    <Sparkles className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p>لا توجد عروض أو تحديثات</p>
+                  </>
                 ) : (
-                  <div className="p-8 text-center text-muted-foreground">
-                    {activeTab === "offers" ? (
-                      <>
-                        <Sparkles className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p>لا توجد عروض أو تحديثات</p>
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p>لا توجد رسائل خاصة</p>
-                      </>
-                    )}
-                  </div>
+                  <>
+                    <Mail className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p>لا توجد رسائل خاصة</p>
+                  </>
                 )}
-              </ScrollArea>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
