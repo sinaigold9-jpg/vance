@@ -1172,6 +1172,54 @@ export type Database = {
           },
         ]
       }
+      staff_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string
+          is_active: boolean
+          permissions: Json
+          role_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by: string
+          is_active?: boolean
+          permissions?: Json
+          role_title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string
+          is_active?: boolean
+          permissions?: Json
+          role_title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           admin_reply: string | null
