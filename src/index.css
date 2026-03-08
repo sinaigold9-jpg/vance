@@ -51,10 +51,12 @@
     --gradient-dark: linear-gradient(180deg, hsl(222 47% 8%), hsl(222 50% 5%));
     --gradient-card: linear-gradient(145deg, hsl(222 40% 14%), hsl(222 40% 10%));
     --gradient-vip: linear-gradient(135deg, hsl(45 93% 47%), hsl(35 100% 50%));
+    --gradient-premium: linear-gradient(135deg, hsl(222 40% 14%) 0%, hsl(222 45% 10%) 50%, hsl(222 40% 14%) 100%);
 
     /* Shadows */
     --shadow-gold: 0 4px 30px hsl(45 93% 47% / 0.3);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.4), 0 4px 12px hsl(0 0% 0% / 0.2);
   }
 }
 
@@ -65,12 +67,30 @@
 
   html {
     direction: rtl;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-background text-foreground font-tajawal antialiased;
     background: var(--gradient-dark);
     min-height: 100vh;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
   }
 }
 
@@ -90,12 +110,20 @@
     background: var(--gradient-card);
   }
 
+  .bg-gradient-premium {
+    background: var(--gradient-premium);
+  }
+
   .shadow-gold {
     box-shadow: var(--shadow-gold);
   }
 
   .shadow-card {
     box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
   }
 
   .glow-gold {
@@ -108,6 +136,42 @@
 
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .glass-strong {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* Premium card hover effect */
+  .card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.08) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
   }
 }
 
@@ -127,6 +191,11 @@
   50% {
     transform: translateY(-10px);
   }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .animate-float {
