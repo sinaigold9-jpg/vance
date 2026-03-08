@@ -341,10 +341,6 @@ const Index = () => {
               <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
 
-            {/* Footer */}
-            <div className="text-center py-6 border-t border-border/30 mt-4">
-              <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
-            </div>
           </motion.div>
         );
       case "packages":
