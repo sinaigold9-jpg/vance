@@ -55,7 +55,7 @@ export const SupportSection = () => {
       .maybeSingle();
     if (data) {
       setUserProfile(data);
-      if (["vip2", "vip3"].includes(data.account_type)) {
+      if (["vip1", "vip2", "vip3"].includes(data.account_type)) {
         setActiveTab("chat");
       }
     }
