@@ -600,6 +600,7 @@ const Index = () => {
       
       {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
       <BotWidget />
+      <FloatingLuckyWheel />
       <InstallPWA />
     </div>
   );
