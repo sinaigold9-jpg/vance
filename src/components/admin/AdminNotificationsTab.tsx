@@ -287,7 +287,7 @@ export const AdminNotificationsTab = () => {
       <Card className="border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <HandMetal className="w-5 h-5" />
+            <PartyPopper className="w-5 h-5" />
             رسالة الترحيب للمستخدمين الجدد
           </CardTitle>
           <p className="text-xs text-muted-foreground">تظهر تلقائياً في قسم الرسائل الخاصة عند إنشاء حساب جديد</p>
