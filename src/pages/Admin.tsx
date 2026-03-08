@@ -322,6 +322,10 @@ const Admin = () => {
           <TabsContent value="offers-contests" className="mt-6">
             <AdminOffersContestsTab />
           </TabsContent>
+
+          <TabsContent value="internal-links" className="mt-6">
+            <AdminInternalLinksTab />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
