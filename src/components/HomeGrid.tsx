@@ -29,9 +29,9 @@ interface GridItem {
 }
 
 const gridItems: GridItem[] = [
+  { id: "home", icon: Home, label: "الرئيسية", description: "عرض الرصيد والأرباح", gradient: "from-blue-500 to-blue-600" },
   { id: "tasks", icon: Gift, label: "المهام", description: "أكمل المهام واربح", gradient: "from-purple-500 to-violet-500" },
   { id: "offers", icon: Trophy, label: "العروض", description: "العروض والمسابقات", gradient: "from-amber-500 to-yellow-500" },
-  { id: "home", icon: Home, label: "الرئيسية", description: "عرض الرصيد والأرباح", gradient: "from-blue-500 to-blue-600" },
   { id: "packages", icon: Package, label: "الباقات", description: "اختر باقتك المناسبة", gradient: "from-amber-500 to-orange-500" },
   { id: "earnings", icon: Calculator, label: "الأرباح", description: "حاسبة أرباح الباقات", gradient: "from-emerald-500 to-green-500" },
   { id: "ads", icon: Megaphone, label: "الإعلانات", description: "تصفح وأنشئ إعلانات", gradient: "from-rose-500 to-pink-500" },
