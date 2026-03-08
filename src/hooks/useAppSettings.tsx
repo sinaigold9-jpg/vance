@@ -70,6 +70,8 @@ export const useAppSettings = () => {
       setSettings({
         appEnabled: settingsMap["app_enabled"]?.is_active ?? true,
         appDisabledMessage: settingsMap["app_disabled_message"]?.value || "التطبيق تحت الصيانة",
+        landingEnabled: settingsMap["landing_enabled"]?.is_active ?? true,
+        landingDisabledMessage: settingsMap["landing_disabled_message"]?.value || "الصفحة مغلقة حالياً",
         tasksEnabled: settingsMap["tasks_enabled"]?.is_active ?? true,
         tasksDisabledMessage: settingsMap["tasks_disabled_message"]?.value || "نظام المهام متوقف مؤقتاً",
         luckyWheelEnabled: settingsMap["lucky_wheel_enabled"]?.is_active ?? true,

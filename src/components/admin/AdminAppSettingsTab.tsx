@@ -17,6 +17,7 @@ interface AppSetting {
 
 const settingsConfig = [
   { key: "app_enabled", label: "التطبيق بالكامل", icon: Power, messageKey: "app_disabled_message" },
+  { key: "landing_enabled", label: "صفحة الهبوط (Landing)", icon: Globe, messageKey: "landing_disabled_message" },
   { key: "tasks_enabled", label: "نظام المهام اليومية", icon: Briefcase, messageKey: "tasks_disabled_message" },
   { key: "lucky_wheel_enabled", label: "عجلة الحظ", icon: Target, messageKey: "lucky_wheel_disabled_message" },
   { key: "referral_enabled", label: "نظام الإحالة", icon: Share2, messageKey: "referral_disabled_message" },
