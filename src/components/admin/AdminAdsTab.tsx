@@ -262,9 +262,9 @@ export const AdminAdsTab = () => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="border-border/50 overflow-hidden">
-                    <div className="flex">
+                    <div className="flex flex-col sm:flex-row">
                       {ad.images?.[0] && (
-                        <div className="w-40 h-32 flex-shrink-0">
+                        <div className="w-full sm:w-40 h-32 flex-shrink-0">
                           <img
                             src={ad.images[0]}
                             alt={ad.title}
@@ -273,21 +273,23 @@ export const AdminAdsTab = () => {
                         </div>
                       )}
                       <CardContent className="flex-1 p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
                               <h3 className="font-bold">{ad.title}</h3>
                               {getStatusBadge(ad.status)}
-                              {ad.ad_type === "paid" && (
+                              {ad.ad_type === "paid" ? (
                                 <Badge className="bg-gradient-gold text-primary-foreground text-xs">
                                   مدفوع - {ad.promotion_amount} جنيه
                                 </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">مجاني</Badge>
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
                               {ad.short_description}
                             </p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                               <span>{getCategoryIcon(ad.category)} {getCategoryLabel(ad.category)}</span>
                               <span className="flex items-center gap-1">
                                 <Eye className="w-3 h-3" />
@@ -297,6 +299,10 @@ export const AdminAdsTab = () => {
                                 <BarChart3 className="w-3 h-3" />
                                 {ad.clicks_count} نقرة
                               </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {format(new Date(ad.created_at), "dd MMM yyyy - hh:mm a", { locale: ar })}
+                              </span>
                             </div>
                             <div className="mt-2 text-xs">
                               <span className="text-muted-foreground">المعلن: </span>
@@ -305,49 +311,51 @@ export const AdminAdsTab = () => {
                               <span className="font-mono">{ad.profiles?.membership_id}</span>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-2">
-                            {ad.status === "pending" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApprove(ad)}
-                                  className="gap-1 bg-accent"
-                                >
-                                  <Check className="w-4 h-4" />
-                                  موافقة
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => setSelectedAd(ad)}
-                                  className="gap-1"
-                                >
-                                  <X className="w-4 h-4" />
-                                  رفض
-                                </Button>
-                              </>
-                            )}
-                            {ad.status === "approved" && (
+                        </div>
+
+                        {/* Action buttons - always visible */}
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 flex-wrap">
+                          {ad.status === "pending" && (
+                            <>
                               <Button
                                 size="sm"
-                                variant="secondary"
-                                onClick={() => handleArchive(ad)}
+                                onClick={() => handleApprove(ad)}
+                                className="gap-1 bg-accent"
+                              >
+                                <Check className="w-4 h-4" />
+                                موافقة على النشر
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setSelectedAd(ad)}
                                 className="gap-1"
                               >
-                                <Archive className="w-4 h-4" />
-                                أرشفة
+                                <X className="w-4 h-4" />
+                                رفض
                               </Button>
-                            )}
+                            </>
+                          )}
+                          {ad.status === "approved" && (
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedAd(ad)}
+                              variant="secondary"
+                              onClick={() => handleArchive(ad)}
                               className="gap-1"
                             >
-                              <Eye className="w-4 h-4" />
-                              عرض
+                              <Archive className="w-4 h-4" />
+                              أرشفة
                             </Button>
-                          </div>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedAd(ad)}
+                            className="gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            عرض التفاصيل
+                          </Button>
                         </div>
                       </CardContent>
                     </div>
