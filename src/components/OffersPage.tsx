@@ -357,7 +357,7 @@ export const OffersPage = () => {
         <div className="flex gap-2">
           <Button className="flex-1" onClick={() => handleParticipate(item)}>
             <Gift className="w-4 h-4 ml-2" />
-            اشترك واكسب
+            {item.button_label || "اشترك واكسب"}
           </Button>
           <Button variant="outline" onClick={() => handleShare(item)}>
             <Share2 className="w-4 h-4 ml-1" />
