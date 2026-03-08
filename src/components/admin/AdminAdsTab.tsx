@@ -81,12 +81,12 @@ export const AdminAdsTab = () => {
         })
         .eq("id", ad.id);
 
-      // Send notification
+      // Send approval as incoming message
       await supabase.from("notifications").insert({
         user_id: ad.user_id,
-        title: "تمت الموافقة على إعلانك",
-        message: `تمت الموافقة على إعلان "${ad.title}" وهو الآن منشور ومرئي للمستخدمين`,
-        type: "ad_approved",
+        title: "تمت الموافقة على إعلانك ✅",
+        message: `مبروك! تمت الموافقة على إعلان "${ad.title}" وهو الآن منشور ومرئي لجميع المستخدمين.`,
+        type: "private_message",
         related_id: ad.id
       });
 
