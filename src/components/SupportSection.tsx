@@ -25,6 +25,7 @@ interface UserProfile {
   email: string | null;
   phone: string | null;
   membership_id: string | null;
+  account_type: string;
 }
 
 export const SupportSection = () => {
@@ -34,8 +35,10 @@ export const SupportSection = () => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("ticket");
   const { user } = useAuth();
+
+  const canAccessLiveChat = userProfile && ["vip2", "vip3"].includes(userProfile.account_type);
 
   useEffect(() => {
     if (user) {
@@ -47,11 +50,14 @@ export const SupportSection = () => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, email, phone, membership_id")
+      .select("full_name, email, phone, membership_id, account_type")
       .eq("id", user.id)
       .maybeSingle();
     if (data) {
       setUserProfile(data);
+      if (["vip2", "vip3"].includes(data.account_type)) {
+        setActiveTab("chat");
+      }
     }
   };
 
