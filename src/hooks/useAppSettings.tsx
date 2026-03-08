@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface AppSettings {
   appEnabled: boolean;
   appDisabledMessage: string;
+  landingEnabled: boolean;
+  landingDisabledMessage: string;
   tasksEnabled: boolean;
   tasksDisabledMessage: string;
   luckyWheelEnabled: boolean;
@@ -18,6 +20,8 @@ export const useAppSettings = () => {
   const [settings, setSettings] = useState<AppSettings>({
     appEnabled: true,
     appDisabledMessage: "",
+    landingEnabled: true,
+    landingDisabledMessage: "",
     tasksEnabled: true,
     tasksDisabledMessage: "",
     luckyWheelEnabled: true,
@@ -66,6 +70,8 @@ export const useAppSettings = () => {
       setSettings({
         appEnabled: settingsMap["app_enabled"]?.is_active ?? true,
         appDisabledMessage: settingsMap["app_disabled_message"]?.value || "التطبيق تحت الصيانة",
+        landingEnabled: settingsMap["landing_enabled"]?.is_active ?? true,
+        landingDisabledMessage: settingsMap["landing_disabled_message"]?.value || "الصفحة مغلقة حالياً",
         tasksEnabled: settingsMap["tasks_enabled"]?.is_active ?? true,
         tasksDisabledMessage: settingsMap["tasks_disabled_message"]?.value || "نظام المهام متوقف مؤقتاً",
         luckyWheelEnabled: settingsMap["lucky_wheel_enabled"]?.is_active ?? true,

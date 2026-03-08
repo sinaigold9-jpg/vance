@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, Download, Smartphone } from "lucide-react";
+import { ArrowRight, ArrowLeft, Download, Smartphone, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppSettings } from "@/hooks/useAppSettings";
 const appIcon = "/app-icon-optimized.webp";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,6 +18,7 @@ const Landing = () => {
   const { user, isAdmin } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const { settings, loading: settingsLoading } = useAppSettings();
 
   useEffect(() => {
     if (user) {
@@ -51,6 +53,30 @@ const Landing = () => {
   };
 
   const refCode = searchParams.get("ref");
+
+  // Show locked screen if landing is disabled (admins can still pass)
+  if (!settingsLoading && !settings.landingEnabled && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background via-background to-background/90">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md text-center space-y-6"
+        >
+          <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <Lock className="w-10 h-10 text-destructive" />
+          </div>
+          <h1 className="text-2xl font-black text-foreground">الصفحة مغلقة</h1>
+          <p className="text-muted-foreground">
+            {settings.landingDisabledMessage || "الصفحة مغلقة حالياً، يرجى المحاولة لاحقاً"}
+          </p>
+          <p className="text-muted-foreground text-sm mt-4">
+            جميع الحقوق محفوظة لـ Advance 2025©
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background via-background to-background/90">

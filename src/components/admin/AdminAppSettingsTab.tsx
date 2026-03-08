@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Power, Settings, Save, AlertTriangle, CheckCircle, Briefcase, Target, Users, Share2 } from "lucide-react";
+import { Power, Settings, Save, AlertTriangle, CheckCircle, Briefcase, Target, Users, Share2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ interface AppSetting {
 
 const settingsConfig = [
   { key: "app_enabled", label: "التطبيق بالكامل", icon: Power, messageKey: "app_disabled_message" },
+  { key: "landing_enabled", label: "صفحة الهبوط (Landing)", icon: Globe, messageKey: "landing_disabled_message" },
   { key: "tasks_enabled", label: "نظام المهام اليومية", icon: Briefcase, messageKey: "tasks_disabled_message" },
   { key: "lucky_wheel_enabled", label: "عجلة الحظ", icon: Target, messageKey: "lucky_wheel_disabled_message" },
   { key: "referral_enabled", label: "نظام الإحالة", icon: Share2, messageKey: "referral_disabled_message" },
