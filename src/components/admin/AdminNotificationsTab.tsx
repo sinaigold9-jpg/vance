@@ -283,6 +283,45 @@ export const AdminNotificationsTab = () => {
         </Card>
       </div>
 
+      {/* Welcome Message Settings */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <HandMetal className="w-5 h-5" />
+            رسالة الترحيب للمستخدمين الجدد
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">تظهر تلقائياً في قسم الرسائل الخاصة عند إنشاء حساب جديد</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>عنوان رسالة الترحيب</Label>
+            <Input
+              value={welcomeTitle}
+              onChange={e => setWelcomeTitle(e.target.value)}
+              placeholder="مرحباً بك في Advance! 🎉"
+            />
+          </div>
+          <div>
+            <Label>نص رسالة الترحيب</Label>
+            <Textarea
+              value={welcomeBody}
+              onChange={e => setWelcomeBody(e.target.value)}
+              placeholder="أهلاً وسهلاً بك! نتمنى لك تجربة ممتعة..."
+              rows={3}
+            />
+          </div>
+          <Button
+            onClick={handleSaveWelcome}
+            disabled={isSavingWelcome}
+            className="gap-2"
+            variant="outline"
+          >
+            <Save className="w-4 h-4" />
+            حفظ رسالة الترحيب
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Send Notification Form */}
         <Card className="border-border/50 lg:col-span-1">
