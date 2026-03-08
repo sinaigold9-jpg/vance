@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Gift, ArrowLeft, Clock } from "lucide-react";
+import { Gift, ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,9 @@ interface HomeOffersPreviewProps {
 
 export const HomeOffersPreview = ({ onViewAll }: HomeOffersPreviewProps) => {
   const [offers, setOffers] = useState<OfferPreview[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
     fetchOffers();
@@ -34,9 +37,34 @@ export const HomeOffersPreview = ({ onViewAll }: HomeOffersPreviewProps) => {
       .select("id, title, description, image_url, type, reward_amount, reward_type, ends_at, is_active")
       .eq("is_active", true)
       .neq("display_location", "archived")
-      .order("display_order", { ascending: true })
-      .limit(3);
+      .order("display_order", { ascending: true });
     if (data) setOffers(data as OfferPreview[]);
+  };
+
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // RTL: scrollLeft is negative in RTL
+    const sl = Math.abs(el.scrollLeft);
+    setCanScrollRight(sl > 1);
+    setCanScrollLeft(sl + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll, { passive: true });
+      return () => el.removeEventListener("scroll", checkScroll);
+    }
+  }, [offers]);
+
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = 220;
+    // In RTL, scrolling "left" visually means positive scrollLeft change
+    el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
   };
 
   if (offers.length === 0) return null;
@@ -53,44 +81,89 @@ export const HomeOffersPreview = ({ onViewAll }: HomeOffersPreviewProps) => {
           <ArrowLeft className="w-4 h-4 mr-1" />
         </Button>
       </div>
-      <div className="space-y-3">
-        {offers.map((offer, idx) => (
-          <motion.div
-            key={offer.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            onClick={onViewAll}
-            className="flex items-center gap-3 bg-card/60 border border-border/30 rounded-xl p-3 cursor-pointer card-hover"
+
+      <div className="relative">
+        {/* Left arrow */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card/90 border border-border/50 shadow-lg flex items-center justify-center text-foreground hover:bg-primary/10 transition-colors"
           >
-            {offer.image_url ? (
-              <img src={offer.image_url} alt={offer.title} className="w-14 h-14 rounded-lg object-cover shrink-0" />
-            ) : (
-              <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Gift className="w-6 h-6 text-primary" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <p className="font-bold text-sm text-foreground truncate">{offer.title}</p>
-                <Badge variant={offer.type === "offer" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                  {offer.type === "offer" ? "عرض" : "مسابقة"}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground truncate">{offer.description}</p>
-              {offer.ends_at && (
-                <p className="text-[10px] text-amber-500 flex items-center gap-1 mt-1">
-                  <Clock className="w-3 h-3" />
-                  متاح لفترة محدودة
-                </p>
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Right arrow */}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card/90 border border-border/50 shadow-lg flex items-center justify-center text-foreground hover:bg-primary/10 transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Scrollable container */}
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-1 snap-x snap-mandatory"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {offers.map((offer, idx) => (
+            <motion.div
+              key={offer.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.04 }}
+              onClick={onViewAll}
+              className="flex-shrink-0 w-[200px] bg-card/60 border border-border/30 rounded-xl overflow-hidden cursor-pointer card-hover snap-start"
+            >
+              {/* Image or placeholder */}
+              {offer.image_url ? (
+                <div className="relative h-24 overflow-hidden">
+                  <img src={offer.image_url} alt={offer.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                  <Badge
+                    variant={offer.type === "offer" ? "default" : "secondary"}
+                    className="absolute top-2 right-2 text-[10px] px-1.5 py-0"
+                  >
+                    {offer.type === "offer" ? "عرض" : "مسابقة"}
+                  </Badge>
+                </div>
+              ) : (
+                <div className="relative h-24 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                  <Gift className="w-10 h-10 text-primary/40" />
+                  <Badge
+                    variant={offer.type === "offer" ? "default" : "secondary"}
+                    className="absolute top-2 right-2 text-[10px] px-1.5 py-0"
+                  >
+                    {offer.type === "offer" ? "عرض" : "مسابقة"}
+                  </Badge>
+                </div>
               )}
-            </div>
-            <div className="text-center bg-primary/10 rounded-lg px-2 py-1.5 shrink-0">
-              <p className="text-sm font-black text-primary">{offer.reward_amount}</p>
-              <p className="text-[9px] text-primary/70">{offer.reward_type === "points" ? "نقطة" : "ج.م"}</p>
-            </div>
-          </motion.div>
-        ))}
+
+              <div className="p-3 space-y-2">
+                <p className="font-bold text-sm text-foreground truncate">{offer.title}</p>
+                <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
+
+                <div className="flex items-center justify-between">
+                  <div className="bg-primary/10 rounded-lg px-2 py-1">
+                    <span className="text-xs font-black text-primary">{offer.reward_amount}</span>
+                    <span className="text-[9px] text-primary/70 mr-1">
+                      {offer.reward_type === "points" ? "نقطة" : "ج.م"}
+                    </span>
+                  </div>
+                  {offer.ends_at && (
+                    <p className="text-[10px] text-amber-500 flex items-center gap-0.5">
+                      <Clock className="w-3 h-3" />
+                      محدود
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
