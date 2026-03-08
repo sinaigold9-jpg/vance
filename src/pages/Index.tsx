@@ -588,18 +588,16 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
         <AnimatePresence mode="wait">
           {renderContent()}
         </AnimatePresence>
-      </main>
-
-      {/* Footer */}
-      <footer className="max-w-4xl mx-auto px-4 pb-6 pt-2">
-        <div className="text-center py-4 border-t border-border/30">
+        
+        {/* Footer */}
+        <div className="text-center py-4 mt-8 border-t border-border/30">
           <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
         </div>
-      </footer>
+      </main>
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
