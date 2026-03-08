@@ -21,9 +21,9 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border/50 z-50"
+      className="fixed bottom-0 left-0 right-0 glass-strong z-50 border-t border-border/30"
     >
-      <div className="max-w-lg mx-auto px-2 py-2">
+      <div className="max-w-lg mx-auto px-2 py-1.5">
         <div className="grid grid-cols-3 gap-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -31,19 +31,27 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-200 ${
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-muted/50"
+                className={`relative flex flex-col items-center justify-center py-2.5 px-1 rounded-xl transition-all duration-300 ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="navActive"
+                    className="absolute inset-0 bg-primary/10 rounded-xl"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
                 <motion.div
-                  animate={isActive ? { scale: 1.1 } : { scale: 1 }}
-                  className="relative"
+                  animate={isActive ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="relative z-10"
                 >
-                  <tab.icon className="w-5 h-5" />
+                  <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
                 </motion.div>
-                <span className={`text-[10px] mt-1 ${isActive ? "font-bold" : ""}`}>
+                <span className={`text-[10px] mt-1 relative z-10 transition-all ${isActive ? "font-black" : "font-medium"}`}>
                   {tab.label}
                 </span>
               </button>
