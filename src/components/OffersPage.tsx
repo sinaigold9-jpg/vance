@@ -372,7 +372,7 @@ export const OffersPage = () => {
       return (
         <Button className="w-full bg-gradient-to-r from-primary to-primary/80" onClick={() => handleParticipate(item)}>
           <Zap className="w-4 h-4 ml-2" />
-          فعّل العرض
+          {item.button_label || "فعّل العرض"}
         </Button>
       );
     }
@@ -380,7 +380,7 @@ export const OffersPage = () => {
     return (
       <Button className="w-full" onClick={() => handleParticipate(item)}>
         <Gift className="w-4 h-4 ml-2" />
-        {taskInfo.btnLabel || "اشترك الآن"}
+        {item.button_label || taskInfo.btnLabel || "اشترك الآن"}
       </Button>
     );
   };
