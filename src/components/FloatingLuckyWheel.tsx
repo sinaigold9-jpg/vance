@@ -8,7 +8,7 @@ export const FloatingLuckyWheel = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
 
-  const shouldHide = !location.pathname.startsWith("/app") || location.pathname === "/app/wheel";
+  const shouldHide = location.pathname !== "/app";
 
   useEffect(() => {
     if (shouldHide) return;
