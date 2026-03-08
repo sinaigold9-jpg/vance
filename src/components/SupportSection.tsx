@@ -153,7 +153,7 @@ export const SupportSection = () => {
           <TabsTrigger value="chat" className="gap-2" disabled={!canAccessLiveChat}>
             <MessageCircle className="w-4 h-4" />
             المحادثة المباشرة
-            {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP2+</span>}
+            {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP</span>}
           </TabsTrigger>
           <TabsTrigger value="ticket" className="gap-2">
             <MessageSquare className="w-4 h-4" />
