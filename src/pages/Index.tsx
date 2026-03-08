@@ -24,6 +24,7 @@ import { ProfileSection } from "@/components/profile/ProfileSection";
 import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
+import { HomeOffersPreview } from "@/components/HomeOffersPreview";
 import { PromotionBanner } from "@/components/PromotionBanner";
 import { FloatingLuckyWheel } from "@/components/FloatingLuckyWheel";
 import { FAQ } from "@/components/FAQ";
