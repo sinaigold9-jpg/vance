@@ -27,6 +27,9 @@ interface OfferContest {
   ends_at: string | null;
   created_at: string;
   display_order: number;
+  button_label: string | null;
+  original_price: number;
+  discount_percentage: number;
 }
 
 interface Participation {
@@ -354,7 +357,7 @@ export const OffersPage = () => {
         <div className="flex gap-2">
           <Button className="flex-1" onClick={() => handleParticipate(item)}>
             <Gift className="w-4 h-4 ml-2" />
-            اشترك واكسب
+            {item.button_label || "اشترك واكسب"}
           </Button>
           <Button variant="outline" onClick={() => handleShare(item)}>
             <Share2 className="w-4 h-4 ml-1" />
@@ -369,7 +372,7 @@ export const OffersPage = () => {
       return (
         <Button className="w-full bg-gradient-to-r from-primary to-primary/80" onClick={() => handleParticipate(item)}>
           <Zap className="w-4 h-4 ml-2" />
-          فعّل العرض
+          {item.button_label || "فعّل العرض"}
         </Button>
       );
     }
@@ -377,7 +380,7 @@ export const OffersPage = () => {
     return (
       <Button className="w-full" onClick={() => handleParticipate(item)}>
         <Gift className="w-4 h-4 ml-2" />
-        {taskInfo.btnLabel || "اشترك الآن"}
+        {item.button_label || taskInfo.btnLabel || "اشترك الآن"}
       </Button>
     );
   };
@@ -467,10 +470,20 @@ export const OffersPage = () => {
                         <p className="text-muted-foreground text-sm mt-1">{item.description}</p>
                       </div>
                       <div className="text-center bg-primary/10 rounded-xl px-3 py-2 min-w-[70px]">
-                        <p className="text-xl font-black text-primary">{item.reward_amount}</p>
-                        <p className="text-[10px] text-primary/70">
-                          {item.reward_type === "points" ? "نقطة" : item.reward_type === "discount" ? "خصم ج.م" : "ج.م"}
-                        </p>
+                        {item.discount_percentage > 0 ? (
+                          <>
+                            <p className="text-xs line-through text-muted-foreground">{item.original_price} ج.م</p>
+                            <p className="text-xl font-black text-primary">{item.discount_percentage}%</p>
+                            <p className="text-[10px] text-primary/70">خصم</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xl font-black text-primary">{item.reward_amount}</p>
+                            <p className="text-[10px] text-primary/70">
+                              {item.reward_type === "points" ? "نقطة" : item.reward_type === "discount" || item.reward_type === "package_discount" ? "خصم ج.م" : "ج.م"}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
 

@@ -38,7 +38,7 @@ export const SupportSection = () => {
   const [activeTab, setActiveTab] = useState("ticket");
   const { user } = useAuth();
 
-  const canAccessLiveChat = userProfile && ["vip2", "vip3"].includes(userProfile.account_type);
+  const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
 
   useEffect(() => {
     if (user) {
@@ -55,7 +55,7 @@ export const SupportSection = () => {
       .maybeSingle();
     if (data) {
       setUserProfile(data);
-      if (["vip2", "vip3"].includes(data.account_type)) {
+      if (["vip1", "vip2", "vip3"].includes(data.account_type)) {
         setActiveTab("chat");
       }
     }
@@ -153,7 +153,7 @@ export const SupportSection = () => {
           <TabsTrigger value="chat" className="gap-2" disabled={!canAccessLiveChat}>
             <MessageCircle className="w-4 h-4" />
             المحادثة المباشرة
-            {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP2+</span>}
+            {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP</span>}
           </TabsTrigger>
           <TabsTrigger value="ticket" className="gap-2">
             <MessageSquare className="w-4 h-4" />
@@ -171,11 +171,20 @@ export const SupportSection = () => {
               className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-8 text-center"
             >
               <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-bold mb-2">الدعم المباشر لباقات VIP2 وأعلى</h3>
+              <h3 className="text-lg font-bold mb-2">الدعم المباشر لباقات VIP فقط</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                قم بترقية باقتك إلى VIP2 أو VIP3 للوصول إلى المحادثة المباشرة مع فريق الدعم
+                قم بترقية باقتك إلى أي باقة VIP للوصول إلى المحادثة المباشرة مع فريق الدعم
               </p>
-              <p className="text-xs text-muted-foreground">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
+              <Button
+                className="bg-gradient-gold text-primary-foreground"
+                onClick={() => {
+                  const event = new CustomEvent("navigate-tab", { detail: "packages" });
+                  window.dispatchEvent(event);
+                }}
+              >
+                ترقية الباقة الآن
+              </Button>
+              <p className="text-xs text-muted-foreground mt-3">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
             </motion.div>
           )}
         </TabsContent>

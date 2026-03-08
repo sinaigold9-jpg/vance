@@ -136,6 +136,9 @@ export const AdminOffersContestsTab = () => {
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
       max_participants: maxParticipants ? Number(maxParticipants) : null,
       display_order: Number(displayOrder),
+      button_label: buttonType === "custom" ? customTaskDesc.trim() || null : BUTTON_TYPES[buttonType] || null,
+      original_price: Number(originalPrice),
+      discount_percentage: Number(discountAmount),
     };
 
     if (editingId) {
@@ -287,6 +290,7 @@ export const AdminOffersContestsTab = () => {
                   <SelectItem value="points">نقاط</SelectItem>
                   <SelectItem value="feature">ميزة خاصة</SelectItem>
                   <SelectItem value="discount">خصم على باقة</SelectItem>
+                  <SelectItem value="package_discount">خصم اشتراك باقة</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -313,14 +317,14 @@ export const AdminOffersContestsTab = () => {
             </div>
           </div>
 
-          {requiredTask === "activate_offer" && (
+          {(requiredTask === "activate_offer" || rewardType === "package_discount") && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">السعر الأصلي (ج.م)</label>
                 <Input type="number" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">قيمة الخصم (ج.م)</label>
+                <label className="text-xs text-muted-foreground mb-1 block">نسبة/قيمة الخصم (%)</label>
                 <Input type="number" value={discountAmount} onChange={e => setDiscountAmount(e.target.value)} />
               </div>
             </div>
