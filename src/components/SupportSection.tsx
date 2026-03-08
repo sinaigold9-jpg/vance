@@ -150,9 +150,10 @@ export const SupportSection = () => {
       {/* Tabs for Chat and Tickets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-          <TabsTrigger value="chat" className="gap-2">
+          <TabsTrigger value="chat" className="gap-2" disabled={!canAccessLiveChat}>
             <MessageCircle className="w-4 h-4" />
             المحادثة المباشرة
+            {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP2+</span>}
           </TabsTrigger>
           <TabsTrigger value="ticket" className="gap-2">
             <MessageSquare className="w-4 h-4" />
@@ -161,7 +162,22 @@ export const SupportSection = () => {
         </TabsList>
 
         <TabsContent value="chat" className="mt-4">
-          <ChatSection />
+          {canAccessLiveChat ? (
+            <ChatSection />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-8 text-center"
+            >
+              <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/40 mb-4" />
+              <h3 className="text-lg font-bold mb-2">الدعم المباشر لباقات VIP2 وأعلى</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                قم بترقية باقتك إلى VIP2 أو VIP3 للوصول إلى المحادثة المباشرة مع فريق الدعم
+              </p>
+              <p className="text-xs text-muted-foreground">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
+            </motion.div>
+          )}
         </TabsContent>
 
         <TabsContent value="ticket" className="mt-4 space-y-4">
