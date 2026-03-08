@@ -272,7 +272,7 @@ export const AdminNotificationsTab = () => {
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-blue-500">{stats.privateMessages}</p>
-            <p className="text-xs text-muted-foreground">رسائل خاصة</p>
+            <p className="text-xs text-muted-foreground">رسائل واردة</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
