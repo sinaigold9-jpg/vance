@@ -54,6 +54,30 @@ const Landing = () => {
 
   const refCode = searchParams.get("ref");
 
+  // Show locked screen if landing is disabled (admins can still pass)
+  if (!settingsLoading && !settings.landingEnabled && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background via-background to-background/90">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md text-center space-y-6"
+        >
+          <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <Lock className="w-10 h-10 text-destructive" />
+          </div>
+          <h1 className="text-2xl font-black text-foreground">الصفحة مغلقة</h1>
+          <p className="text-muted-foreground">
+            {settings.landingDisabledMessage || "الصفحة مغلقة حالياً، يرجى المحاولة لاحقاً"}
+          </p>
+          <p className="text-muted-foreground text-sm mt-4">
+            جميع الحقوق محفوظة لـ Advance 2025©
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background via-background to-background/90">
       <motion.div
