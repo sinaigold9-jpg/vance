@@ -71,6 +71,7 @@ const getVipLevel = (accountType: string): number => {
 const pathToTab: Record<string, string> = {
   "/app": "home",
   "/app/tasks": "tasks",
+  "/app/wheel": "wheel",
   "/app/wallet": "wallet",
   "/app/team": "team",
   "/app/packages": "packages",
@@ -86,6 +87,7 @@ const pathToTab: Record<string, string> = {
 const tabToPath: Record<string, string> = {
   home: "/app",
   tasks: "/app/tasks",
+  wheel: "/app/wheel",
   wallet: "/app/wallet",
   team: "/app/team",
   packages: "/app/packages",
@@ -374,7 +376,7 @@ const Index = () => {
       case "tasks":
         return (
           <motion.div key="tasks" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-            <PageHeader title="المهام وعجلة الحظ" subtitle="أكمل المهام واربح" onBack={() => handleTabChange("home")} />
+            <PageHeader title="المهام اليومية" subtitle="أكمل المهام واربح المكافآت" onBack={() => handleTabChange("home")} />
             {!appSettings.tasksEnabled ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -393,11 +395,24 @@ const Index = () => {
             ) : (
               <div className="bg-gradient-card rounded-2xl p-6 text-center"><p className="text-muted-foreground">يرجى تسجيل الدخول</p></div>
             )}
+          </motion.div>
+        );
+      case "wheel":
+        return (
+          <motion.div key="wheel" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+            <PageHeader title="عجلة الحظ" subtitle="جرب حظك واربح جوائز رائعة" onBack={() => handleTabChange("home")} />
             {!appSettings.luckyWheelEnabled || disabledFeatures.wheel ? (
               <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
                 <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">عجلة الحظ متوقفة</h3>
                 <p className="text-muted-foreground">{disabledFeatures.wheel ? "عجلة الحظ معطلة لحسابك" : appSettings.luckyWheelDisabledMessage}</p>
+              </div>
+            ) : trialExpired ? (
+              <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
+                <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">انتهت فترة التجربة</h3>
+                <p className="text-muted-foreground mb-4">قم بترقية باقتك لاستخدام عجلة الحظ</p>
+                <Button onClick={() => handleTabChange("packages")} className="bg-gradient-gold text-primary-foreground">ترقية الباقة</Button>
               </div>
             ) : (
               <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} trialExpired={trialExpired} />
