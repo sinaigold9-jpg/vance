@@ -28,6 +28,7 @@ import { AdminExportTab } from "@/components/admin/AdminExportTab";
 import { AdminChangeRequestsTab } from "@/components/admin/AdminChangeRequestsTab";
 import { AdminEmailTab } from "@/components/admin/AdminEmailTab";
 import { AdminOffersContestsTab } from "@/components/admin/AdminOffersContestsTab";
+import { AdminInternalLinksTab } from "@/components/admin/AdminInternalLinksTab";
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -252,6 +253,10 @@ const Admin = () => {
               <Gift className="w-4 h-4 ml-1" />
               العروض والمسابقات
             </TabsTrigger>
+            <TabsTrigger value="internal-links" className="flex-1 min-w-[80px]">
+              <Key className="w-4 h-4 ml-1" />
+              الروابط
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
@@ -316,6 +321,10 @@ const Admin = () => {
 
           <TabsContent value="offers-contests" className="mt-6">
             <AdminOffersContestsTab />
+          </TabsContent>
+
+          <TabsContent value="internal-links" className="mt-6">
+            <AdminInternalLinksTab />
           </TabsContent>
         </Tabs>
       </div>
