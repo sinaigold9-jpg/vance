@@ -253,6 +253,10 @@ const Admin = () => {
               <Gift className="w-4 h-4 ml-1" />
               العروض والمسابقات
             </TabsTrigger>
+            <TabsTrigger value="internal-links" className="flex-1 min-w-[80px]">
+              <Key className="w-4 h-4 ml-1" />
+              الروابط
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6">
