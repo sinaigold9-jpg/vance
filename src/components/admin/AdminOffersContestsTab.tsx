@@ -290,6 +290,7 @@ export const AdminOffersContestsTab = () => {
                   <SelectItem value="points">نقاط</SelectItem>
                   <SelectItem value="feature">ميزة خاصة</SelectItem>
                   <SelectItem value="discount">خصم على باقة</SelectItem>
+                  <SelectItem value="package_discount">خصم اشتراك باقة</SelectItem>
                 </SelectContent>
               </Select>
             </div>
