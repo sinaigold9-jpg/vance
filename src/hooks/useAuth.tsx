@@ -6,6 +6,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isStaff: boolean;
+  staffPermissions: string[];
+  staffRole: string;
   loading: boolean;
   signUp: (email: string, password: string, fullName: string, phone: string, referredBy?: string | null) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -18,10 +21,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
+  const [staffPermissions, setStaffPermissions] = useState<string[]>([]);
+  const [staffRole, setStaffRole] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state change listener BEFORE getting session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -30,21 +35,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             checkAdminRole(session.user.id);
+            checkStaffRole(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsStaff(false);
+          setStaffPermissions([]);
+          setStaffRole("");
         }
 
-        // Handle token refresh errors by clearing session
         if (event === 'TOKEN_REFRESHED' && !session) {
           localStorage.removeItem('supabase.auth.token');
         }
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      // If there's an error getting session (e.g., expired refresh token), clear it
       if (error) {
         console.log('Session error, clearing:', error.message);
         supabase.auth.signOut();
@@ -56,6 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
+        checkStaffRole(session.user.id);
       }
       setLoading(false);
     });
@@ -72,6 +79,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
 
     setIsAdmin(!!data && !error);
+  };
+
+  const checkStaffRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("staff_members")
+      .select("role_title, permissions, is_active")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (data && !error) {
+      setIsStaff(true);
+      setStaffRole(data.role_title);
+      setStaffPermissions(Array.isArray(data.permissions) ? data.permissions as string[] : []);
+    } else {
+      setIsStaff(false);
+      setStaffPermissions([]);
+      setStaffRole("");
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string, referredBy?: string | null) => {
@@ -102,10 +128,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setIsStaff(false);
+    setStaffPermissions([]);
+    setStaffRole("");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isStaff, staffPermissions, staffRole, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
