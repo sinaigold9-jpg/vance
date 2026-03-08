@@ -136,6 +136,9 @@ export const AdminOffersContestsTab = () => {
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
       max_participants: maxParticipants ? Number(maxParticipants) : null,
       display_order: Number(displayOrder),
+      button_label: buttonType === "custom" ? customTaskDesc.trim() || null : BUTTON_TYPES[buttonType] || null,
+      original_price: Number(originalPrice),
+      discount_percentage: Number(discountAmount),
     };
 
     if (editingId) {
