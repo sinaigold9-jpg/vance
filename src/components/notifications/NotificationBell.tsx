@@ -305,7 +305,7 @@ export const NotificationBell = () => {
                 ) : (
                   <>
                     <Mail className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p>لا توجد رسائل خاصة</p>
+                    <p>لا توجد رسائل واردة</p>
                   </>
                 )}
               </div>
