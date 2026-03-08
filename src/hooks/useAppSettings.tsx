@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface AppSettings {
   appEnabled: boolean;
   appDisabledMessage: string;
+  landingEnabled: boolean;
+  landingDisabledMessage: string;
   tasksEnabled: boolean;
   tasksDisabledMessage: string;
   luckyWheelEnabled: boolean;
