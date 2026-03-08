@@ -90,19 +90,7 @@ export const EmailSubscription = () => {
   if (loading || !user) return null;
 
   if (isSubscribed) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-center gap-3"
-      >
-        <CheckCircle className="w-6 h-6 text-primary shrink-0" />
-        <div>
-          <p className="font-bold text-sm text-foreground">مشترك في العروض</p>
-          <p className="text-xs text-muted-foreground">{email}</p>
-        </div>
-      </motion.div>
-    );
+    return null;
   }
 
   return (

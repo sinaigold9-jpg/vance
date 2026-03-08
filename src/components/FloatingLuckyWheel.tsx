@@ -23,7 +23,7 @@ export const FloatingLuckyWheel = () => {
 
   return (
     <motion.div
-      className="fixed top-20 left-4 z-40"
+      className="fixed bottom-20 left-4 z-40"
       onHoverStart={() => setIsExpanded(true)}
       onHoverEnd={() => setIsExpanded(false)}
     >
