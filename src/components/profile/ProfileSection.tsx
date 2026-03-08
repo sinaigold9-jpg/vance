@@ -28,7 +28,7 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isStaff, staffRole } = useAuth();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
 
