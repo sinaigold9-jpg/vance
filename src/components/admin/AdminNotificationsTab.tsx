@@ -484,7 +484,7 @@ export const AdminNotificationsTab = () => {
                 <SelectContent>
                   <SelectItem value="all">الكل</SelectItem>
                   <SelectItem value="general">عام</SelectItem>
-                  <SelectItem value="private_message">رسائل خاصة</SelectItem>
+                  <SelectItem value="private_message">رسائل واردة</SelectItem>
                   <SelectItem value="offer">عروض خاصة</SelectItem>
                   <SelectItem value="update">تحديثات</SelectItem>
                   <SelectItem value="chat">محادثة</SelectItem>
