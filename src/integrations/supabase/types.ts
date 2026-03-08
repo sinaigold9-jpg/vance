@@ -768,10 +768,12 @@ export type Database = {
       }
       offers_contests: {
         Row: {
+          button_label: string | null
           created_at: string
           created_by: string | null
           custom_task_description: string | null
           description: string
+          discount_percentage: number | null
           display_location: string
           display_order: number | null
           ends_at: string | null
@@ -779,6 +781,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           max_participants: number | null
+          original_price: number | null
           required_task: string
           reward_amount: number
           reward_type: string
@@ -788,10 +791,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          button_label?: string | null
           created_at?: string
           created_by?: string | null
           custom_task_description?: string | null
           description: string
+          discount_percentage?: number | null
           display_location?: string
           display_order?: number | null
           ends_at?: string | null
@@ -799,6 +804,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           max_participants?: number | null
+          original_price?: number | null
           required_task?: string
           reward_amount?: number
           reward_type?: string
@@ -808,10 +814,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          button_label?: string | null
           created_at?: string
           created_by?: string | null
           custom_task_description?: string | null
           description?: string
+          discount_percentage?: number | null
           display_location?: string
           display_order?: number | null
           ends_at?: string | null
@@ -819,6 +827,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           max_participants?: number | null
+          original_price?: number | null
           required_task?: string
           reward_amount?: number
           reward_type?: string

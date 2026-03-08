@@ -317,14 +317,14 @@ export const AdminOffersContestsTab = () => {
             </div>
           </div>
 
-          {requiredTask === "activate_offer" && (
+          {(requiredTask === "activate_offer" || rewardType === "package_discount") && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">السعر الأصلي (ج.م)</label>
                 <Input type="number" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">قيمة الخصم (ج.م)</label>
+                <label className="text-xs text-muted-foreground mb-1 block">نسبة/قيمة الخصم (%)</label>
                 <Input type="number" value={discountAmount} onChange={e => setDiscountAmount(e.target.value)} />
               </div>
             </div>

@@ -171,11 +171,20 @@ export const SupportSection = () => {
               className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-8 text-center"
             >
               <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-bold mb-2">الدعم المباشر لباقات VIP2 وأعلى</h3>
+              <h3 className="text-lg font-bold mb-2">الدعم المباشر لباقات VIP فقط</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                قم بترقية باقتك إلى VIP2 أو VIP3 للوصول إلى المحادثة المباشرة مع فريق الدعم
+                قم بترقية باقتك إلى أي باقة VIP للوصول إلى المحادثة المباشرة مع فريق الدعم
               </p>
-              <p className="text-xs text-muted-foreground">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
+              <Button
+                className="bg-gradient-gold text-primary-foreground"
+                onClick={() => {
+                  const event = new CustomEvent("navigate-tab", { detail: "packages" });
+                  window.dispatchEvent(event);
+                }}
+              >
+                ترقية الباقة الآن
+              </Button>
+              <p className="text-xs text-muted-foreground mt-3">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
             </motion.div>
           )}
         </TabsContent>
