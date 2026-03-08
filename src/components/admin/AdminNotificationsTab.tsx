@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Bell, Send, Search, MessageSquare, 
-  Megaphone, DollarSign, Filter, Mail, Sparkles
+  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
