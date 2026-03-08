@@ -47,10 +47,41 @@ export const AdminNotificationsTab = () => {
   const [notifType, setNotifType] = useState("general");
   const [isSending, setIsSending] = useState(false);
 
+  // Welcome message settings
+  const [welcomeTitle, setWelcomeTitle] = useState("");
+  const [welcomeBody, setWelcomeBody] = useState("");
+  const [isSavingWelcome, setIsSavingWelcome] = useState(false);
+
   useEffect(() => {
     fetchNotifications();
     fetchUsers();
+    fetchWelcomeSettings();
   }, [typeFilter]);
+
+  const fetchWelcomeSettings = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["welcome_message_title", "welcome_message_body"]);
+    
+    if (data) {
+      setWelcomeTitle(data.find(s => s.key === "welcome_message_title")?.value || "");
+      setWelcomeBody(data.find(s => s.key === "welcome_message_body")?.value || "");
+    }
+  };
+
+  const handleSaveWelcome = async () => {
+    setIsSavingWelcome(true);
+    try {
+      await supabase.from("app_settings").update({ value: welcomeTitle }).eq("key", "welcome_message_title");
+      await supabase.from("app_settings").update({ value: welcomeBody }).eq("key", "welcome_message_body");
+      toast.success("تم حفظ رسالة الترحيب بنجاح");
+    } catch {
+      toast.error("حدث خطأ أثناء الحفظ");
+    } finally {
+      setIsSavingWelcome(false);
+    }
+  };
 
   const fetchNotifications = async () => {
     setIsLoading(true);

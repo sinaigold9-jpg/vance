@@ -74,7 +74,39 @@ export const NotificationBell = () => {
     if (data) {
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.is_read).length);
+
+      // Send welcome message for new users (no notifications yet)
+      if (data.length === 0) {
+        sendWelcomeMessage();
+      }
     }
+  };
+
+  const sendWelcomeMessage = async () => {
+    if (!user) return;
+    try {
+      // Fetch welcome message settings
+      const { data: settings } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["welcome_message_title", "welcome_message_body"]);
+
+      const title = settings?.find(s => s.key === "welcome_message_title")?.value || "مرحباً بك في Advance! 🎉";
+      const body = settings?.find(s => s.key === "welcome_message_body")?.value || "أهلاً وسهلاً بك! نتمنى لك تجربة ممتعة ومربحة.";
+
+      const { data: inserted } = await supabase.from("notifications").insert({
+        user_id: user.id,
+        title,
+        message: body,
+        type: "private_message",
+        is_read: false
+      }).select().single();
+
+      if (inserted) {
+        setNotifications([inserted]);
+        setUnreadCount(1);
+      }
+    } catch {}
   };
 
   const markAsRead = async (id: string) => {
