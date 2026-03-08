@@ -422,6 +422,22 @@ export const AdminAdsTab = () => {
                 )}
               </div>
 
+              {/* Payment Info */}
+              <div className="bg-secondary/30 rounded-xl p-4">
+                <p className="font-medium mb-2">نوع الإعلان</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {selectedAd.ad_type === "paid" ? (
+                    <>
+                      <Badge className="bg-gradient-gold text-primary-foreground">إعلان مدفوع</Badge>
+                      <span className="text-sm">المبلغ: <strong>{selectedAd.promotion_amount} جنيه</strong></span>
+                      <span className="text-sm">المدة: <strong>{selectedAd.promotion_days} يوم</strong></span>
+                    </>
+                  ) : (
+                    <Badge variant="secondary">إعلان مجاني</Badge>
+                  )}
+                </div>
+              </div>
+
               {selectedAd.external_link && (
                 <a
                   href={selectedAd.external_link}
