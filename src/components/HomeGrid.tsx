@@ -29,16 +29,16 @@ interface GridItem {
 }
 
 const gridItems: GridItem[] = [
+  { id: "tasks", icon: Gift, label: "المهام", description: "أكمل المهام واربح", gradient: "from-purple-500 to-violet-500" },
+  { id: "offers", icon: Trophy, label: "العروض", description: "العروض والمسابقات", gradient: "from-amber-500 to-yellow-500" },
   { id: "home", icon: Home, label: "الرئيسية", description: "عرض الرصيد والأرباح", gradient: "from-blue-500 to-blue-600" },
   { id: "packages", icon: Package, label: "الباقات", description: "اختر باقتك المناسبة", gradient: "from-amber-500 to-orange-500" },
   { id: "earnings", icon: Calculator, label: "الأرباح", description: "حاسبة أرباح الباقات", gradient: "from-emerald-500 to-green-500" },
-  { id: "tasks", icon: Gift, label: "المهام", description: "أكمل المهام واربح", gradient: "from-purple-500 to-violet-500" },
   { id: "ads", icon: Megaphone, label: "الإعلانات", description: "تصفح وأنشئ إعلانات", gradient: "from-rose-500 to-pink-500" },
   { id: "wallet", icon: Wallet, label: "المحفظة", description: "إيداع وسحب الأموال", gradient: "from-pink-500 to-rose-500" },
   { id: "team", icon: Users, label: "الفريق", description: "ادعُ أصدقاءك واربح", gradient: "from-cyan-500 to-teal-500" },
   { id: "profile", icon: User, label: "الملف الشخصي", description: "إعدادات حسابك", gradient: "from-violet-500 to-purple-500" },
   { id: "sponsor", icon: Tag, label: "ممول", description: "إنشاء صفحة ممول", gradient: "from-orange-500 to-amber-500" },
-  { id: "offers", icon: Trophy, label: "العروض", description: "العروض والمسابقات", gradient: "from-amber-500 to-yellow-500" },
   { id: "support", icon: HeadphonesIcon, label: "الدعم", description: "تواصل معنا للمساعدة", gradient: "from-indigo-500 to-blue-600" },
   { id: "faq", icon: HelpCircle, label: "الأسئلة الشائعة", description: "دليل استخدام التطبيق", gradient: "from-teal-500 to-cyan-500" },
 ];
