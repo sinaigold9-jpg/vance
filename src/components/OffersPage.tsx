@@ -470,10 +470,20 @@ export const OffersPage = () => {
                         <p className="text-muted-foreground text-sm mt-1">{item.description}</p>
                       </div>
                       <div className="text-center bg-primary/10 rounded-xl px-3 py-2 min-w-[70px]">
-                        <p className="text-xl font-black text-primary">{item.reward_amount}</p>
-                        <p className="text-[10px] text-primary/70">
-                          {item.reward_type === "points" ? "نقطة" : item.reward_type === "discount" ? "خصم ج.م" : "ج.م"}
-                        </p>
+                        {item.discount_percentage > 0 ? (
+                          <>
+                            <p className="text-xs line-through text-muted-foreground">{item.original_price} ج.م</p>
+                            <p className="text-xl font-black text-primary">{item.discount_percentage}%</p>
+                            <p className="text-[10px] text-primary/70">خصم</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xl font-black text-primary">{item.reward_amount}</p>
+                            <p className="text-[10px] text-primary/70">
+                              {item.reward_type === "points" ? "نقطة" : item.reward_type === "discount" || item.reward_type === "package_discount" ? "خصم ج.م" : "ج.م"}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
 
