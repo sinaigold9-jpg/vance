@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Gift, Trophy, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Gift, Trophy, Plus, Edit, Trash2, Eye, EyeOff, Archive, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -42,13 +42,23 @@ const TASK_TYPES: Record<string, string> = {
   share_facebook: "مشاركة فيسبوك",
   share_telegram: "مشاركة تيليجرام",
   share_whatsapp: "مشاركة واتساب",
+  activate_offer: "تفعيل عرض (خصم من الرصيد)",
   custom: "مهمة مخصصة",
+};
+
+const BUTTON_TYPES: Record<string, string> = {
+  share: "شارك",
+  activate: "فعّل العرض",
+  earn: "اكسب",
+  subscribe: "اشترك",
+  custom: "مخصص",
 };
 
 export const AdminOffersContestsTab = () => {
   const [items, setItems] = useState<OfferContest[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewTab, setViewTab] = useState("offers");
 
   // Form state
   const [title, setTitle] = useState("");
@@ -63,6 +73,9 @@ export const AdminOffersContestsTab = () => {
   const [endsAt, setEndsAt] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [displayOrder, setDisplayOrder] = useState("0");
+  const [buttonType, setButtonType] = useState("subscribe");
+  const [discountAmount, setDiscountAmount] = useState("0");
+  const [originalPrice, setOriginalPrice] = useState("0");
 
   useEffect(() => { fetchItems(); }, []);
 
@@ -79,6 +92,7 @@ export const AdminOffersContestsTab = () => {
     setRewardAmount("0"); setRequiredTask("share_app"); setCustomTaskDesc("");
     setDisplayLocation("offers_only"); setImageUrl(""); setEndsAt("");
     setMaxParticipants(""); setDisplayOrder("0"); setEditingId(null); setShowForm(false);
+    setButtonType("subscribe"); setDiscountAmount("0"); setOriginalPrice("0");
   };
 
   const handleEdit = (item: OfferContest) => {
@@ -143,17 +157,84 @@ export const AdminOffersContestsTab = () => {
     fetchItems();
   };
 
+  const handleArchive = async (id: string) => {
+    await supabase.from("offers_contests").update({ is_active: false, display_location: "archived" }).eq("id", id);
+    toast.success("تم أرشفة العنصر");
+    fetchItems();
+  };
+
+  const handleRestore = async (id: string) => {
+    await supabase.from("offers_contests").update({ is_active: true, display_location: "offers_only" }).eq("id", id);
+    toast.success("تمت استعادة العنصر");
+    fetchItems();
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من الحذف؟")) return;
+    if (!confirm("هل أنت متأكد من الحذف النهائي؟")) return;
     await supabase.from("offers_contests").delete().eq("id", id);
     toast.success("تم الحذف");
     fetchItems();
   };
 
+  const offers = items.filter(i => i.type === "offer" && i.display_location !== "archived");
+  const contests = items.filter(i => i.type === "contest" && i.display_location !== "archived");
+  const archived = items.filter(i => i.display_location === "archived");
+
+  const renderItemCard = (item: OfferContest, showArchiveBtn = true) => (
+    <motion.div
+      key={item.id}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-card border border-border rounded-xl p-4"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {item.type === "offer" ? <Gift className="w-4 h-4 text-primary" /> : <Trophy className="w-4 h-4 text-amber-500" />}
+            <span className="font-bold text-sm">{item.title}</span>
+            <Badge variant={item.is_active ? "default" : "secondary"} className="text-[10px]">
+              {item.display_location === "archived" ? "مؤرشف" : item.is_active ? "نشط" : "متوقف"}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+          <div className="flex gap-2 mt-2 text-[10px] text-muted-foreground">
+            <span>المكافأة: {item.reward_amount} {item.reward_type === "points" ? "نقطة" : "ج.م"}</span>
+            <span>•</span>
+            <span>{DISPLAY_LOCATIONS[item.display_location] || item.display_location}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
+            <Edit className="w-4 h-4" />
+          </Button>
+          {item.display_location === "archived" ? (
+            <Button size="icon" variant="ghost" onClick={() => handleRestore(item.id)}>
+              <RotateCcw className="w-4 h-4 text-primary" />
+            </Button>
+          ) : (
+            <>
+              <Button size="icon" variant="ghost" onClick={() => handleToggle(item.id, item.is_active)}>
+                {item.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+              {showArchiveBtn && (
+                <Button size="icon" variant="ghost" onClick={() => handleArchive(item.id)}>
+                  <Archive className="w-4 h-4 text-amber-500" />
+                </Button>
+              )}
+            </>
+          )}
+          <Button size="icon" variant="ghost" onClick={() => handleDelete(item.id)} className="text-destructive">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <div className="bg-card border border-border rounded-xl p-3 text-center">
           <p className="text-2xl font-bold">{items.length}</p>
           <p className="text-xs text-muted-foreground">الإجمالي</p>
@@ -163,8 +244,12 @@ export const AdminOffersContestsTab = () => {
           <p className="text-xs text-muted-foreground">نشط</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-amber-500">{items.filter(i => i.type === "contest").length}</p>
+          <p className="text-2xl font-bold text-amber-500">{contests.length}</p>
           <p className="text-xs text-muted-foreground">مسابقات</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-3 text-center">
+          <p className="text-2xl font-bold text-muted-foreground">{archived.length}</p>
+          <p className="text-xs text-muted-foreground">مؤرشف</p>
         </div>
       </div>
 
@@ -201,6 +286,7 @@ export const AdminOffersContestsTab = () => {
                   <SelectItem value="balance">رصيد (ج.م)</SelectItem>
                   <SelectItem value="points">نقاط</SelectItem>
                   <SelectItem value="feature">ميزة خاصة</SelectItem>
+                  <SelectItem value="discount">خصم على باقة</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -211,7 +297,7 @@ export const AdminOffersContestsTab = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">قيمة المكافأة</label>
+              <label className="text-xs text-muted-foreground mb-1 block">قيمة المكافأة / الخصم</label>
               <Input type="number" value={rewardAmount} onChange={e => setRewardAmount(e.target.value)} />
             </div>
             <div>
@@ -227,20 +313,46 @@ export const AdminOffersContestsTab = () => {
             </div>
           </div>
 
+          {requiredTask === "activate_offer" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">السعر الأصلي (ج.م)</label>
+                <Input type="number" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">قيمة الخصم (ج.م)</label>
+                <Input type="number" value={discountAmount} onChange={e => setDiscountAmount(e.target.value)} />
+              </div>
+            </div>
+          )}
+
           {requiredTask === "custom" && (
             <Input placeholder="وصف المهمة المخصصة" value={customTaskDesc} onChange={e => setCustomTaskDesc(e.target.value)} />
           )}
 
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">مكان الظهور</label>
-            <Select value={displayLocation} onValueChange={setDisplayLocation}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(DISPLAY_LOCATIONS).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">مكان الظهور</label>
+              <Select value={displayLocation} onValueChange={setDisplayLocation}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(DISPLAY_LOCATIONS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">نوع الزر</label>
+              <Select value={buttonType} onValueChange={setButtonType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(BUTTON_TYPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
@@ -273,46 +385,38 @@ export const AdminOffersContestsTab = () => {
         </motion.div>
       )}
 
-      {/* List */}
-      <div className="space-y-3">
-        {items.map((item) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-card border border-border rounded-xl p-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  {item.type === "offer" ? <Gift className="w-4 h-4 text-primary" /> : <Trophy className="w-4 h-4 text-amber-500" />}
-                  <span className="font-bold text-sm">{item.title}</span>
-                  <Badge variant={item.is_active ? "default" : "secondary"} className="text-[10px]">
-                    {item.is_active ? "نشط" : "متوقف"}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
-                <div className="flex gap-2 mt-2 text-[10px] text-muted-foreground">
-                  <span>المكافأة: {item.reward_amount} {item.reward_type === "points" ? "نقطة" : "ج.م"}</span>
-                  <span>•</span>
-                  <span>{DISPLAY_LOCATIONS[item.display_location] || item.display_location}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => handleToggle(item.id, item.is_active)}>
-                  {item.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => handleDelete(item.id)} className="text-destructive">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {/* Tabs: Offers / Contests / Archive */}
+      <Tabs value={viewTab} onValueChange={setViewTab}>
+        <TabsList className="w-full">
+          <TabsTrigger value="offers" className="flex-1">
+            <Gift className="w-4 h-4 ml-1" />العروض ({offers.length})
+          </TabsTrigger>
+          <TabsTrigger value="contests" className="flex-1">
+            <Trophy className="w-4 h-4 ml-1" />المسابقات ({contests.length})
+          </TabsTrigger>
+          <TabsTrigger value="archive" className="flex-1">
+            <Archive className="w-4 h-4 ml-1" />الأرشيف ({archived.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="offers" className="mt-4 space-y-3">
+          {offers.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">لا توجد عروض</p>
+          ) : offers.map(item => renderItemCard(item))}
+        </TabsContent>
+
+        <TabsContent value="contests" className="mt-4 space-y-3">
+          {contests.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">لا توجد مسابقات</p>
+          ) : contests.map(item => renderItemCard(item))}
+        </TabsContent>
+
+        <TabsContent value="archive" className="mt-4 space-y-3">
+          {archived.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">الأرشيف فارغ</p>
+          ) : archived.map(item => renderItemCard(item, false))}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, Trophy, Share2, Users, MessageCircle, Clock, CheckCircle2, Star, ExternalLink } from "lucide-react";
+import { Gift, Trophy, Share2, Users, MessageCircle, Clock, CheckCircle2, Star, ExternalLink, Zap, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "./BackButton";
 import { PromotionBanner } from "./PromotionBanner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -36,13 +37,14 @@ interface Participation {
   balance_earned: number;
 }
 
-const TASK_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
-  share_app: { label: "مشاركة التطبيق", icon: Share2 },
-  invite_friends: { label: "دعوة أصدقاء", icon: Users },
-  share_facebook: { label: "مشاركة على فيسبوك", icon: ExternalLink },
-  share_telegram: { label: "مشاركة على تيليجرام", icon: MessageCircle },
-  share_whatsapp: { label: "مشاركة على واتساب", icon: MessageCircle },
-  custom: { label: "مهمة مخصصة", icon: Star },
+const TASK_LABELS: Record<string, { label: string; icon: typeof Share2; btnLabel: string }> = {
+  share_app: { label: "مشاركة التطبيق", icon: Share2, btnLabel: "شارك" },
+  invite_friends: { label: "دعوة أصدقاء", icon: Users, btnLabel: "ادعُ" },
+  share_facebook: { label: "مشاركة على فيسبوك", icon: ExternalLink, btnLabel: "شارك" },
+  share_telegram: { label: "مشاركة على تيليجرام", icon: MessageCircle, btnLabel: "شارك" },
+  share_whatsapp: { label: "مشاركة على واتساب", icon: MessageCircle, btnLabel: "شارك" },
+  activate_offer: { label: "تفعيل العرض", icon: Zap, btnLabel: "فعّل العرض" },
+  custom: { label: "مهمة مخصصة", icon: Star, btnLabel: "اشترك" },
 };
 
 export const OffersPage = () => {
@@ -52,6 +54,9 @@ export const OffersPage = () => {
   const [activeTab, setActiveTab] = useState<"all" | "offers" | "contests">("all");
   const [loading, setLoading] = useState(true);
   const [countdowns, setCountdowns] = useState<Record<string, string>>({});
+  const [activateDialog, setActivateDialog] = useState<OfferContest | null>(null);
+  const [userBalance, setUserBalance] = useState(0);
+  const [activating, setActivating] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -88,10 +93,11 @@ export const OffersPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    // Fetch all offers (including expired, but not archived)
     const { data: offersData } = await supabase
       .from("offers_contests")
       .select("*")
-      .eq("is_active", true)
+      .neq("display_location", "archived")
       .order("display_order", { ascending: true });
 
     if (offersData) setItems(offersData as unknown as OfferContest[]);
@@ -102,6 +108,13 @@ export const OffersPage = () => {
         .select("*")
         .eq("user_id", user.id);
       if (partData) setParticipations(partData as unknown as Participation[]);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
+      if (profile) setUserBalance(profile.balance || 0);
     }
     setLoading(false);
   };
@@ -109,29 +122,103 @@ export const OffersPage = () => {
   const getParticipation = (offerId: string) =>
     participations.find(p => p.offer_id === offerId);
 
+  const isExpired = (item: OfferContest) => {
+    if (!item.ends_at) return false;
+    return new Date(item.ends_at).getTime() < Date.now();
+  };
+
   const handleParticipate = async (item: OfferContest) => {
-    if (!user) {
-      toast.error("يجب تسجيل الدخول أولاً");
-      return;
-    }
+    if (!user) { toast.error("يجب تسجيل الدخول أولاً"); return; }
+    if (isExpired(item)) { toast.error("هذا العرض قد انتهى"); return; }
 
     const existing = getParticipation(item.id);
-    if (existing) {
-      toast.info("أنت مشترك بالفعل في هذا النشاط");
+    if (existing) { toast.info("أنت مشترك بالفعل"); return; }
+
+    // For activate_offer type, show confirmation dialog
+    if (item.required_task === "activate_offer") {
+      setActivateDialog(item);
       return;
     }
 
     const { error } = await supabase
       .from("offer_participations")
       .insert({ offer_id: item.id, user_id: user.id, status: "pending" });
+    if (error) { toast.error("حدث خطأ في الاشتراك"); return; }
+    await executeTask(item);
+  };
 
-    if (error) {
-      toast.error("حدث خطأ في الاشتراك");
+  const handleActivateOffer = async () => {
+    if (!user || !activateDialog) return;
+    setActivating(true);
+
+    const cost = activateDialog.reward_amount; // The discount/cost amount
+    if (userBalance < cost) {
+      toast.error(`لا يوجد رصيد كافٍ لتفعيل العرض. المطلوب: ${cost} ج.م، رصيدك: ${userBalance} ج.م`);
+      setActivating(false);
       return;
     }
 
-    // Execute the task
-    await executeTask(item);
+    // Deduct balance
+    const newBalance = userBalance - cost;
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ balance: newBalance })
+      .eq("id", user.id);
+
+    if (updateError) {
+      toast.error("حدث خطأ في تفعيل العرض");
+      setActivating(false);
+      return;
+    }
+
+    // Record participation
+    await supabase
+      .from("offer_participations")
+      .insert({
+        offer_id: activateDialog.id,
+        user_id: user.id,
+        status: "rewarded",
+        completed_at: new Date().toISOString(),
+        rewarded_at: new Date().toISOString(),
+        balance_earned: cost,
+      });
+
+    // Log activity
+    await supabase.from("activity_logs").insert({
+      user_id: user.id,
+      action: `تفعيل عرض: ${activateDialog.title}`,
+      amount: -cost,
+    });
+
+    setUserBalance(newBalance);
+    toast.success(`✅ تم تفعيل العرض بنجاح! تم خصم ${cost} ج.م من رصيدك`);
+    setActivateDialog(null);
+    setActivating(false);
+    fetchData();
+  };
+
+  const handleShare = async (item: OfferContest) => {
+    const appUrl = window.location.origin;
+    const shareUrl = `${appUrl}/app/offers?id=${item.id}`;
+    const shareText = `🎉 ${item.title}\n${item.description}\n\nجرب الآن: ${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: item.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        return true;
+      } catch {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      toast.success("تم نسخ رابط المشاركة");
+      return true;
+    }
+    return false;
   };
 
   const executeTask = async (item: OfferContest) => {
@@ -139,22 +226,13 @@ export const OffersPage = () => {
     const shareText = `🎉 ${item.title} - جرب تطبيق Advance الآن! ${appUrl}`;
 
     switch (item.required_task) {
-      case "share_app":
-        if (navigator.share) {
-          try {
-            await navigator.share({ title: "Advance", text: shareText, url: appUrl });
-            await completeParticipation(item);
-          } catch {
-            toast.info("تم إلغاء المشاركة");
-          }
-        } else {
-          await navigator.clipboard.writeText(shareText);
-          toast.success("تم نسخ رابط المشاركة");
-          await completeParticipation(item);
-        }
+      case "share_app": {
+        const shared = await handleShare(item);
+        if (shared) await completeParticipation(item);
         break;
+      }
       case "share_facebook":
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}`, "_blank");
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}&quote=${encodeURIComponent(shareText)}`, "_blank");
         await completeParticipation(item);
         break;
       case "share_telegram":
@@ -186,48 +264,24 @@ export const OffersPage = () => {
       .eq("offer_id", item.id)
       .eq("user_id", user.id);
 
-    // Award the reward
     if (item.reward_type === "balance") {
-      await supabase.rpc("admin_update_user_balance", {
-        _user_id: user.id,
-        _new_balance: undefined,
-      });
-      // Direct update for user's own balance
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("balance, points")
-        .eq("id", user.id)
-        .single();
-
+      const { data: profile } = await supabase.from("profiles").select("balance").eq("id", user.id).single();
       if (profile) {
-        await supabase
-          .from("profiles")
-          .update({ balance: profile.balance + item.reward_amount })
-          .eq("id", user.id);
+        await supabase.from("profiles").update({ balance: profile.balance + item.reward_amount }).eq("id", user.id);
       }
     } else if (item.reward_type === "points") {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("points")
-        .eq("id", user.id)
-        .single();
-
+      const { data: profile } = await supabase.from("profiles").select("points").eq("id", user.id).single();
       if (profile) {
-        await supabase
-          .from("profiles")
-          .update({ points: (profile.points || 0) + item.reward_amount })
-          .eq("id", user.id);
+        await supabase.from("profiles").update({ points: (profile.points || 0) + item.reward_amount }).eq("id", user.id);
       }
     }
 
-    // Update participation to rewarded
     await supabase
       .from("offer_participations")
       .update({ status: "rewarded", rewarded_at: new Date().toISOString() })
       .eq("offer_id", item.id)
       .eq("user_id", user.id);
 
-    // Log activity
     await supabase.from("activity_logs").insert({
       user_id: user.id,
       action: item.type === "offer" ? "مكافأة عرض ترويجي" : "مكافأة مسابقة",
@@ -239,10 +293,80 @@ export const OffersPage = () => {
   };
 
   const filtered = items.filter(item => {
+    if (item.display_location === "archived") return false;
+    if (!item.is_active && !isExpired(item)) return false;
     if (activeTab === "offers") return item.type === "offer";
     if (activeTab === "contests") return item.type === "contest";
     return true;
   });
+
+  const getActionButton = (item: OfferContest) => {
+    const participation = getParticipation(item.id);
+    const taskInfo = TASK_LABELS[item.required_task] || TASK_LABELS.custom;
+    const TaskIcon = taskInfo.icon;
+    const isCompleted = participation?.status === "rewarded" || participation?.status === "completed";
+    const expired = isExpired(item);
+
+    if (isCompleted) {
+      return (
+        <div className="flex items-center gap-2 bg-accent/50 rounded-lg px-3 py-2 text-accent-foreground">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="font-semibold text-sm">تم الحصول على المكافأة ✓</span>
+        </div>
+      );
+    }
+
+    if (expired) {
+      return (
+        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2.5">
+          <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+          <span className="font-medium text-sm text-muted-foreground">انتهى هذا العرض ولم يعد متاحاً</span>
+        </div>
+      );
+    }
+
+    if (participation?.status === "pending") {
+      return (
+        <Button variant="secondary" className="w-full" onClick={() => executeTask(item)}>
+          <TaskIcon className="w-4 h-4 ml-2" />
+          أكمل المهمة
+        </Button>
+      );
+    }
+
+    // For share-type tasks, show share + subscribe buttons
+    if (["share_app", "share_facebook", "share_telegram", "share_whatsapp"].includes(item.required_task)) {
+      return (
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={() => handleParticipate(item)}>
+            <Gift className="w-4 h-4 ml-2" />
+            اشترك واكسب
+          </Button>
+          <Button variant="outline" onClick={() => handleShare(item)}>
+            <Share2 className="w-4 h-4 ml-1" />
+            شارك
+          </Button>
+        </div>
+      );
+    }
+
+    // For activate_offer
+    if (item.required_task === "activate_offer") {
+      return (
+        <Button className="w-full bg-gradient-to-r from-primary to-primary/80" onClick={() => handleParticipate(item)}>
+          <Zap className="w-4 h-4 ml-2" />
+          فعّل العرض
+        </Button>
+      );
+    }
+
+    return (
+      <Button className="w-full" onClick={() => handleParticipate(item)}>
+        <Gift className="w-4 h-4 ml-2" />
+        {taskInfo.btnLabel || "اشترك الآن"}
+      </Button>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -253,7 +377,6 @@ export const OffersPage = () => {
         <p className="text-muted-foreground text-sm">اشترك في العروض واربح مكافآت رائعة</p>
       </div>
 
-      {/* Promotion Banner */}
       <PromotionBanner location="offers" />
 
       {/* Tabs */}
@@ -287,10 +410,9 @@ export const OffersPage = () => {
         <div className="space-y-4">
           <AnimatePresence>
             {filtered.map((item, idx) => {
-              const participation = getParticipation(item.id);
               const taskInfo = TASK_LABELS[item.required_task] || TASK_LABELS.custom;
               const TaskIcon = taskInfo.icon;
-              const isCompleted = participation?.status === "rewarded" || participation?.status === "completed";
+              const expired = isExpired(item);
 
               return (
                 <motion.div
@@ -299,16 +421,19 @@ export const OffersPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border rounded-2xl overflow-hidden"
+                  className={`bg-card border rounded-2xl overflow-hidden ${expired ? "border-muted opacity-75" : "border-border"}`}
                 >
                   {item.image_url && (
                     <div className="relative h-40 overflow-hidden">
                       <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent" />
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-3 right-3 flex gap-1">
                         <Badge variant={item.type === "offer" ? "default" : "secondary"} className="text-xs">
                           {item.type === "offer" ? "عرض" : "مسابقة"}
                         </Badge>
+                        {expired && (
+                          <Badge variant="destructive" className="text-xs">منتهي</Badge>
+                        )}
                       </div>
                     </div>
                   )}
@@ -317,9 +442,12 @@ export const OffersPage = () => {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         {!item.image_url && (
-                          <Badge variant={item.type === "offer" ? "default" : "secondary"} className="text-xs mb-2">
-                            {item.type === "offer" ? "عرض" : "مسابقة"}
-                          </Badge>
+                          <div className="flex gap-1 mb-2">
+                            <Badge variant={item.type === "offer" ? "default" : "secondary"} className="text-xs">
+                              {item.type === "offer" ? "عرض" : "مسابقة"}
+                            </Badge>
+                            {expired && <Badge variant="destructive" className="text-xs">منتهي</Badge>}
+                          </div>
                         )}
                         <h3 className="font-bold text-foreground text-lg">{item.title}</h3>
                         <p className="text-muted-foreground text-sm mt-1">{item.description}</p>
@@ -327,7 +455,7 @@ export const OffersPage = () => {
                       <div className="text-center bg-primary/10 rounded-xl px-3 py-2 min-w-[70px]">
                         <p className="text-xl font-black text-primary">{item.reward_amount}</p>
                         <p className="text-[10px] text-primary/70">
-                          {item.reward_type === "points" ? "نقطة" : "ج.م"}
+                          {item.reward_type === "points" ? "نقطة" : item.reward_type === "discount" ? "خصم ج.م" : "ج.م"}
                         </p>
                       </div>
                     </div>
@@ -342,40 +470,14 @@ export const OffersPage = () => {
 
                     {/* Countdown */}
                     {countdowns[item.id] && (
-                      <div className="flex items-center gap-1 text-amber-500 text-sm">
+                      <div className={`flex items-center gap-1 text-sm ${expired ? "text-destructive" : "text-amber-500"}`}>
                         <Clock className="w-4 h-4" />
-                        <span>{countdowns[item.id] === "انتهى" ? "انتهى العرض" : `ينتهي خلال: ${countdowns[item.id]}`}</span>
+                        <span>{expired ? "انتهى العرض" : `ينتهي خلال: ${countdowns[item.id]}`}</span>
                       </div>
                     )}
 
-                    {/* Action */}
-                    {isCompleted ? (
-                      <div className="flex items-center gap-2 bg-accent/50 rounded-lg px-3 py-2 text-accent-foreground">
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span className="font-semibold text-sm">تم الحصول على المكافأة ✓</span>
-                      </div>
-                    ) : participation?.status === "pending" ? (
-                      <Button
-                        variant="secondary"
-                        className="w-full"
-                        onClick={() => executeTask(item)}
-                      >
-                        <TaskIcon className="w-4 h-4 ml-2" />
-                        أكمل المهمة
-                      </Button>
-                    ) : countdowns[item.id] === "انتهى" ? (
-                      <Button className="w-full" disabled>
-                        انتهى العرض
-                      </Button>
-                    ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() => handleParticipate(item)}
-                      >
-                        <Gift className="w-4 h-4 ml-2" />
-                        اشترك الآن
-                      </Button>
-                    )}
+                    {/* Action buttons */}
+                    {getActionButton(item)}
                   </div>
                 </motion.div>
               );
@@ -383,6 +485,43 @@ export const OffersPage = () => {
           </AnimatePresence>
         </div>
       )}
+
+      {/* Activate Offer Dialog */}
+      <Dialog open={!!activateDialog} onOpenChange={() => setActivateDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">تفعيل العرض</DialogTitle>
+            <DialogDescription className="text-center">
+              {activateDialog && (
+                <div className="space-y-3 mt-3">
+                  <p className="font-medium text-foreground">{activateDialog.title}</p>
+                  <p className="text-sm">{activateDialog.description}</p>
+                  <div className="bg-muted rounded-lg p-3 space-y-1">
+                    <p className="text-sm">سيتم خصم <strong className="text-primary">{activateDialog.reward_amount} ج.م</strong> من رصيدك</p>
+                    <p className="text-xs text-muted-foreground">رصيدك الحالي: {userBalance} ج.م</p>
+                  </div>
+                  {userBalance < (activateDialog?.reward_amount || 0) && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-2">
+                      <p className="text-xs text-destructive font-medium">⚠️ لا يوجد رصيد كافٍ لتفعيل هذا العرض</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <Button
+              className="flex-1"
+              onClick={handleActivateOffer}
+              disabled={activating || userBalance < (activateDialog?.reward_amount || 0)}
+            >
+              <Zap className="w-4 h-4 ml-2" />
+              {activating ? "جاري التفعيل..." : "فعّل الآن"}
+            </Button>
+            <Button variant="outline" onClick={() => setActivateDialog(null)}>إلغاء</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
