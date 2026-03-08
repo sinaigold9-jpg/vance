@@ -18,6 +18,7 @@ const Landing = () => {
   const { user, isAdmin } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const { settings, loading: settingsLoading } = useAppSettings();
 
   useEffect(() => {
     if (user) {
