@@ -71,6 +71,7 @@ const getVipLevel = (accountType: string): number => {
 const pathToTab: Record<string, string> = {
   "/app": "home",
   "/app/tasks": "tasks",
+  "/app/wheel": "wheel",
   "/app/wallet": "wallet",
   "/app/team": "team",
   "/app/packages": "packages",
@@ -86,6 +87,7 @@ const pathToTab: Record<string, string> = {
 const tabToPath: Record<string, string> = {
   home: "/app",
   tasks: "/app/tasks",
+  wheel: "/app/wheel",
   wallet: "/app/wallet",
   team: "/app/team",
   packages: "/app/packages",
