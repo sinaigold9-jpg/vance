@@ -113,12 +113,12 @@ export const AdminAdsTab = () => {
         })
         .eq("id", ad.id);
 
-      // Send notification
+      // Send rejection as incoming message
       await supabase.from("notifications").insert({
         user_id: ad.user_id,
-        title: "تم رفض إعلانك",
-        message: `تم رفض إعلان "${ad.title}". السبب: ${rejectReason}`,
-        type: "ad_rejected",
+        title: "تم رفض إعلانك: " + ad.title,
+        message: `عذراً، تم رفض إعلانك "${ad.title}".\n\nسبب الرفض: ${rejectReason}\n\nيمكنك تعديل الإعلان وإعادة إرساله للمراجعة.`,
+        type: "private_message",
         related_id: ad.id
       });
 
