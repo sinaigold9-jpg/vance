@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, Download, Smartphone } from "lucide-react";
+import { ArrowRight, ArrowLeft, Download, Smartphone, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppSettings } from "@/hooks/useAppSettings";
 const appIcon = "/app-icon-optimized.webp";
 
 interface BeforeInstallPromptEvent extends Event {
