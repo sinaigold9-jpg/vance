@@ -27,6 +27,9 @@ interface OfferContest {
   ends_at: string | null;
   created_at: string;
   display_order: number;
+  button_label: string | null;
+  original_price: number;
+  discount_percentage: number;
 }
 
 interface Participation {
