@@ -42,6 +42,18 @@ export const useAppSettings = () => {
     referralDisabledMessage: "",
     teamEnabled: true,
     teamDisabledMessage: "",
+    walletEnabled: true,
+    walletDisabledMessage: "",
+    adsEnabled: true,
+    adsDisabledMessage: "",
+    offersEnabled: true,
+    offersDisabledMessage: "",
+    chatEnabled: true,
+    chatDisabledMessage: "",
+    depositsEnabled: true,
+    depositsDisabledMessage: "",
+    withdrawalsEnabled: true,
+    withdrawalsDisabledMessage: "",
   });
   const [loading, setLoading] = useState(true);
 
