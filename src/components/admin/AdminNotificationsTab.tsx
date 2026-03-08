@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Bell, Send, Users, Search, MessageSquare, 
-  Megaphone, DollarSign, Check, Filter
+  Bell, Send, Search, MessageSquare, 
+  Megaphone, DollarSign, Filter, Mail, Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -37,6 +38,7 @@ export const AdminNotificationsTab = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Send notification form
+  const [sendTab, setSendTab] = useState<"offers" | "messages">("offers");
   const [targetType, setTargetType] = useState<"all" | "single">("all");
   const [targetUser, setTargetUser] = useState("");
   const [notifTitle, setNotifTitle] = useState("");
@@ -85,28 +87,51 @@ export const AdminNotificationsTab = () => {
       return;
     }
 
-    if (targetType === "single" && !targetUser) {
+    // For private messages, must select a user
+    if (sendTab === "messages" && !targetUser) {
+      toast.error("يرجى اختيار المستخدم لإرسال رسالة خاصة");
+      return;
+    }
+
+    if (sendTab === "offers" && targetType === "single" && !targetUser) {
       toast.error("يرجى اختيار المستخدم");
       return;
     }
 
     setIsSending(true);
 
+    const finalType = sendTab === "messages" ? "private_message" : notifType;
+
     try {
-      if (targetType === "all") {
-        // Send to all users
+      if (sendTab === "messages") {
+        // Always single user for private messages
+        const { error } = await supabase.from("notifications").insert({
+          user_id: targetUser,
+          title: notifTitle,
+          message: notifMessage,
+          type: finalType,
+          link: notifLink || null
+        });
+
+        if (error) throw error;
+
+        supabase.functions.invoke("send-push", {
+          body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+        }).catch(() => {});
+
+        toast.success("تم إرسال الرسالة الخاصة");
+      } else if (targetType === "all") {
         const notifications = users.map(user => ({
           user_id: user.id,
           title: notifTitle,
           message: notifMessage,
-          type: notifType,
+          type: finalType,
           link: notifLink || null
         }));
 
         const { error } = await supabase.from("notifications").insert(notifications);
         if (error) throw error;
 
-        // Send push notifications to all users
         for (const u of users) {
           supabase.functions.invoke("send-push", {
             body: { user_id: u.id, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
@@ -115,18 +140,16 @@ export const AdminNotificationsTab = () => {
 
         toast.success(`تم إرسال الإشعار إلى ${users.length} مستخدم`);
       } else {
-        // Send to single user
         const { error } = await supabase.from("notifications").insert({
           user_id: targetUser,
           title: notifTitle,
           message: notifMessage,
-          type: notifType,
+          type: finalType,
           link: notifLink || null
         });
 
         if (error) throw error;
 
-        // Send push notification
         supabase.functions.invoke("send-push", {
           body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
         }).catch(() => {});
@@ -137,6 +160,7 @@ export const AdminNotificationsTab = () => {
       setNotifTitle("");
       setNotifMessage("");
       setNotifLink("");
+      setTargetUser("");
       fetchNotifications();
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ");
@@ -147,6 +171,8 @@ export const AdminNotificationsTab = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case "private_message":
+        return <Mail className="w-4 h-4 text-blue-500" />;
       case "chat":
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
       case "ad_interaction":
@@ -156,6 +182,9 @@ export const AdminNotificationsTab = () => {
         return <Megaphone className="w-4 h-4 text-amber-500" />;
       case "transaction":
         return <DollarSign className="w-4 h-4 text-green-500" />;
+      case "offer":
+      case "update":
+        return <Sparkles className="w-4 h-4 text-primary" />;
       default:
         return <Bell className="w-4 h-4 text-primary" />;
     }
@@ -164,7 +193,10 @@ export const AdminNotificationsTab = () => {
   const getTypeBadge = (type: string) => {
     const labels: Record<string, string> = {
       general: "عام",
+      private_message: "رسالة خاصة",
       chat: "محادثة",
+      offer: "عرض",
+      update: "تحديث",
       ad_interaction: "تفاعل إعلان",
       ad_click: "نقرة إعلان",
       ad_approved: "موافقة إعلان",
@@ -184,6 +216,7 @@ export const AdminNotificationsTab = () => {
   const stats = {
     total: notifications.length,
     unread: notifications.filter(n => !n.is_read).length,
+    privateMessages: notifications.filter(n => n.type === "private_message").length,
     today: notifications.filter(n => 
       new Date(n.created_at).toDateString() === new Date().toDateString()
     ).length
@@ -192,7 +225,7 @@ export const AdminNotificationsTab = () => {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{stats.total}</p>
@@ -207,6 +240,12 @@ export const AdminNotificationsTab = () => {
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-blue-500">{stats.privateMessages}</p>
+            <p className="text-xs text-muted-foreground">رسائل خاصة</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">{stats.today}</p>
             <p className="text-xs text-muted-foreground">اليوم</p>
           </CardContent>
@@ -216,73 +255,108 @@ export const AdminNotificationsTab = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Send Notification Form */}
         <Card className="border-border/50 lg:col-span-1">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Send className="w-5 h-5" />
               إرسال إشعار
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>إرسال إلى</Label>
-              <Select value={targetType} onValueChange={(v: "all" | "single") => setTargetType(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع المستخدمين</SelectItem>
-                  <SelectItem value="single">مستخدم محدد</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Send Type Tabs */}
+            <Tabs value={sendTab} onValueChange={(v) => setSendTab(v as "offers" | "messages")}>
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="offers" className="gap-1.5 text-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  عروض وتحديثات
+                </TabsTrigger>
+                <TabsTrigger value="messages" className="gap-1.5 text-xs">
+                  <Mail className="w-3.5 h-3.5" />
+                  رسالة خاصة
+                </TabsTrigger>
+              </TabsList>
 
-            {targetType === "single" && (
-              <div>
-                <Label>اختر المستخدم</Label>
-                <Select value={targetUser} onValueChange={setTargetUser}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المستخدم" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.full_name} ({user.membership_id})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+              <TabsContent value="offers" className="space-y-4 mt-4">
+                <div>
+                  <Label>إرسال إلى</Label>
+                  <Select value={targetType} onValueChange={(v: "all" | "single") => setTargetType(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المستخدمين</SelectItem>
+                      <SelectItem value="single">مستخدم محدد</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>نوع الإشعار</Label>
-              <Select value={notifType} onValueChange={setNotifType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">عام</SelectItem>
-                  <SelectItem value="chat">محادثة</SelectItem>
-                  <SelectItem value="transaction">معاملة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {targetType === "single" && (
+                  <div>
+                    <Label>اختر المستخدم</Label>
+                    <Select value={targetUser} onValueChange={setTargetUser}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر المستخدم" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.full_name} ({user.membership_id})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label>نوع الإشعار</Label>
+                  <Select value={notifType} onValueChange={setNotifType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">عام</SelectItem>
+                      <SelectItem value="offer">عرض خاص</SelectItem>
+                      <SelectItem value="update">تحديث / تطوير</SelectItem>
+                      <SelectItem value="transaction">معاملة</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="messages" className="space-y-4 mt-4">
+                <div>
+                  <Label>اختر المستخدم</Label>
+                  <Select value={targetUser} onValueChange={setTargetUser}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المستخدم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name} ({user.membership_id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <div>
               <Label>العنوان</Label>
               <Input
                 value={notifTitle}
                 onChange={e => setNotifTitle(e.target.value)}
-                placeholder="عنوان الإشعار"
+                placeholder={sendTab === "messages" ? "عنوان الرسالة" : "عنوان الإشعار"}
               />
             </div>
 
             <div>
-              <Label>الرسالة</Label>
+              <Label>{sendTab === "messages" ? "نص الرسالة" : "الرسالة"}</Label>
               <Textarea
                 value={notifMessage}
                 onChange={e => setNotifMessage(e.target.value)}
-                placeholder="نص الإشعار"
+                placeholder={sendTab === "messages" ? "اكتب رسالتك الخاصة هنا..." : "نص الإشعار"}
                 rows={3}
               />
             </div>
@@ -296,14 +370,18 @@ export const AdminNotificationsTab = () => {
               />
             </div>
 
-
             <Button
               onClick={handleSendNotification}
               disabled={isSending}
               className="w-full gap-2 bg-gradient-gold text-primary-foreground"
             >
-              <Send className="w-4 h-4" />
-              {targetType === "all" ? `إرسال للجميع (${users.length})` : "إرسال"}
+              {sendTab === "messages" ? <Mail className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+              {sendTab === "messages" 
+                ? "إرسال رسالة خاصة" 
+                : targetType === "all" 
+                  ? `إرسال للجميع (${users.length})` 
+                  : "إرسال"
+              }
             </Button>
           </CardContent>
         </Card>
@@ -329,13 +407,16 @@ export const AdminNotificationsTab = () => {
                 />
               </div>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-44">
                   <Filter className="w-4 h-4 ml-2" />
                   <SelectValue placeholder="النوع" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">الكل</SelectItem>
                   <SelectItem value="general">عام</SelectItem>
+                  <SelectItem value="private_message">رسائل خاصة</SelectItem>
+                  <SelectItem value="offer">عروض خاصة</SelectItem>
+                  <SelectItem value="update">تحديثات</SelectItem>
                   <SelectItem value="chat">محادثة</SelectItem>
                   <SelectItem value="ad_interaction">تفاعل إعلان</SelectItem>
                   <SelectItem value="transaction">معاملة</SelectItem>
@@ -368,7 +449,7 @@ export const AdminNotificationsTab = () => {
                           {getTypeIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <p className="font-medium text-sm">{notification.title}</p>
                             {getTypeBadge(notification.type)}
                             {!notification.is_read && (
