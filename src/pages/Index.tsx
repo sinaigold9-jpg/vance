@@ -341,10 +341,6 @@ const Index = () => {
               <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
 
-            {/* Footer */}
-            <div className="text-center py-6 border-t border-border/30 mt-4">
-              <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
-            </div>
           </motion.div>
         );
       case "packages":
@@ -597,6 +593,13 @@ const Index = () => {
           {renderContent()}
         </AnimatePresence>
       </main>
+
+      {/* Footer */}
+      <footer className="max-w-4xl mx-auto px-4 pb-6 pt-2">
+        <div className="text-center py-4 border-t border-border/30">
+          <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
+        </div>
+      </footer>
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
