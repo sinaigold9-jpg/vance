@@ -38,7 +38,7 @@ export const SupportSection = () => {
   const [activeTab, setActiveTab] = useState("ticket");
   const { user } = useAuth();
 
-  const canAccessLiveChat = userProfile && ["vip2", "vip3"].includes(userProfile.account_type);
+  const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
 
   useEffect(() => {
     if (user) {
