@@ -30,10 +30,10 @@ interface OfferContest {
 
 const DISPLAY_LOCATIONS: Record<string, string> = {
   home_only: "الصفحة الرئيسية فقط",
-  offers_only: "صفحة العروض فقط",
-  both: "الرئيسية + العروض",
-  contest_points: "مسابقة نقاط",
-  offers_contests_page: "صفحة العروض والمسابقات",
+  offers_only: "صفحة العروض والمسابقات",
+  both: "الرئيسية + صفحة العروض والمسابقات",
+  offers_contests_page: "(قديم) صفحة العروض والمسابقات",
+  contest_points: "(قديم) مسابقة نقاط",
 };
 
 const TASK_TYPES: Record<string, string> = {
