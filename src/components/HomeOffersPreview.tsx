@@ -36,7 +36,7 @@ export const HomeOffersPreview = ({ onViewAll }: HomeOffersPreviewProps) => {
       .from("offers_contests")
       .select("id, title, description, image_url, type, reward_amount, reward_type, ends_at, is_active")
       .eq("is_active", true)
-      .neq("display_location", "archived")
+      .in("display_location", ["home_only", "both"])
       .order("display_order", { ascending: true });
     if (data) setOffers(data as OfferPreview[]);
   };

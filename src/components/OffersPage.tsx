@@ -99,7 +99,7 @@ export const OffersPage = () => {
     const { data: offersData } = await supabase
       .from("offers_contests")
       .select("*")
-      .neq("display_location", "archived")
+      .in("display_location", ["offers_only", "both", "offers_contests_page", "contest_points"])
       .order("display_order", { ascending: true });
 
     if (offersData) {

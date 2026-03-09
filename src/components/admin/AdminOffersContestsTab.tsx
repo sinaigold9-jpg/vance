@@ -30,10 +30,10 @@ interface OfferContest {
 
 const DISPLAY_LOCATIONS: Record<string, string> = {
   home_only: "الصفحة الرئيسية فقط",
-  offers_only: "صفحة العروض فقط",
-  both: "الرئيسية + العروض",
-  contest_points: "مسابقة نقاط",
-  offers_contests_page: "صفحة العروض والمسابقات",
+  offers_only: "صفحة العروض والمسابقات",
+  both: "الرئيسية + صفحة العروض والمسابقات",
+  offers_contests_page: "(قديم) صفحة العروض والمسابقات",
+  contest_points: "(قديم) مسابقة نقاط",
 };
 
 const TASK_TYPES: Record<string, string> = {
@@ -123,31 +123,41 @@ export const AdminOffersContestsTab = () => {
       return;
     }
 
+    const toNumber = (value: string, fallback = 0) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const normalizedDisplayLocation =
+      displayLocation === "offers_contests_page" || displayLocation === "contest_points"
+        ? "offers_only"
+        : displayLocation;
+
     const payload = {
       title: title.trim(),
       description: description.trim(),
       type,
       reward_type: rewardType,
-      reward_amount: Number(rewardAmount),
+      reward_amount: toNumber(rewardAmount),
       required_task: requiredTask,
       custom_task_description: customTaskDesc.trim() || null,
-      display_location: displayLocation,
+      display_location: normalizedDisplayLocation,
       image_url: imageUrl || null,
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
-      max_participants: maxParticipants ? Number(maxParticipants) : null,
-      display_order: Number(displayOrder),
+      max_participants: maxParticipants ? toNumber(maxParticipants, 0) : null,
+      display_order: toNumber(displayOrder),
       button_label: buttonType === "custom" ? customTaskDesc.trim() || null : BUTTON_TYPES[buttonType] || null,
-      original_price: Number(originalPrice),
-      discount_percentage: Number(discountAmount),
+      original_price: toNumber(originalPrice),
+      discount_percentage: toNumber(discountAmount),
     };
 
     if (editingId) {
       const { error } = await supabase.from("offers_contests").update(payload).eq("id", editingId);
-      if (error) { toast.error("فشل التحديث"); return; }
+      if (error) { toast.error(error.message || "فشل التحديث"); return; }
       toast.success("تم التحديث بنجاح");
     } else {
       const { error } = await supabase.from("offers_contests").insert(payload);
-      if (error) { toast.error("فشل الإنشاء"); return; }
+      if (error) { toast.error(error.message || "فشل الإنشاء"); return; }
       toast.success("تم الإنشاء بنجاح");
     }
     resetForm();
