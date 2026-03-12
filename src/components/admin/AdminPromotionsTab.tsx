@@ -330,7 +330,7 @@ export const AdminPromotionsTab = () => {
                         )}
                         {promo.buttons?.length > 0 && (
                           <div className="flex gap-1 mt-2 flex-wrap">
-                            {promo.buttons.map((btn, i) => (
+                            {promo.buttons.slice(0, 2).map((btn, i) => (
                               <Badge key={i} variant="secondary" className="text-xs">{btn.label}</Badge>
                             ))}
                           </div>
