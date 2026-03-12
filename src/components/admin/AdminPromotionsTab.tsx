@@ -106,8 +106,16 @@ export const AdminPromotionsTab = () => {
     const style = promo.content_style || {};
     setIsBold((style as any).fontWeight === "bold");
     setTextColor((style as any).color || "#ffffff");
-    setOfferType(promo.offer_type || "personal");
-    setButtons(promo.buttons?.map(b => b.label) || OFFER_TYPES[promo.offer_type || "personal"]?.defaultButtons || []);
+
+    const currentType = promo.offer_type || "personal";
+    const savedButtons = promo.buttons?.map(b => b.label).filter(Boolean) || [];
+    const fallbackButtons = OFFER_TYPES[currentType]?.defaultButtons || DEFAULT_PROMOTION_BUTTONS;
+
+    setOfferType(currentType);
+    setButtons([
+      savedButtons[0] || fallbackButtons[0] || DEFAULT_PROMOTION_BUTTONS[0],
+      savedButtons[1] || fallbackButtons[1] || DEFAULT_PROMOTION_BUTTONS[1],
+    ]);
     setEndsAt(promo.ends_at || "");
     setDisplayLocation(promo.display_location || "home_only");
   };
