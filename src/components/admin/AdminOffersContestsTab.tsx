@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface OfferContest {
   id: string;
@@ -37,24 +38,17 @@ const DISPLAY_LOCATIONS: Record<string, string> = {
 };
 
 const TASK_TYPES: Record<string, string> = {
-  share_app: "مشاركة التطبيق",
-  invite_friends: "دعوة أصدقاء",
-  share_facebook: "مشاركة فيسبوك",
-  share_telegram: "مشاركة تيليجرام",
-  share_whatsapp: "مشاركة واتساب",
-  activate_offer: "تفعيل عرض (خصم من الرصيد)",
-  custom: "مهمة مخصصة",
+  share_app: "مشاركة العرض على التواصل",
+  activate_offer: "تفعيل العرض",
 };
 
 const BUTTON_TYPES: Record<string, string> = {
-  share: "شارك",
+  share: "شارك العرض",
   activate: "فعّل العرض",
-  earn: "اكسب",
-  subscribe: "اشترك",
-  custom: "مخصص",
 };
 
 export const AdminOffersContestsTab = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState<OfferContest[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,11 +67,15 @@ export const AdminOffersContestsTab = () => {
   const [endsAt, setEndsAt] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [displayOrder, setDisplayOrder] = useState("0");
-  const [buttonType, setButtonType] = useState("subscribe");
+  const [buttonType, setButtonType] = useState("share");
   const [discountAmount, setDiscountAmount] = useState("0");
   const [originalPrice, setOriginalPrice] = useState("0");
 
   useEffect(() => { fetchItems(); }, []);
+
+  useEffect(() => {
+    setButtonType(requiredTask === "activate_offer" ? "activate" : "share");
+  }, [requiredTask]);
 
   const fetchItems = async () => {
     const { data } = await supabase
@@ -92,17 +90,20 @@ export const AdminOffersContestsTab = () => {
     setRewardAmount("0"); setRequiredTask("share_app"); setCustomTaskDesc("");
     setDisplayLocation("offers_only"); setImageUrl(""); setEndsAt("");
     setMaxParticipants(""); setDisplayOrder("0"); setEditingId(null); setShowForm(false);
-    setButtonType("subscribe"); setDiscountAmount("0"); setOriginalPrice("0");
+    setButtonType("share"); setDiscountAmount("0"); setOriginalPrice("0");
   };
 
   const handleEdit = (item: OfferContest) => {
+    const normalizedTask = item.required_task === "activate_offer" ? "activate_offer" : "share_app";
+
     setTitle(item.title); setDescription(item.description); setType(item.type);
     setRewardType(item.reward_type); setRewardAmount(String(item.reward_amount));
-    setRequiredTask(item.required_task); setCustomTaskDesc(item.custom_task_description || "");
+    setRequiredTask(normalizedTask); setCustomTaskDesc(item.custom_task_description || "");
     setDisplayLocation(item.display_location); setImageUrl(item.image_url || "");
     setEndsAt(item.ends_at ? item.ends_at.slice(0, 16) : "");
     setMaxParticipants(item.max_participants ? String(item.max_participants) : "");
     setDisplayOrder(String(item.display_order)); setEditingId(item.id); setShowForm(true);
+    setButtonType(normalizedTask === "activate_offer" ? "activate" : "share");
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,14 +140,14 @@ export const AdminOffersContestsTab = () => {
       type,
       reward_type: rewardType,
       reward_amount: toNumber(rewardAmount),
-      required_task: requiredTask,
-      custom_task_description: customTaskDesc.trim() || null,
+      required_task: requiredTask === "activate_offer" ? "activate_offer" : "share_app",
+      custom_task_description: null,
       display_location: normalizedDisplayLocation,
       image_url: imageUrl || null,
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
       max_participants: maxParticipants ? toNumber(maxParticipants, 0) : null,
       display_order: toNumber(displayOrder),
-      button_label: buttonType === "custom" ? customTaskDesc.trim() || null : BUTTON_TYPES[buttonType] || null,
+      button_label: BUTTON_TYPES[buttonType] || null,
       original_price: toNumber(originalPrice),
       discount_percentage: toNumber(discountAmount),
     };
@@ -156,7 +157,10 @@ export const AdminOffersContestsTab = () => {
       if (error) { toast.error(error.message || "فشل التحديث"); return; }
       toast.success("تم التحديث بنجاح");
     } else {
-      const { error } = await supabase.from("offers_contests").insert(payload);
+      const { error } = await supabase.from("offers_contests").insert({
+        ...payload,
+        created_by: user?.id ?? null,
+      });
       if (error) { toast.error(error.message || "فشل الإنشاء"); return; }
       toast.success("تم الإنشاء بنجاح");
     }
