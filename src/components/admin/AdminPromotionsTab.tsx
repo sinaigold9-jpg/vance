@@ -34,11 +34,13 @@ interface Promotion {
   display_location: string;
 }
 
+const DEFAULT_PROMOTION_BUTTONS = ["شارك العرض", "فعّل العرض"];
+
 const OFFER_TYPES: Record<string, { label: string; defaultButtons: string[] }> = {
-  personal: { label: "عرض شخصي", defaultButtons: ["اربح", "استلم", "فعّل", "تفاصيل"] },
-  marketing: { label: "عرض تسويقي", defaultButtons: ["شارك", "ادعُ", "سوّق", "احصل"] },
-  discount: { label: "عرض خصم", defaultButtons: ["احجز", "استخدم", "فعّل الآن", "اعرف أكثر"] },
-  limited: { label: "عرض محدود الوقت", defaultButtons: ["اضغط الآن", "استغل العرض", "ابدأ", "تفاصيل"] },
+  personal: { label: "عرض شخصي", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  marketing: { label: "عرض تسويقي", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  discount: { label: "عرض خصم", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  limited: { label: "عرض محدود الوقت", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
 };
 
 const DISPLAY_LOCATIONS: Record<string, string> = {
