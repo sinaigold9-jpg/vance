@@ -229,15 +229,22 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
         </motion.div>
       </AnimatePresence>
 
-      {currentPromo.buttons?.length > 0 && (
+      {getActionButtons(currentPromo).length > 0 && (
         <div className="flex gap-2 px-4 pb-3 flex-wrap">
-          {currentPromo.buttons.map((btn, i) => (
+          {getActionButtons(currentPromo).map((btn, i) => (
             <Button
-              key={i}
+              key={`${btn.action}-${i}`}
               size="sm"
-              variant="outline"
-              className="text-xs flex-1 min-w-[60px]"
-              onClick={(e) => { e.stopPropagation(); handleClick(currentPromo); }}
+              variant={btn.action === "activate" ? "default" : "outline"}
+              className="text-xs flex-1 min-w-[120px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (btn.action === "activate") {
+                  activatePromotion(currentPromo);
+                } else {
+                  sharePromotion(currentPromo);
+                }
+              }}
             >
               {btn.label}
             </Button>
