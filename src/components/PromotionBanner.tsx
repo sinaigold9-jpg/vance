@@ -115,6 +115,63 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
     }
   };
 
+  const getPromoShareUrl = (promo: Promotion) => {
+    if (!promo.link_url) return `${window.location.origin}/app/offers`;
+    if (promo.link_type === "external") return promo.link_url;
+    return promo.link_url.startsWith("http")
+      ? promo.link_url
+      : `${window.location.origin}${promo.link_url.startsWith("/") ? "" : "/"}${promo.link_url}`;
+  };
+
+  const sharePromotion = async (promo: Promotion) => {
+    const shareUrl = getPromoShareUrl(promo);
+    const shareText = `🎉 ${promo.title}\n${promo.content}\n\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: promo.title,
+          text: promo.content,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // ignore canceled share action
+      }
+    }
+
+    await navigator.clipboard.writeText(shareText);
+    toast.success("تم نسخ رابط العرض للمشاركة");
+  };
+
+  const activatePromotion = (promo: Promotion) => {
+    if (promo.link_url) {
+      handleClick(promo);
+      return;
+    }
+    navigate("/app/offers");
+  };
+
+  const getActionButtons = (promo: Promotion): PromotionButton[] => {
+    const defaults: PromotionButton[] = [
+      { label: "شارك العرض", action: "share" },
+      { label: "فعّل العرض", action: "activate" },
+    ];
+
+    if (!promo.buttons?.length) return defaults;
+
+    const parsed = promo.buttons.slice(0, 2).map((btn, index) => ({
+      label: btn.label || defaults[index].label,
+      action: btn.action || (index === 0 ? "share" : "activate"),
+    }));
+
+    if (parsed.length < 2) {
+      parsed.push(defaults[1]);
+    }
+
+    return parsed;
+  };
+
   const goNext = () => setCurrentIndex((prev) => (prev + 1) % promotions.length);
   const goPrev = () => setCurrentIndex((prev) => (prev - 1 + promotions.length) % promotions.length);
 
