@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 interface PromotionButton {
   label: string;
-  action?: "share" | "activate" | string;
+  action: "share" | "activate" | string;
 }
 
 interface Promotion {
