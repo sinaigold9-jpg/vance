@@ -59,7 +59,7 @@ export const DailyTasks = ({ userId, accountType, onBalanceUpdate }: DailyTasksP
   }, [userId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     
     if (isTaskActive && remainingSeconds > 0) {
       interval = setInterval(() => {

@@ -153,6 +153,11 @@ export const AdminPromotionsTab = () => {
   const handleSave = async () => {
     if (!title || !content) { toast.error("يرجى ملء العنوان والمحتوى"); return; }
     setIsSaving(true);
+    const normalizedButtons = [
+      buttons[0] || DEFAULT_PROMOTION_BUTTONS[0],
+      buttons[1] || DEFAULT_PROMOTION_BUTTONS[1],
+    ];
+
     const promoData = {
       title, content,
       content_style: { fontWeight: isBold ? "bold" : "normal", color: textColor },
@@ -162,7 +167,7 @@ export const AdminPromotionsTab = () => {
       display_order: displayOrder,
       created_by: user?.id,
       offer_type: offerType,
-      buttons: buttons.map(label => ({ label })),
+      buttons: normalizedButtons.map(label => ({ label })),
       ends_at: endsAt || null,
       display_location: displayLocation,
     };
