@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ExternalLink, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PromotionButton {
   label: string;
+  action?: "share" | "activate" | string;
 }
 
 interface Promotion {
