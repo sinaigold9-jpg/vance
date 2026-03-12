@@ -34,11 +34,13 @@ interface Promotion {
   display_location: string;
 }
 
+const DEFAULT_PROMOTION_BUTTONS = ["شارك العرض", "فعّل العرض"];
+
 const OFFER_TYPES: Record<string, { label: string; defaultButtons: string[] }> = {
-  personal: { label: "عرض شخصي", defaultButtons: ["اربح", "استلم", "فعّل", "تفاصيل"] },
-  marketing: { label: "عرض تسويقي", defaultButtons: ["شارك", "ادعُ", "سوّق", "احصل"] },
-  discount: { label: "عرض خصم", defaultButtons: ["احجز", "استخدم", "فعّل الآن", "اعرف أكثر"] },
-  limited: { label: "عرض محدود الوقت", defaultButtons: ["اضغط الآن", "استغل العرض", "ابدأ", "تفاصيل"] },
+  personal: { label: "عرض شخصي", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  marketing: { label: "عرض تسويقي", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  discount: { label: "عرض خصم", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
+  limited: { label: "عرض محدود الوقت", defaultButtons: DEFAULT_PROMOTION_BUTTONS },
 };
 
 const DISPLAY_LOCATIONS: Record<string, string> = {
@@ -104,8 +106,16 @@ export const AdminPromotionsTab = () => {
     const style = promo.content_style || {};
     setIsBold((style as any).fontWeight === "bold");
     setTextColor((style as any).color || "#ffffff");
-    setOfferType(promo.offer_type || "personal");
-    setButtons(promo.buttons?.map(b => b.label) || OFFER_TYPES[promo.offer_type || "personal"]?.defaultButtons || []);
+
+    const currentType = promo.offer_type || "personal";
+    const savedButtons = promo.buttons?.map(b => b.label).filter(Boolean) || [];
+    const fallbackButtons = OFFER_TYPES[currentType]?.defaultButtons || DEFAULT_PROMOTION_BUTTONS;
+
+    setOfferType(currentType);
+    setButtons([
+      savedButtons[0] || fallbackButtons[0] || DEFAULT_PROMOTION_BUTTONS[0],
+      savedButtons[1] || fallbackButtons[1] || DEFAULT_PROMOTION_BUTTONS[1],
+    ]);
     setEndsAt(promo.ends_at || "");
     setDisplayLocation(promo.display_location || "home_only");
   };
@@ -143,6 +153,11 @@ export const AdminPromotionsTab = () => {
   const handleSave = async () => {
     if (!title || !content) { toast.error("يرجى ملء العنوان والمحتوى"); return; }
     setIsSaving(true);
+    const normalizedButtons = [
+      buttons[0] || DEFAULT_PROMOTION_BUTTONS[0],
+      buttons[1] || DEFAULT_PROMOTION_BUTTONS[1],
+    ];
+
     const promoData = {
       title, content,
       content_style: { fontWeight: isBold ? "bold" : "normal", color: textColor },
@@ -152,7 +167,7 @@ export const AdminPromotionsTab = () => {
       display_order: displayOrder,
       created_by: user?.id,
       offer_type: offerType,
-      buttons: buttons.map(label => ({ label })),
+      buttons: normalizedButtons.map(label => ({ label })),
       ends_at: endsAt || null,
       display_location: displayLocation,
     };
@@ -315,7 +330,7 @@ export const AdminPromotionsTab = () => {
                         )}
                         {promo.buttons?.length > 0 && (
                           <div className="flex gap-1 mt-2 flex-wrap">
-                            {promo.buttons.map((btn, i) => (
+                            {promo.buttons.slice(0, 2).map((btn, i) => (
                               <Badge key={i} variant="secondary" className="text-xs">{btn.label}</Badge>
                             ))}
                           </div>

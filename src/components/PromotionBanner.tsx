@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ExternalLink, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PromotionButton {
   label: string;
+  action: "share" | "activate" | string;
 }
 
 interface Promotion {
@@ -113,6 +115,63 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
     }
   };
 
+  const getPromoShareUrl = (promo: Promotion) => {
+    if (!promo.link_url) return `${window.location.origin}/app/offers`;
+    if (promo.link_type === "external") return promo.link_url;
+    return promo.link_url.startsWith("http")
+      ? promo.link_url
+      : `${window.location.origin}${promo.link_url.startsWith("/") ? "" : "/"}${promo.link_url}`;
+  };
+
+  const sharePromotion = async (promo: Promotion) => {
+    const shareUrl = getPromoShareUrl(promo);
+    const shareText = `🎉 ${promo.title}\n${promo.content}\n\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: promo.title,
+          text: promo.content,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // ignore canceled share action
+      }
+    }
+
+    await navigator.clipboard.writeText(shareText);
+    toast.success("تم نسخ رابط العرض للمشاركة");
+  };
+
+  const activatePromotion = (promo: Promotion) => {
+    if (promo.link_url) {
+      handleClick(promo);
+      return;
+    }
+    navigate("/app/offers");
+  };
+
+  const getActionButtons = (promo: Promotion): PromotionButton[] => {
+    const defaults: PromotionButton[] = [
+      { label: "شارك العرض", action: "share" },
+      { label: "فعّل العرض", action: "activate" },
+    ];
+
+    if (!promo.buttons?.length) return defaults;
+
+    const parsed = promo.buttons.slice(0, 2).map((btn, index) => ({
+      label: btn.label || defaults[index].label,
+      action: btn.action || (index === 0 ? "share" : "activate"),
+    }));
+
+    if (parsed.length < 2) {
+      parsed.push(defaults[1]);
+    }
+
+    return parsed;
+  };
+
   const goNext = () => setCurrentIndex((prev) => (prev + 1) % promotions.length);
   const goPrev = () => setCurrentIndex((prev) => (prev - 1 + promotions.length) % promotions.length);
 
@@ -170,15 +229,22 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
         </motion.div>
       </AnimatePresence>
 
-      {currentPromo.buttons?.length > 0 && (
+      {getActionButtons(currentPromo).length > 0 && (
         <div className="flex gap-2 px-4 pb-3 flex-wrap">
-          {currentPromo.buttons.map((btn, i) => (
+          {getActionButtons(currentPromo).map((btn, i) => (
             <Button
-              key={i}
+              key={`${btn.action}-${i}`}
               size="sm"
-              variant="outline"
-              className="text-xs flex-1 min-w-[60px]"
-              onClick={(e) => { e.stopPropagation(); handleClick(currentPromo); }}
+              variant={btn.action === "activate" ? "default" : "outline"}
+              className="text-xs flex-1 min-w-[120px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (btn.action === "activate") {
+                  activatePromotion(currentPromo);
+                } else {
+                  sharePromotion(currentPromo);
+                }
+              }}
             >
               {btn.label}
             </Button>
