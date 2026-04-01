@@ -106,31 +106,77 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
     }
   };
 
-  const getInternalPath = (url: string): string => {
+  const getInternalPath = (url: string): string | null => {
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return null;
+
+    const legacyAppPaths = new Set([
+      "/tasks",
+      "/wheel",
+      "/wallet",
+      "/team",
+      "/packages",
+      "/earnings",
+      "/ads",
+      "/offers",
+      "/profile",
+      "/sponsor",
+      "/support",
+      "/faq",
+    ]);
+
     try {
-      const parsed = new URL(url, window.location.origin);
-      if (parsed.origin === window.location.origin) {
-        return parsed.pathname + parsed.search + parsed.hash;
+      const parsed = new URL(trimmedUrl, window.location.origin);
+      const normalizedPath = legacyAppPaths.has(parsed.pathname)
+        ? `/app${parsed.pathname}`
+        : parsed.pathname;
+
+      const isKnownInternalPath =
+        normalizedPath === "/" ||
+        normalizedPath === "/auth" ||
+        normalizedPath === "/admin" ||
+        normalizedPath === "/landing" ||
+        normalizedPath === "/download" ||
+        normalizedPath === "/app" ||
+        normalizedPath.startsWith("/app/");
+
+      const isAbsoluteHttpUrl =
+        /^https?:\/\//i.test(trimmedUrl) && parsed.origin !== window.location.origin;
+
+      if (isAbsoluteHttpUrl && !isKnownInternalPath) {
+        return null;
       }
-    } catch {}
-    return url.startsWith("/") ? url : `/${url}`;
+
+      return `${normalizedPath}${parsed.search}${parsed.hash}`;
+    } catch {
+      return null;
+    }
   };
 
   const handleClick = (promo: Promotion) => {
     if (!promo.link_url) return;
     if (promo.link_type === "external") {
-      window.open(promo.link_url, "_blank");
-    } else {
-      navigate(getInternalPath(promo.link_url));
+      window.open(promo.link_url, "_blank", "noopener,noreferrer");
+      return;
     }
+
+    const internalPath = getInternalPath(promo.link_url);
+    if (!internalPath) {
+      toast.error("رابط العرض غير صالح");
+      return;
+    }
+
+    navigate(internalPath);
   };
 
   const getPromoShareUrl = (promo: Promotion) => {
     if (!promo.link_url) return `${window.location.origin}/app/offers`;
     if (promo.link_type === "external") return promo.link_url;
-    return promo.link_url.startsWith("http")
-      ? promo.link_url
-      : `${window.location.origin}${promo.link_url.startsWith("/") ? "" : "/"}${promo.link_url}`;
+
+    const internalPath = getInternalPath(promo.link_url);
+    return internalPath
+      ? `${window.location.origin}${internalPath}`
+      : `${window.location.origin}/app/offers`;
   };
 
   const sharePromotion = async (promo: Promotion) => {
