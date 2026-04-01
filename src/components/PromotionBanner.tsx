@@ -106,12 +106,22 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
     }
   };
 
+  const getInternalPath = (url: string): string => {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        return parsed.pathname + parsed.search + parsed.hash;
+      }
+    } catch {}
+    return url.startsWith("/") ? url : `/${url}`;
+  };
+
   const handleClick = (promo: Promotion) => {
     if (!promo.link_url) return;
     if (promo.link_type === "external") {
       window.open(promo.link_url, "_blank");
     } else {
-      navigate(promo.link_url);
+      navigate(getInternalPath(promo.link_url));
     }
   };
 
