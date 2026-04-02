@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Bot, Download } from "lucide-react";
+import { ExternalLink, Bot } from "lucide-react";
 
 const FacebookIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
