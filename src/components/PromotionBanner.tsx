@@ -136,7 +136,7 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
         normalizedPath === "/auth" ||
         normalizedPath === "/admin" ||
         normalizedPath === "/landing" ||
-        normalizedPath === "/download" ||
+        
         normalizedPath === "/app" ||
         normalizedPath.startsWith("/app/");
 
@@ -160,10 +160,15 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
       return;
     }
 
-    const internalPath = getInternalPath(promo.link_url);
+    let internalPath = getInternalPath(promo.link_url);
     if (!internalPath) {
       toast.error("رابط العرض غير صالح");
       return;
+    }
+
+    // If offer targets a specific VIP and links to packages, add highlight param
+    if (internalPath === "/app/packages" && promo.offer_type && promo.offer_type.startsWith("vip")) {
+      internalPath = `/app/packages?highlight=${promo.offer_type}`;
     }
 
     navigate(internalPath);

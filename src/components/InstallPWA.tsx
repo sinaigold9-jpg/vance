@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,7 +13,6 @@ export const InstallPWA = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
 
@@ -25,7 +23,6 @@ export const InstallPWA = () => {
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
@@ -49,31 +46,35 @@ export const InstallPWA = () => {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-20 left-4 right-4 z-50 max-w-lg mx-auto"
+        exit={{ opacity: 0, y: -50 }}
+        className="fixed top-0 left-0 right-0 z-50"
       >
-        <div className="bg-card border border-primary/30 rounded-2xl p-4 shadow-gold flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center flex-shrink-0">
-            <Download className="w-6 h-6 text-primary-foreground" />
+        <div className="bg-card/95 backdrop-blur-md border-b border-border/50 px-4 py-3 flex items-center gap-3 shadow-lg">
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
+            <img 
+              src="/icon-192.png" 
+              alt="Advance" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-foreground text-sm">تثبيت التطبيق</p>
-            <p className="text-xs text-muted-foreground">ثبّت Advance على هاتفك للوصول السريع</p>
+            <p className="font-bold text-foreground text-sm leading-tight">تثبيت "Advance"</p>
+            <p className="text-xs text-muted-foreground leading-tight">vance.lovable.app</p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              size="sm"
-              onClick={handleInstall}
-              className="bg-gradient-gold text-primary-foreground shadow-gold text-xs px-3"
-            >
-              تثبيت
-            </Button>
-            <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground p-1">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={handleInstall}
+            className="text-primary font-bold text-sm px-3 py-1.5 hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+          >
+            تثبيت
+          </button>
+          <button 
+            onClick={handleDismiss} 
+            className="text-muted-foreground hover:text-foreground p-1 flex-shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </motion.div>
     </AnimatePresence>

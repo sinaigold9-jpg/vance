@@ -19,7 +19,7 @@ const APP_LINKS = [
   { label: "الدعم الفني", path: "/app/support" },
   { label: "الأسئلة الشائعة", path: "/app/faq" },
   { label: "صفحة التسجيل", path: "/auth" },
-  { label: "صفحة التحميل", path: "/download" },
+  
   { label: "الصفحة الترحيبية", path: "/landing" },
 ];
 

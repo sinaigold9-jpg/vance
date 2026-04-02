@@ -1,23 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, Download, Smartphone, Lock } from "lucide-react";
+import { ArrowRight, ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppSettings } from "@/hooks/useAppSettings";
-const appIcon = "/app-icon-optimized.webp";
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
 
 const Landing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isAdmin } = useAuth();
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+
+
   const { settings, loading: settingsLoading } = useAppSettings();
 
   useEffect(() => {
@@ -26,31 +21,8 @@ const Landing = () => {
     }
   }, [user, navigate]);
 
-  // PWA install prompt
-  useEffect(() => {
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    if (isStandalone) {
-      setIsInstalled(true);
-      return;
-    }
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
 
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setIsInstalled(true);
-        setDeferredPrompt(null);
-      }
-    }
-  };
+
 
   const refCode = searchParams.get("ref");
 
@@ -121,27 +93,6 @@ const Landing = () => {
           </Button>
 
           {/* Admin access - only show for logged in admins */}
-          {!isInstalled && (
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full text-lg py-6 border-primary/50 text-primary hover:bg-primary/10"
-                onClick={deferredPrompt ? handleInstall : () => navigate("/download")}
-              >
-                <Smartphone className="w-5 h-5 ml-2" />
-                {deferredPrompt ? "تثبيت التطبيق" : "تنزيل التطبيق"}
-              </Button>
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse"
-              >
-                20ج.م
-              </motion.span>
-            </div>
-          )}
-
           {isAdmin && (
             <Button
               variant="ghost"
