@@ -26,31 +26,8 @@ const Landing = () => {
     }
   }, [user, navigate]);
 
-  // PWA install prompt
-  useEffect(() => {
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    if (isStandalone) {
-      setIsInstalled(true);
-      return;
-    }
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
 
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setIsInstalled(true);
-        setDeferredPrompt(null);
-      }
-    }
-  };
+
 
   const refCode = searchParams.get("ref");
 
