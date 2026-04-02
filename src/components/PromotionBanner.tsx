@@ -136,7 +136,7 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
         normalizedPath === "/auth" ||
         normalizedPath === "/admin" ||
         normalizedPath === "/landing" ||
-        normalizedPath === "/download" ||
+        
         normalizedPath === "/app" ||
         normalizedPath.startsWith("/app/");
 
