@@ -11,7 +11,6 @@ const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const DownloadPage = lazy(() => import("./pages/Download"));
 
 const queryClient = new QueryClient();
 
