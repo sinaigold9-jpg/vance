@@ -71,17 +71,6 @@ export const SocialLinks = () => {
           <ExternalLink className="w-4 h-4 text-[#9333EA] opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
 
-        {/* Download App - Links to dedicated page */}
-        <a
-          href="/download"
-          className="flex items-center justify-center gap-3 p-4 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 hover:bg-[#10B981]/20 transition-all group"
-        >
-          <div className="text-[#10B981]">
-            <Download className="w-6 h-6" />
-          </div>
-          <span className="font-bold text-[#10B981]">تنزيل التطبيق</span>
-          <ExternalLink className="w-4 h-4 text-[#10B981] opacity-0 group-hover:opacity-100 transition-opacity" />
-        </a>
       </div>
     </motion.div>
   );
