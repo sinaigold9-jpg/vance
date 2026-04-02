@@ -16,8 +16,8 @@ const Landing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isAdmin } = useAuth();
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+
+
   const { settings, loading: settingsLoading } = useAppSettings();
 
   useEffect(() => {
