@@ -846,6 +846,44 @@ export type Database = {
           },
         ]
       }
+      otp_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          purpose: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_used?: boolean
+          purpose?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          purpose?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_upgrade_requests: {
         Row: {
           amount: number | null
@@ -1012,6 +1050,7 @@ export type Database = {
           team_code: string | null
           team_members_count: number | null
           team_rank: string | null
+          telegram_chat_id: number | null
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
@@ -1039,6 +1078,7 @@ export type Database = {
           team_code?: string | null
           team_members_count?: number | null
           team_rank?: string | null
+          telegram_chat_id?: number | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1066,6 +1106,7 @@ export type Database = {
           team_code?: string | null
           team_members_count?: number | null
           team_rank?: string | null
+          telegram_chat_id?: number | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1277,6 +1318,24 @@ export type Database = {
           status?: string
           ticket_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_bot_state: {
+        Row: {
+          id: number
+          update_offset: number
+          updated_at: string
+        }
+        Insert: {
+          id: number
+          update_offset?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          update_offset?: number
+          updated_at?: string
         }
         Relationships: []
       }

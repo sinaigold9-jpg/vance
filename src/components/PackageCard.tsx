@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Crown, Check, Zap, ArrowUp } from "lucide-react";
+import { Crown, Check, Zap, ArrowUp, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PackageUpgradeDialog } from "./PackageUpgradeDialog";
 
@@ -18,6 +18,8 @@ interface PackageCardProps {
   vipLevel?: number;
   isActive?: boolean;
   accountType?: string;
+  isHighlighted?: boolean;
+  discountPercentage?: number;
 }
 
 const vipColors = {
@@ -50,17 +52,38 @@ export const PackageCard = ({
   vipLevel = 0,
   isActive = false,
   accountType = "beginner",
+  isHighlighted = false,
+  discountPercentage = 0,
 }: PackageCardProps) => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const targetAccountType = accountTypes[vipLevel];
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const discountedPrice = discountPercentage > 0
+    ? Math.round(price * (1 - discountPercentage / 100))
+    : price;
+
+  // Auto-scroll to highlighted card
+  useEffect(() => {
+    if (isHighlighted && cardRef.current) {
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [isHighlighted]);
 
   return (
     <>
       <motion.div
+        ref={cardRef}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.02 }}
-        className={`relative overflow-hidden rounded-2xl border-2 ${vipColors[vipLevel as keyof typeof vipColors]} bg-gradient-card shadow-card transition-all duration-300`}
+        className={`relative overflow-hidden rounded-2xl border-2 ${
+          isHighlighted
+            ? "border-primary ring-2 ring-primary/30 shadow-lg"
+            : vipColors[vipLevel as keyof typeof vipColors]
+        } bg-gradient-card shadow-card transition-all duration-300`}
       >
         {isVip && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-transparent via-gold to-transparent" />
@@ -69,6 +92,13 @@ export const PackageCard = ({
         {isActive && (
           <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-emerald text-primary-foreground text-xs font-bold">
             باقتك الحالية
+          </div>
+        )}
+
+        {isHighlighted && discountPercentage > 0 && (
+          <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center gap-1 animate-pulse">
+            <Percent className="w-3 h-3" />
+            خصم {discountPercentage}%
           </div>
         )}
 
@@ -93,6 +123,12 @@ export const PackageCard = ({
                   <p className="text-xs text-amber-500 mt-1">تبدأ بـ {initialBalance} ج.م رصيد افتتاحي</p>
                 )}
               </>
+            ) : discountPercentage > 0 ? (
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-black text-primary">{discountedPrice}</span>
+                <span className="text-muted-foreground">جنيه</span>
+                <span className="text-lg text-muted-foreground line-through">{price}</span>
+              </div>
             ) : (
               <>
                 <span className="text-3xl font-black text-gradient-gold">{price}</span>
@@ -112,10 +148,13 @@ export const PackageCard = ({
           {!isActive && (
             <Button
               onClick={() => setShowUpgradeDialog(true)}
-              className="w-full bg-gradient-gold text-primary-foreground gap-2"
+              className={`w-full gap-2 ${isHighlighted ? "bg-primary text-primary-foreground" : "bg-gradient-gold text-primary-foreground"}`}
             >
               <ArrowUp className="w-4 h-4" />
-              ترقية الباقة
+              {isHighlighted && discountPercentage > 0
+                ? `ترقية بـ ${discountedPrice} جنيه`
+                : "ترقية الباقة"
+              }
             </Button>
           )}
         </div>
@@ -125,7 +164,7 @@ export const PackageCard = ({
         isOpen={showUpgradeDialog}
         onClose={() => setShowUpgradeDialog(false)}
         packageName={name}
-        packagePrice={price}
+        packagePrice={discountedPrice}
         targetAccountType={targetAccountType}
       />
     </>

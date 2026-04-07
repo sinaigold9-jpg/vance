@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.send-push]
 verify_jwt = false
+
+[functions.telegram-poll]
+verify_jwt = false
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp]
+verify_jwt = false

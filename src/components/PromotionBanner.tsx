@@ -166,9 +166,15 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
       return;
     }
 
-    // If offer targets a specific VIP and links to packages, add highlight param
+    // If offer targets a specific VIP and links to packages, add highlight + discount params
     if (internalPath === "/app/packages" && promo.offer_type && promo.offer_type.startsWith("vip")) {
-      internalPath = `/app/packages?highlight=${promo.offer_type}`;
+      const params = new URLSearchParams({ highlight: promo.offer_type });
+      // Check if content contains discount info (from admin setup)
+      const discountMatch = promo.content.match(/(\d+)\s*%/);
+      if (discountMatch) {
+        params.set("discount", discountMatch[1]);
+      }
+      internalPath = `/app/packages?${params.toString()}`;
     }
 
     navigate(internalPath);
