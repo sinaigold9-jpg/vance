@@ -343,13 +343,17 @@ const Index = () => {
 
           </motion.div>
         );
-      case "packages":
+      case "packages": {
+        const highlightPkg = searchParams.get("highlight");
+        const discountPct = Number(searchParams.get("discount")) || 0;
         return (
           <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
             <PageHeader title="الباقات" subtitle="كلما زادت الباقة، زادت الأرباح" onBack={() => handleTabChange("home")} />
             <div className="grid gap-4">
               {packagesData.map((pkg) => {
                 const vipLevel = getVipLevel(pkg.account_type);
+                const isHighlighted = highlightPkg === pkg.account_type;
+                const appliedDiscount = isHighlighted ? discountPct : 0;
                 return (
                   <PackageCard
                     key={pkg.id}
@@ -365,12 +369,15 @@ const Index = () => {
                     vipLevel={vipLevel}
                     isActive={pkg.account_type === accountType}
                     accountType={pkg.account_type}
+                    isHighlighted={isHighlighted}
+                    discountPercentage={appliedDiscount}
                   />
                 );
               })}
             </div>
           </motion.div>
         );
+      }
       case "earnings":
         return (
           <motion.div key="earnings" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
