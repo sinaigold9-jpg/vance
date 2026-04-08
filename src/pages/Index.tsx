@@ -576,7 +576,10 @@ const Index = () => {
     setActiveTab(tab);
   };
 
+  const botUsername = appSettings.telegramBotUsername || "AdvanceAppBot";
+
   return (
+    <TelegramVerificationGate botUsername={botUsername}>
     <div className="min-h-screen pb-8">
       
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
