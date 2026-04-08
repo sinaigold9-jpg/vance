@@ -1038,6 +1038,7 @@ export type Database = {
           full_name: string
           id: string
           is_package_activated: boolean | null
+          is_verified: boolean
           last_active_at: string | null
           last_attempt_date: string | null
           last_wheel_spin: string | null
@@ -1066,6 +1067,7 @@ export type Database = {
           full_name: string
           id: string
           is_package_activated?: boolean | null
+          is_verified?: boolean
           last_active_at?: string | null
           last_attempt_date?: string | null
           last_wheel_spin?: string | null
@@ -1094,6 +1096,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_package_activated?: boolean | null
+          is_verified?: boolean
           last_active_at?: string | null
           last_attempt_date?: string | null
           last_wheel_spin?: string | null

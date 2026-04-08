@@ -33,6 +33,7 @@ import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { InstallPWA } from "@/components/InstallPWA";
 import { EmailSubscription } from "@/components/EmailSubscription";
+import { TelegramVerificationGate } from "@/components/TelegramVerificationGate";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";
@@ -575,7 +576,10 @@ const Index = () => {
     setActiveTab(tab);
   };
 
+  const botUsername = "AdvanceAppBot";
+
   return (
+    <TelegramVerificationGate botUsername={botUsername}>
     <div className="min-h-screen pb-8">
       
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
@@ -637,6 +641,7 @@ const Index = () => {
       <FloatingLuckyWheel />
       <InstallPWA />
     </div>
+    </TelegramVerificationGate>
   );
 };
 
