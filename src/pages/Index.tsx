@@ -33,6 +33,7 @@ import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { InstallPWA } from "@/components/InstallPWA";
 import { EmailSubscription } from "@/components/EmailSubscription";
+import { TelegramVerificationGate } from "@/components/TelegramVerificationGate";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";

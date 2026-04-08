@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.verify-otp]
 verify_jwt = false
+
+[functions.confirm-account]
+verify_jwt = false
