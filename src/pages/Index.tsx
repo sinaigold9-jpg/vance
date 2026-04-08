@@ -576,7 +576,7 @@ const Index = () => {
     setActiveTab(tab);
   };
 
-  const botUsername = appSettings.telegramBotUsername || "AdvanceAppBot";
+  const botUsername = "AdvanceAppBot";
 
   return (
     <TelegramVerificationGate botUsername={botUsername}>
