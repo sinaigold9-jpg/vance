@@ -641,6 +641,7 @@ const Index = () => {
       <FloatingLuckyWheel />
       <InstallPWA />
     </div>
+    </TelegramVerificationGate>
   );
 };
 
