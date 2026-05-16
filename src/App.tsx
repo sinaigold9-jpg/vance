@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Landing from "./pages/Landing";
+import { UpdateGate } from "@/components/UpdateGate";
 
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -22,7 +23,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <Routes>
+            <UpdateGate>
+              <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<Index />} />
               <Route path="/app/tasks" element={<Index />} />
@@ -42,7 +44,8 @@ const App = () => (
               <Route path="/landing" element={<Landing />} />
               
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </UpdateGate>
           </Suspense>
         </BrowserRouter>
       </AuthProvider>
