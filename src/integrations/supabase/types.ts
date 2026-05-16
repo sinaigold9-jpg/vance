@@ -430,6 +430,57 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          images: string[]
+          is_active: boolean
+          is_mandatory: boolean
+          release_date: string
+          target_audience: string
+          theme: string
+          title: string
+          updated_at: string
+          version: string
+          version_code: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          is_mandatory?: boolean
+          release_date?: string
+          target_audience?: string
+          theme?: string
+          title: string
+          updated_at?: string
+          version: string
+          version_code: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          is_mandatory?: boolean
+          release_date?: string
+          target_audience?: string
+          theme?: string
+          title?: string
+          updated_at?: string
+          version?: string
+          version_code?: number
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
