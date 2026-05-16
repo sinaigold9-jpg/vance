@@ -57,6 +57,9 @@ export const InstallPWA = () => {
               src="/icon-192.png" 
               alt="Advance" 
               className="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
             />
           </div>
           <div className="flex-1 min-w-0">
