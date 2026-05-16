@@ -12,6 +12,11 @@ interface TelegramVerificationGateProps {
 }
 
 export const TelegramVerificationGate = ({ children, botUsername }: TelegramVerificationGateProps) => {
+  // ⚠️ التحقق عبر بوت تليجرام معطّل مؤقتاً حتى إصلاح اتصال البوت.
+  // لإعادة تفعيله: احذف السطر التالي وأعد منطق التحقق الأصلي.
+  return <>{children}</>;
+
+  // eslint-disable-next-line no-unreachable
   const { user } = useAuth();
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [telegramLinked, setTelegramLinked] = useState(false);
