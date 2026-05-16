@@ -74,12 +74,25 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
               )}
               <div
                 className={`
-                  relative w-12 h-12 md:w-14 md:h-14 rounded-xl mb-2 md:mb-3
+                  relative w-14 h-14 md:w-16 md:h-16 rounded-2xl mb-2 md:mb-3
                   flex items-center justify-center
                   bg-gradient-to-br ${item.gradient}
-                  shadow-lg
+                  shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)]
+                  ring-2 ring-white/25
+                  ring-offset-2 ring-offset-background/40
+                  overflow-hidden
                 `}
               >
+                {/* Inner border highlight */}
+                <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/30" />
+                {/* Glossy top shine */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/35 to-transparent" />
+                {/* Sparkle */}
+                <motion.span
+                  className="pointer-events-none absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white shadow-[0_0_8px_2px_rgba(255,255,255,0.9)]"
+                  animate={{ opacity: [0.2, 1, 0.2], scale: [0.6, 1.1, 0.6] }}
+                  transition={{ duration: 2.4, repeat: Infinity, delay: index * 0.15 }}
+                />
                 <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-white" />
               </div>
               <span className={`relative text-sm md:text-base font-bold mb-1 ${isActive ? "text-primary" : "text-foreground"}`}>
