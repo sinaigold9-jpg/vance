@@ -5,34 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAppVersion, type AppVersion, type VersionFeature } from "@/hooks/useAppVersion";
-import { performAppUpdate, CURRENT_VERSION } from "@/lib/appVersion";
+import {
+  performAppUpdate,
+  CURRENT_VERSION,
+  measureUpdateManifest,
+  downloadUpdate,
+  formatBytes,
+  formatSpeed,
+  type UpdateManifest,
+  type DownloadProgress,
+} from "@/lib/appVersion";
 import { cn } from "@/lib/utils";
 
-const themeStyles: Record<string, { bg: string; accent: string; ring: string; emoji: string }> = {
-  default: {
-    bg: "from-slate-950 via-slate-900 to-slate-950",
-    accent: "from-amber-400 via-yellow-500 to-amber-600",
-    ring: "ring-amber-400/40",
-    emoji: "✨",
-  },
-  ramadan: {
-    bg: "from-emerald-950 via-green-900 to-emerald-950",
-    accent: "from-yellow-300 via-amber-400 to-yellow-500",
-    ring: "ring-emerald-400/40",
-    emoji: "🌙",
-  },
-  eid: {
-    bg: "from-purple-950 via-fuchsia-900 to-purple-950",
-    accent: "from-pink-400 via-fuchsia-500 to-purple-500",
-    ring: "ring-fuchsia-400/40",
-    emoji: "🎉",
-  },
-  celebration: {
-    bg: "from-rose-950 via-pink-900 to-rose-950",
-    accent: "from-yellow-300 via-pink-400 to-rose-500",
-    ring: "ring-pink-400/40",
-    emoji: "🎊",
-  },
+// Unified premium dark / gold theme (no more fixed season themes)
+const theme = {
+  bg: "from-slate-950 via-slate-900 to-slate-950",
+  accent: "from-amber-400 via-yellow-500 to-amber-600",
+  ring: "ring-amber-400/40",
 };
 
 const badgeStyles: Record<string, { label: string; cls: string; Icon: typeof Sparkles }> = {
@@ -121,26 +110,40 @@ const ImageSlider = ({ images }: { images: string[] }) => {
 
 const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () => void }) => {
   const [updating, setUpdating] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const theme = themeStyles[version.theme] || themeStyles.default;
+  const [manifest, setManifest] = useState<UpdateManifest | null>(null);
+  const [progress, setProgress] = useState<DownloadProgress>({
+    loadedBytes: 0,
+    totalBytes: 0,
+    speedBps: 0,
+    percent: 0,
+  });
 
+  // Measure real update size when the screen opens
   useEffect(() => {
-    if (!updating) return;
-    const t = setInterval(() => {
-      setProgress((p) => Math.min(p + Math.random() * 18, 95));
-    }, 250);
-    return () => clearInterval(t);
-  }, [updating]);
+    let cancelled = false;
+    (async () => {
+      const m = await measureUpdateManifest();
+      if (!cancelled) setManifest(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleUpdate = async () => {
+    if (!manifest || updating) return;
     setUpdating(true);
-    setProgress(8);
-    // small visual delay
-    await new Promise((r) => setTimeout(r, 800));
-    setProgress(100);
-    await new Promise((r) => setTimeout(r, 400));
+    await downloadUpdate(manifest, (p) => setProgress(p));
+    await new Promise((r) => setTimeout(r, 250));
     await performAppUpdate();
   };
+
+  const sizeLabel = manifest && manifest.totalBytes > 0
+    ? formatBytes(manifest.totalBytes)
+    : "جاري حساب الحجم...";
+
+  const headerLabel = (version.update_label && version.update_label.trim())
+    || "يوجد إصدار جديد متوفر";
 
   return (
     <div
@@ -171,16 +174,20 @@ const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () 
               <Rocket className="w-7 h-7 text-black" />
             </div>
             <div className="flex-1">
-              <div className="text-xs text-white/60">{theme.emoji} يوجد إصدار جديد متوفر</div>
+              <div className="text-xs text-white/60">✨ {headerLabel}</div>
               <h2 className="text-lg font-extrabold text-white">{version.title}</h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-wrap">
             <span className="px-2 py-1 rounded-md bg-white/10 text-white/70 font-mono">v{CURRENT_VERSION}</span>
             <span className="text-white/40">←</span>
             <span className={cn("px-2 py-1 rounded-md font-mono font-bold text-black bg-gradient-to-r", theme.accent)}>
               v{version.version}
+            </span>
+            <span className="px-2 py-1 rounded-md bg-white/10 text-white/80 flex items-center gap-1">
+              <Download className="w-3 h-3" />
+              {sizeLabel}
             </span>
             {version.is_mandatory && (
               <Badge className="ms-auto bg-red-500/20 text-red-300 border border-red-400/40 text-[10px]">
@@ -214,9 +221,16 @@ const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () 
 
           {updating && (
             <div className="space-y-2 pt-2">
-              <Progress value={progress} className="h-2" />
-              <p className="text-xs text-center text-white/70">
-                جاري تثبيت التحديث... {Math.round(progress)}%
+              <Progress value={progress.percent} className="h-2" />
+              <div className="flex items-center justify-between text-xs text-white/70 font-mono">
+                <span>
+                  {formatBytes(progress.loadedBytes)} / {formatBytes(progress.totalBytes)}
+                </span>
+                <span>{formatSpeed(progress.speedBps)}</span>
+                <span>{progress.percent.toFixed(1)}%</span>
+              </div>
+              <p className="text-xs text-center text-white/60">
+                جاري تحميل ملفات التحديث...
               </p>
             </div>
           )}
@@ -226,14 +240,18 @@ const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () 
         <div className="p-6 pt-2 space-y-2 border-t border-white/10 sticky bottom-0 bg-black/60 backdrop-blur-xl">
           <Button
             onClick={handleUpdate}
-            disabled={updating}
+            disabled={updating || !manifest}
             className={cn(
               "w-full h-12 text-base font-bold text-black bg-gradient-to-r hover:opacity-90 transition gap-2 shadow-lg",
               theme.accent
             )}
           >
             <Download className="w-5 h-5" />
-            {updating ? "جاري التحديث..." : "تحديث الآن"}
+            {updating
+              ? `جاري التحديث... ${progress.percent.toFixed(0)}%`
+              : manifest
+                ? `تحديث الآن (${sizeLabel})`
+                : "جاري التحضير..."}
           </Button>
           {!version.is_mandatory && onLater && !updating && (
             <Button
