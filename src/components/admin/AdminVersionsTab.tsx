@@ -28,7 +28,7 @@ interface VersionRow {
   images: string[];
   is_mandatory: boolean;
   target_audience: string;
-  theme: string;
+  update_label: string | null;
   is_active: boolean;
   release_date: string;
 }
@@ -42,7 +42,7 @@ const empty: Omit<VersionRow, "id" | "release_date"> = {
   images: [],
   is_mandatory: true,
   target_audience: "all",
-  theme: "default",
+  update_label: "",
   is_active: true,
 };
 
@@ -65,6 +65,7 @@ export const AdminVersionsTab = () => {
       setRows(
         (data || []).map((r: any) => ({
           ...r,
+          update_label: r.update_label ?? "",
           features: Array.isArray(r.features) ? r.features : [],
           images: Array.isArray(r.images) ? r.images : [],
         }))
@@ -93,7 +94,7 @@ export const AdminVersionsTab = () => {
       images: r.images,
       is_mandatory: r.is_mandatory,
       target_audience: r.target_audience,
-      theme: r.theme,
+      update_label: r.update_label || "",
       is_active: r.is_active,
     });
     setOpen(true);
@@ -113,7 +114,7 @@ export const AdminVersionsTab = () => {
       images: form.images,
       is_mandatory: form.is_mandatory,
       target_audience: form.target_audience,
-      theme: form.theme,
+      update_label: form.update_label?.trim() || null,
       is_active: form.is_active,
     };
     const op = editing
@@ -190,7 +191,7 @@ export const AdminVersionsTab = () => {
                   {r.is_mandatory && <Badge className="bg-red-500/20 text-red-600 border-red-400/40">إجباري</Badge>}
                   {!r.is_active && <Badge variant="secondary">معطل</Badge>}
                   <Badge variant="outline">{r.target_audience}</Badge>
-                  <Badge variant="outline">{r.theme}</Badge>
+                  {r.update_label && <Badge variant="outline">{r.update_label}</Badge>}
                 </div>
                 <div className="text-sm mt-1">{r.title}</div>
                 <div className="text-xs text-muted-foreground">{r.features.length} ميزات · {r.images.length} صور</div>
@@ -249,16 +250,12 @@ export const AdminVersionsTab = () => {
               </Select>
             </div>
             <div>
-              <Label>الثيم</Label>
-              <Select value={form.theme} onValueChange={(v) => setForm({ ...form, theme: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">افتراضي ✨</SelectItem>
-                  <SelectItem value="ramadan">رمضان 🌙</SelectItem>
-                  <SelectItem value="eid">عيد 🎉</SelectItem>
-                  <SelectItem value="celebration">احتفال 🎊</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>اسم التحديث (اختياري)</Label>
+              <Input
+                value={form.update_label || ""}
+                onChange={(e) => setForm({ ...form, update_label: e.target.value })}
+                placeholder="مثال: تحديث الصيف، تحديث الأداء..."
+              />
             </div>
             <div className="space-y-2 pt-6">
               <div className="flex items-center justify-between">
