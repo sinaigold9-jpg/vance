@@ -443,6 +443,7 @@ export type Database = {
           target_audience: string
           theme: string
           title: string
+          update_label: string | null
           updated_at: string
           version: string
           version_code: number
@@ -459,6 +460,7 @@ export type Database = {
           target_audience?: string
           theme?: string
           title: string
+          update_label?: string | null
           updated_at?: string
           version: string
           version_code: number
@@ -475,6 +477,7 @@ export type Database = {
           target_audience?: string
           theme?: string
           title?: string
+          update_label?: string | null
           updated_at?: string
           version?: string
           version_code?: number
