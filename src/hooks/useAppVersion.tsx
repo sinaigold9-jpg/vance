@@ -21,6 +21,7 @@ export interface AppVersion {
   is_mandatory: boolean;
   target_audience: string;
   theme: string;
+  update_label: string | null;
   is_active: boolean;
   release_date: string;
 }
@@ -72,6 +73,7 @@ export const useAppVersion = () => {
         .filter((v: any) => matchesAudience(v.target_audience, acct))
         .map((v: any) => ({
           ...v,
+          update_label: v.update_label ?? null,
           features: Array.isArray(v.features) ? (v.features as VersionFeature[]) : [],
           images: Array.isArray(v.images) ? v.images : [],
         })) as AppVersion[];
