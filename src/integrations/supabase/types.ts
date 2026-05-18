@@ -519,6 +519,252 @@ export type Database = {
           },
         ]
       }
+      contest_answers: {
+        Row: {
+          answered_at: string
+          contest_id: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          selected_index: number
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          contest_id: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          selected_index: number
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          contest_id?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          selected_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_answers_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contest_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "contest_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_progress: {
+        Row: {
+          claimed_rewards: number[]
+          completed_levels: number[]
+          contest_id: string
+          correct_count: number
+          current_level: number
+          current_question_index: number
+          finished_at: string | null
+          id: string
+          last_played_at: string
+          started_at: string
+          user_id: string
+          wrong_count: number
+        }
+        Insert: {
+          claimed_rewards?: number[]
+          completed_levels?: number[]
+          contest_id: string
+          correct_count?: number
+          current_level?: number
+          current_question_index?: number
+          finished_at?: string | null
+          id?: string
+          last_played_at?: string
+          started_at?: string
+          user_id: string
+          wrong_count?: number
+        }
+        Update: {
+          claimed_rewards?: number[]
+          completed_levels?: number[]
+          contest_id?: string
+          correct_count?: number
+          current_level?: number
+          current_question_index?: number
+          finished_at?: string | null
+          id?: string
+          last_played_at?: string
+          started_at?: string
+          user_id?: string
+          wrong_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_progress_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_questions: {
+        Row: {
+          category: string
+          contest_id: string
+          correct_answer: string
+          created_at: string
+          difficulty: string
+          id: string
+          level_number: number
+          order_in_level: number
+          question_text: string
+          wrong_answers: Json
+        }
+        Insert: {
+          category?: string
+          contest_id: string
+          correct_answer: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          level_number: number
+          order_in_level?: number
+          question_text: string
+          wrong_answers?: Json
+        }
+        Update: {
+          category?: string
+          contest_id?: string
+          correct_answer?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          level_number?: number
+          order_in_level?: number
+          question_text?: string
+          wrong_answers?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_questions_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_rewards: {
+        Row: {
+          at_level: number
+          contest_id: string
+          created_at: string
+          icon: string | null
+          id: string
+          reward_type: string
+          reward_value: Json
+          title: string
+        }
+        Insert: {
+          at_level: number
+          contest_id: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          reward_type: string
+          reward_value?: Json
+          title: string
+        }
+        Update: {
+          at_level?: number
+          contest_id?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          reward_type?: string
+          reward_value?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_rewards_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contests: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          is_active: boolean
+          questions_per_level: number
+          show_on_home: boolean
+          show_on_offers: boolean
+          starts_at: string
+          subtitle: string | null
+          surprise_every: number
+          target_audience: string
+          title: string
+          total_levels: number
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          questions_per_level?: number
+          show_on_home?: boolean
+          show_on_offers?: boolean
+          starts_at?: string
+          subtitle?: string | null
+          surprise_every?: number
+          target_audience?: string
+          title: string
+          total_levels?: number
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          questions_per_level?: number
+          show_on_home?: boolean
+          show_on_offers?: boolean
+          starts_at?: string
+          subtitle?: string | null
+          surprise_every?: number
+          target_audience?: string
+          title?: string
+          total_levels?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_codes: {
         Row: {
           code: string
@@ -1085,6 +1331,8 @@ export type Database = {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
           balance: number
+          contest_discount_percent: number | null
+          contest_discount_until: string | null
           created_at: string
           daily_attempts_count: number
           disabled_features: Json | null
@@ -1106,6 +1354,8 @@ export type Database = {
           team_members_count: number | null
           team_rank: string | null
           telegram_chat_id: number | null
+          temp_vip_type: string | null
+          temp_vip_until: string | null
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
@@ -1114,6 +1364,8 @@ export type Database = {
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"]
           balance?: number
+          contest_discount_percent?: number | null
+          contest_discount_until?: string | null
           created_at?: string
           daily_attempts_count?: number
           disabled_features?: Json | null
@@ -1135,6 +1387,8 @@ export type Database = {
           team_members_count?: number | null
           team_rank?: string | null
           telegram_chat_id?: number | null
+          temp_vip_type?: string | null
+          temp_vip_until?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1143,6 +1397,8 @@ export type Database = {
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"]
           balance?: number
+          contest_discount_percent?: number | null
+          contest_discount_until?: string | null
           created_at?: string
           daily_attempts_count?: number
           disabled_features?: Json | null
@@ -1164,6 +1420,8 @@ export type Database = {
           team_members_count?: number | null
           team_rank?: string | null
           telegram_chat_id?: number | null
+          temp_vip_type?: string | null
+          temp_vip_until?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1499,6 +1757,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      claim_contest_reward: {
+        Args: { _contest_id: string; _level: number }
+        Returns: Json
       }
       generate_membership_id: { Args: never; Returns: string }
       generate_transaction_number: { Args: never; Returns: string }
