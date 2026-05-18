@@ -6,6 +6,7 @@ import {
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
   Megaphone, Bell, Gift, Key, Edit, Mail, Shield, Rocket
 } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +32,7 @@ import { AdminOffersContestsTab } from "@/components/admin/AdminOffersContestsTa
 import { AdminInternalLinksTab } from "@/components/admin/AdminInternalLinksTab";
 import { AdminStaffTab } from "@/components/admin/AdminStaffTab";
 import { AdminVersionsTab } from "@/components/admin/AdminVersionsTab";
+import { AdminContestsTab } from "@/components/admin/AdminContestsTab";
 
 // All admin tabs definition
 const ALL_TABS = [
@@ -53,6 +55,7 @@ const ALL_TABS = [
   { key: "internal-links", label: "الروابط", icon: Key },
   { key: "staff", label: "الموظفين", icon: Shield },
   { key: "versions", label: "الإصدارات", icon: Rocket },
+  { key: "contests", label: "المسابقات", icon: Trophy },
 ];
 
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
@@ -75,6 +78,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   "internal-links": AdminInternalLinksTab,
   staff: AdminStaffTab,
   versions: AdminVersionsTab,
+  contests: AdminContestsTab,
 };
 
 const Admin = () => {
