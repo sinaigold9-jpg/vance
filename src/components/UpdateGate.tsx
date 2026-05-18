@@ -12,6 +12,9 @@ import {
   downloadUpdate,
   formatBytes,
   formatSpeed,
+  setSeenVersionCode,
+  getDownloadedVersionCode,
+  setDownloadedVersionCode,
   type UpdateManifest,
   type DownloadProgress,
 } from "@/lib/appVersion";
@@ -133,7 +136,21 @@ const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () 
   const handleUpdate = async () => {
     if (!manifest || updating) return;
     setUpdating(true);
-    await downloadUpdate(manifest, (p) => setProgress(p));
+    // Skip re-downloading if the same version files were already fetched
+    const alreadyDownloaded = getDownloadedVersionCode() === version.version_code;
+    if (!alreadyDownloaded) {
+      await downloadUpdate(manifest, (p) => setProgress(p));
+      setDownloadedVersionCode(version.version_code);
+    } else {
+      setProgress({
+        loadedBytes: manifest.totalBytes,
+        totalBytes: manifest.totalBytes,
+        speedBps: 0,
+        percent: 100,
+      });
+    }
+    // Persist that this version has been installed so the gate won't reappear
+    setSeenVersionCode(version.version_code);
     await new Promise((r) => setTimeout(r, 250));
     await performAppUpdate();
   };
