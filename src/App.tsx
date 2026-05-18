@@ -12,6 +12,7 @@ const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ContestPage = lazy(() => import("./pages/ContestPage"));
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/app/sponsor" element={<Index />} />
               <Route path="/app/support" element={<Index />} />
               <Route path="/app/faq" element={<Index />} />
+              <Route path="/app/contest/:id" element={<ContestPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/landing" element={<Landing />} />
