@@ -137,7 +137,7 @@ export const ContestLevel = ({
             {answers.map((a, idx) => {
               const isSelected = selected === idx;
               const showResult = locked && isSelected;
-              const showCorrect = locked && a.isCorrect && !a.isCorrect === false && wrongHere;
+              const showCorrect = locked && wrongHere && a.isCorrect;
               return (
                 <motion.button
                   key={idx}
