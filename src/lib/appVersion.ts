@@ -4,6 +4,7 @@ export const CURRENT_VERSION = "1.0.0";
 export const CURRENT_VERSION_CODE = 100;
 
 const LS_KEY = "advance_seen_version_code";
+const LS_DOWNLOADED_KEY = "advance_downloaded_version_code";
 
 export const getSeenVersionCode = (): number => {
   try {
@@ -17,6 +18,23 @@ export const getSeenVersionCode = (): number => {
 export const setSeenVersionCode = (code: number) => {
   try {
     localStorage.setItem(LS_KEY, String(code));
+  } catch {
+    // ignore
+  }
+};
+
+export const getDownloadedVersionCode = (): number => {
+  try {
+    const v = localStorage.getItem(LS_DOWNLOADED_KEY);
+    return v ? parseInt(v, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const setDownloadedVersionCode = (code: number) => {
+  try {
+    localStorage.setItem(LS_DOWNLOADED_KEY, String(code));
   } catch {
     // ignore
   }
