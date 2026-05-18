@@ -396,6 +396,8 @@ export const OffersPage = () => {
 
       <PromotionBanner location="offers" />
 
+      <ContestBanner location="offers" />
+
       {/* Tabs */}
       <div className="flex gap-2 justify-center">
         {([["all", "الكل"], ["offers", "العروض"], ["contests", "المسابقات"]] as const).map(([key, label]) => (
