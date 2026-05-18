@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "./BackButton";
 import { PromotionBanner } from "./PromotionBanner";
+import { ContestBanner } from "./contest/ContestBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -395,6 +396,8 @@ export const OffersPage = () => {
       </div>
 
       <PromotionBanner location="offers" />
+
+      <ContestBanner location="offers" />
 
       {/* Tabs */}
       <div className="flex gap-2 justify-center">

@@ -25,6 +25,7 @@ import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
 import { HomeOffersPreview } from "@/components/HomeOffersPreview";
+import { ContestBanner } from "@/components/contest/ContestBanner";
 import { PromotionBanner } from "@/components/PromotionBanner";
 import { FloatingLuckyWheel } from "@/components/FloatingLuckyWheel";
 import { FAQ } from "@/components/FAQ";
@@ -327,6 +328,9 @@ const Index = () => {
             
             {/* Promotion Banner */}
             <PromotionBanner />
+
+            {/* Active Contest Banner */}
+            <ContestBanner location="home" />
 
             {/* Active Offers Preview on Home */}
             <HomeOffersPreview onViewAll={() => handleTabChange("offers")} />
