@@ -24,6 +24,8 @@ export interface AppVersion {
   update_label: string | null;
   is_active: boolean;
   release_date: string;
+  status?: string;
+  size_bytes?: number;
 }
 
 const matchesAudience = (target: string, accountType?: string | null) => {
@@ -62,6 +64,7 @@ export const useAppVersion = () => {
       .from("app_versions")
       .select("*")
       .eq("is_active", true)
+      .eq("status", "published")
       .gt("version_code", seen)
       .order("version_code", { ascending: true });
 

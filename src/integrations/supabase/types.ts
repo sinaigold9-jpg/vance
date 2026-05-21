@@ -432,6 +432,8 @@ export type Database = {
       }
       app_versions: {
         Row: {
+          auto_generated: boolean
+          build_hash: string | null
           created_at: string
           description: string | null
           features: Json
@@ -439,7 +441,10 @@ export type Database = {
           images: string[]
           is_active: boolean
           is_mandatory: boolean
+          published_at: string | null
           release_date: string
+          size_bytes: number
+          status: string
           target_audience: string
           theme: string
           title: string
@@ -449,6 +454,8 @@ export type Database = {
           version_code: number
         }
         Insert: {
+          auto_generated?: boolean
+          build_hash?: string | null
           created_at?: string
           description?: string | null
           features?: Json
@@ -456,7 +463,10 @@ export type Database = {
           images?: string[]
           is_active?: boolean
           is_mandatory?: boolean
+          published_at?: string | null
           release_date?: string
+          size_bytes?: number
+          status?: string
           target_audience?: string
           theme?: string
           title: string
@@ -466,6 +476,8 @@ export type Database = {
           version_code: number
         }
         Update: {
+          auto_generated?: boolean
+          build_hash?: string | null
           created_at?: string
           description?: string | null
           features?: Json
@@ -473,7 +485,10 @@ export type Database = {
           images?: string[]
           is_active?: boolean
           is_mandatory?: boolean
+          published_at?: string | null
           release_date?: string
+          size_bytes?: number
+          status?: string
           target_audience?: string
           theme?: string
           title?: string
