@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Pencil, Trophy, Gift, ListChecks, ImageIcon } from "lucide-react";
+import { Trash2, Plus, Pencil, Trophy, Gift, ListChecks, ImageIcon, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES = ["تاريخ", "جغرافيا", "أدب", "فنون", "أفلام", "مسلسلات", "تكنولوجيا", "علوم", "رياضة", "دين", "عام"];
@@ -201,6 +201,7 @@ const ManageContest = ({ contestId, onBack }: { contestId: string; onBack: () =>
   const [rewards, setRewards] = useState<any[]>([]);
   const [qDialog, setQDialog] = useState<any | null>(null);
   const [rDialog, setRDialog] = useState<any | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const load = async () => {
     const [{ data: c }, { data: q }, { data: r }] = await Promise.all([
@@ -213,6 +214,23 @@ const ManageContest = ({ contestId, onBack }: { contestId: string; onBack: () =>
     setRewards((r as any[]) || []);
   };
   useEffect(() => { load(); }, [contestId]);
+
+  const autoGenerate = async () => {
+    if (!confirm("سيقوم النظام بتوليد أسئلة احترافية تلقائياً عبر الذكاء الاصطناعي وملء المستويات الناقصة. هل تريد المتابعة؟")) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-contest-questions", {
+        body: { contest_id: contestId },
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success(`تم توليد ${data?.generated ?? 0} سؤال جديد`);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "فشل التوليد");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const saveQuestion = async () => {
     const w = (qDialog.wrong_answers || []).filter((x: string) => x.trim()).slice(0, 3);
@@ -284,7 +302,13 @@ const ManageContest = ({ contestId, onBack }: { contestId: string; onBack: () =>
       <Card className="p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold flex items-center gap-2"><ListChecks className="w-4 h-4" /> الأسئلة ({questions.length})</h3>
-          <Button size="sm" onClick={() => setQDialog({ level_number: 1, order_in_level: 0, category: "عام", wrong_answers: ["", "", ""], difficulty: "medium" })}><Plus className="w-4 h-4" /></Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={autoGenerate} disabled={generating} className="gap-1">
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              توليد تلقائي
+            </Button>
+            <Button size="sm" onClick={() => setQDialog({ level_number: 1, order_in_level: 0, category: "عام", wrong_answers: ["", "", ""], difficulty: "medium" })}><Plus className="w-4 h-4" /></Button>
+          </div>
         </div>
         <div className="space-y-1.5 max-h-72 overflow-y-auto">
           {questions.map((q) => (
