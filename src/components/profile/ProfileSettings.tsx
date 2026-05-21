@@ -20,10 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2, Wifi } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications, unregisterPushNotifications } from "@/lib/pushNotifications";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { toast } from "sonner";
 
 interface ProfileSettingsProps {
@@ -58,6 +59,7 @@ const fieldIcons: Record<string, React.ReactNode> = {
 
 export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
   const { user } = useAuth();
+  const { enabled: dataSaver, toggle: toggleDataSaver } = useDataSaver();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [selectedField, setSelectedField] = useState<string>("");
@@ -237,6 +239,30 @@ export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
                   checked={pushEnabled}
                   onCheckedChange={togglePush}
                   disabled={pushLoading}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Data Saver */}
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wifi className={`w-5 h-5 ${dataSaver ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <p className="font-medium">وضع توفير البيانات</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dataSaver ? "مفعّل — يقلل تحميل الصور والمؤثرات" : "متوقف"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={dataSaver}
+                  onCheckedChange={(v) => {
+                    toggleDataSaver(v);
+                    toast.success(v ? "تم تفعيل وضع توفير البيانات" : "تم إيقاف وضع توفير البيانات");
+                  }}
                 />
               </div>
             </CardContent>
