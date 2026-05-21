@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit, Image as ImageIcon, X, Loader2, Radar, Send, EyeOff } from "lucide-react";
 
 interface Feature {
   label: string;
@@ -31,6 +31,11 @@ interface VersionRow {
   update_label: string | null;
   is_active: boolean;
   release_date: string;
+  status?: string;
+  size_bytes?: number;
+  auto_generated?: boolean;
+  build_hash?: string | null;
+  published_at?: string | null;
 }
 
 const empty: Omit<VersionRow, "id" | "release_date"> = {
@@ -53,6 +58,7 @@ export const AdminVersionsTab = () => {
   const [editing, setEditing] = useState<VersionRow | null>(null);
   const [form, setForm] = useState({ ...empty });
   const [uploading, setUploading] = useState(false);
+  const [detecting, setDetecting] = useState(false);
 
   const fetchRows = async () => {
     setLoading(true);
@@ -140,6 +146,46 @@ export const AdminVersionsTab = () => {
     }
   };
 
+  const detectNewVersion = async () => {
+    setDetecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("detect-app-version", { body: {} });
+      if (error) { toast.error(error.message); return; }
+      if (data?.changed) {
+        toast.success(data.message || "تم إنشاء مسودة جديدة");
+        fetchRows();
+      } else {
+        toast.info(data?.message || "لا توجد نسخة جديدة");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "فشل الكشف");
+    } finally {
+      setDetecting(false);
+    }
+  };
+
+  const publishVersion = async (r: VersionRow) => {
+    const { error } = await supabase.from("app_versions")
+      .update({ status: "published", published_at: new Date().toISOString() } as any)
+      .eq("id", r.id);
+    if (error) toast.error(error.message); else { toast.success("تم النشر للمستخدمين"); fetchRows(); }
+  };
+
+  const unpublishVersion = async (r: VersionRow) => {
+    const { error } = await supabase.from("app_versions")
+      .update({ status: "draft" } as any)
+      .eq("id", r.id);
+    if (error) toast.error(error.message); else { toast.success("تم سحب النشر"); fetchRows(); }
+  };
+
+  const formatBytes = (b?: number) => {
+    if (!b || b <= 0) return "—";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.min(units.length - 1, Math.floor(Math.log(b) / Math.log(1024)));
+    const v = b / Math.pow(1024, i);
+    return `${v.toFixed(v >= 100 || i === 0 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
+  };
+
   const addFeature = () =>
     setForm({ ...form, features: [...form.features, { label: "", description: "", badge: "new" }] });
 
@@ -171,11 +217,17 @@ export const AdminVersionsTab = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">إدارة الإصدارات</h2>
-          <p className="text-sm text-muted-foreground">إنشاء وإدارة تحديثات التطبيق الإجبارية والاختيارية</p>
+          <p className="text-sm text-muted-foreground">المسودات لا تظهر للمستخدمين. اضغط "نشر" عند الجاهزية.</p>
         </div>
-        <Button onClick={openNew} className="gap-2">
-          <Plus className="w-4 h-4" /> إصدار جديد
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={detectNewVersion} variant="outline" disabled={detecting} className="gap-2">
+            {detecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radar className="w-4 h-4" />}
+            كشف نسخة جديدة
+          </Button>
+          <Button onClick={openNew} className="gap-2">
+            <Plus className="w-4 h-4" /> إصدار جديد
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -188,14 +240,30 @@ export const AdminVersionsTab = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold font-mono">v{r.version}</span>
                   <Badge variant="outline">#{r.version_code}</Badge>
+                  {r.status === "draft" ? (
+                    <Badge className="bg-amber-500/20 text-amber-600 border-amber-400/40">مسودة</Badge>
+                  ) : (
+                    <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-400/40">منشور</Badge>
+                  )}
                   {r.is_mandatory && <Badge className="bg-red-500/20 text-red-600 border-red-400/40">إجباري</Badge>}
                   {!r.is_active && <Badge variant="secondary">معطل</Badge>}
                   <Badge variant="outline">{r.target_audience}</Badge>
+                  <Badge variant="outline">{formatBytes(r.size_bytes)}</Badge>
+                  {r.auto_generated && <Badge variant="outline">تم الكشف تلقائياً</Badge>}
                   {r.update_label && <Badge variant="outline">{r.update_label}</Badge>}
                 </div>
                 <div className="text-sm mt-1">{r.title}</div>
                 <div className="text-xs text-muted-foreground">{r.features.length} ميزات · {r.images.length} صور</div>
               </div>
+              {r.status === "draft" ? (
+                <Button variant="outline" size="sm" onClick={() => publishVersion(r)} className="gap-1">
+                  <Send className="w-3 h-3" /> نشر
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => unpublishVersion(r)} className="gap-1">
+                  <EyeOff className="w-3 h-3" /> سحب
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit className="w-4 h-4" /></Button>
               <Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </Card>
