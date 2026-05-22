@@ -54,6 +54,11 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background via-background to-background/90">
+      <SEO
+        title="Advance — منصة المهام والمكافآت"
+        description="تطبيق Advance منصة عربية لإنجاز المهام اليومية، المسابقات، والمكافآت. ابدأ تجربتك المجانية لمدة 7 أيام."
+        path="/"
+      />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
