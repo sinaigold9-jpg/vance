@@ -12,3 +12,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /app/profile
+Disallow: /app/wallet
+Disallow: /app/team
+
+Sitemap: https://vance.lovable.app/sitemap.xml
