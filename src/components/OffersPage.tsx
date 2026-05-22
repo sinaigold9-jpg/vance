@@ -389,6 +389,11 @@ export const OffersPage = () => {
 
   return (
     <div className="space-y-6">
+      <SEO
+        title="العروض والمسابقات"
+        description="اكتشف أحدث العروض والمسابقات اليومية على Advance واربح مكافآت ونقاطًا حصرية."
+        path="/app/offers"
+      />
       <BackButton />
 
       <div className="text-center py-4">
