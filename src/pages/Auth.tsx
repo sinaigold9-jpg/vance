@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
@@ -224,6 +225,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-primary/5">
+      <SEO title="تسجيل الدخول" path="/auth" noIndex />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

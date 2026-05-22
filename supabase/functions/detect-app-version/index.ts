@@ -51,6 +51,66 @@ async function headSize(origin: string, path: string): Promise<number> {
   } catch { return 0; }
 }
 
+function bumpSemver(prev: string, kind: "patch" | "minor" | "major" = "patch"): string {
+  const parts = (prev || "1.0.0").split(".").map(n => parseInt(n, 10) || 0);
+  while (parts.length < 3) parts.push(0);
+  if (kind === "major") { parts[0]++; parts[1] = 0; parts[2] = 0; }
+  else if (kind === "minor") { parts[1]++; parts[2] = 0; }
+  else { parts[2]++; }
+  return parts.slice(0, 3).join(".");
+}
+
+async function generateFeaturesWithAI(appName = "Advance"): Promise<any[]> {
+  const KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!KEY) return [];
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "أنت كاتب ملاحظات إصدار احترافي لتطبيق عربي. اكتب 3-5 ميزات/إصلاحات مقتضبة بلغة عربية واضحة ومحفزة." },
+          { role: "user", content: `اكتب قائمة ميزات وإصلاحات افتراضية لتحديث جديد على تطبيق ${appName}. لا تذكر أسماء تقنية. عبارات قصيرة (3-7 كلمات).` }
+        ],
+        tools: [{
+          type: "function",
+          function: {
+            name: "save_release_notes",
+            parameters: {
+              type: "object",
+              properties: {
+                items: {
+                  type: "array", minItems: 3, maxItems: 5,
+                  items: {
+                    type: "object",
+                    properties: {
+                      label: { type: "string" },
+                      badge: { type: "string", enum: ["new", "feature", "fix", "vip"] }
+                    },
+                    required: ["label", "badge"], additionalProperties: false
+                  }
+                }
+              },
+              required: ["items"], additionalProperties: false
+            }
+          }
+        }],
+        tool_choice: { type: "function", function: { name: "save_release_notes" } }
+      })
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    if (!args) return [];
+    const parsed = JSON.parse(args);
+    return parsed?.items || [];
+  } catch (e) {
+    console.error("AI features error", e);
+    return [];
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -79,6 +139,8 @@ Deno.serve(async (req) => {
     let payload: any = {};
     try { payload = await req.json(); } catch { payload = {}; }
     const origin = await pickOrigin(payload?.origin);
+    const force: boolean = !!payload?.force;
+    const bumpKind: "patch" | "minor" | "major" = payload?.bump === "minor" ? "minor" : payload?.bump === "major" ? "major" : "patch";
 
     // Fetch index.html and parse assets
     const indexRes = await fetch(`${origin}/index.html`, { headers: { "cache-control": "no-cache" } });
@@ -105,7 +167,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (latest?.build_hash === buildHash) {
+    if (latest?.build_hash === buildHash && !force) {
       return new Response(JSON.stringify({
         ok: true, changed: false,
         message: "لا توجد نسخة جديدة. آخر إصدار مطابق للنسخة الحالية.",
@@ -113,22 +175,25 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create a new draft version
+    // Create a new draft version (semver bump)
     const nextCode = (latest?.version_code ?? 100) + 1;
-    const parts = (latest?.version ?? "1.0.0").split(".").map((n: string) => parseInt(n, 10) || 0);
-    parts[2] = (parts[2] || 0) + 1;
-    const nextVersion = parts.join(".");
+    const nextVersion = bumpSemver(latest?.version ?? "1.0.0", bumpKind);
 
-    const features = [
-      { label: "تحسينات في الأداء والاستقرار", badge: "fix" },
-      { label: "إصلاح أخطاء بسيطة", badge: "fix" },
-    ];
+    let features = await generateFeaturesWithAI();
+    if (!features.length) {
+      features = [
+        { label: "تحسينات في الأداء والاستقرار", badge: "fix" },
+        { label: "إصلاح أخطاء بسيطة", badge: "fix" },
+      ];
+    }
 
     const { data: created, error: insErr } = await admin.from("app_versions").insert({
       version: nextVersion,
       version_code: nextCode,
       title: `تحديث جديد ${nextVersion}`,
-      description: "تم اكتشاف نسخة جديدة تلقائياً. عدّل التفاصيل ثم اضغط نشر.",
+      description: force
+        ? "تم إنشاء مسودة جديدة. عدّل الميزات والوصف ثم اضغط نشر."
+        : "تم اكتشاف نسخة جديدة تلقائياً. عدّل التفاصيل ثم اضغط نشر.",
       features,
       images: [],
       is_mandatory: false,
@@ -136,7 +201,7 @@ Deno.serve(async (req) => {
       status: "draft",
       size_bytes: totalBytes,
       build_hash: buildHash,
-      auto_generated: true,
+      auto_generated: !force,
       is_active: true,
     }).select("*").single();
 

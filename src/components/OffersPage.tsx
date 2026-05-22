@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { BackButton } from "./BackButton";
 import { PromotionBanner } from "./PromotionBanner";
 import { ContestBanner } from "./contest/ContestBanner";
+import SEO from "./SEO";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -388,6 +389,11 @@ export const OffersPage = () => {
 
   return (
     <div className="space-y-6">
+      <SEO
+        title="العروض والمسابقات"
+        description="اكتشف أحدث العروض والمسابقات اليومية على Advance واربح مكافآت ونقاطًا حصرية."
+        path="/app/offers"
+      />
       <BackButton />
 
       <div className="text-center py-4">
