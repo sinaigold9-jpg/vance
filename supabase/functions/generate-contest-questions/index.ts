@@ -2,7 +2,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3-flash-preview";
+const MODEL = "google/gemini-2.5-flash";
 
 interface ReqBody {
   contest_id: string;
@@ -88,26 +88,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate in batches of 5 levels to keep prompts manageable
+    // Generate one level at a time for reliability
     let totalGenerated = 0;
-    for (let i = 0; i < levelsToFill.length; i += 5) {
-      const batch = levelsToFill.slice(i, i + 5);
-      const needed = batch.reduce((s, b) => s + b.need, 0);
-      const sampleExisting = Array.from(existingSet).slice(-30);
+    const errors: string[] = [];
+    for (const { level, need } of levelsToFill) {
+      const difficulty = level <= Math.ceil(totalLevels / 3) ? "easy"
+        : level <= Math.ceil((2 * totalLevels) / 3) ? "medium" : "hard";
+      const sampleExisting = Array.from(existingSet).slice(-20);
 
-      const sysPrompt = `أنت مولّد أسئلة ثقافية احترافية باللغة العربية. ولّد أسئلة اختيار من متعدد (MCQ) لمسابقة.
-- كل سؤال 4 إجابات: 1 صحيحة + 3 خاطئة معقولة.
-- صعوبة متدرجة: المستويات الأولى أسهل والأخيرة أصعب.
+      const sysPrompt = `أنت خبير في صياغة أسئلة ثقافة عامة باللغة العربية الفصحى. مهمتك توليد أسئلة اختيار من متعدد (MCQ) دقيقة وحقيقية.
+القواعد:
+- كل سؤال يحتوي على 4 خيارات: إجابة صحيحة واحدة + 3 إجابات خاطئة معقولة وقريبة من الصحيحة.
+- الإجابات يجب أن تكون قصيرة (كلمة أو عبارة قصيرة).
+- المعلومات يجب أن تكون صحيحة 100% ومن مصادر موثوقة (موسوعات، كتب، أحداث تاريخية معروفة).
 - لا تكرر أي سؤال من القائمة المرفقة.
-- استخدم فئات متنوعة من: ${categories.join("، ")}.
-- الأسئلة يجب أن تكون واقعية ودقيقة معرفياً.`;
+- نوّع الفئات: ${categories.join("، ")}.
+- مستوى الصعوبة: ${difficulty === "easy" ? "سهل (معلومات شائعة)" : difficulty === "medium" ? "متوسط (تحتاج ثقافة عامة جيدة)" : "صعب (تحتاج معرفة عميقة)"}.`;
 
-      const userPrompt = `ولّد ${needed} سؤالاً موزعة على المستويات التالية:
-${batch.map(b => `- المستوى ${b.level}: ${b.need} سؤال`).join("\n")}
+      const userPrompt = `ولّد ${need} سؤالاً مختلفاً للمستوى ${level} بمستوى صعوبة ${difficulty}.
 
-أمثلة لأسئلة موجودة (لا تكررها):
-${sampleExisting.slice(0, 15).map(q => `- ${q}`).join("\n") || "(لا يوجد)"}
-`;
+أمثلة على أسئلة موجودة بالفعل (لا تكررها أو تشابهها):
+${sampleExisting.map(q => `- ${q}`).join("\n") || "(لا يوجد)"}`;
 
       const aiRes = await fetch(GATEWAY, {
         method: "POST",
@@ -131,17 +132,16 @@ ${sampleExisting.slice(0, 15).map(q => `- ${q}`).join("\n") || "(لا يوجد)"
                 properties: {
                   questions: {
                     type: "array",
+                    minItems: 1,
                     items: {
                       type: "object",
                       properties: {
-                        level_number: { type: "integer" },
                         category: { type: "string" },
                         question_text: { type: "string" },
                         correct_answer: { type: "string" },
                         wrong_answers: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 3 },
-                        difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
                       },
-                      required: ["level_number", "category", "question_text", "correct_answer", "wrong_answers", "difficulty"],
+                      required: ["category", "question_text", "correct_answer", "wrong_answers"],
                       additionalProperties: false,
                     },
                   },
@@ -167,48 +167,63 @@ ${sampleExisting.slice(0, 15).map(q => `- ${q}`).join("\n") || "(لا يوجد)"
           });
         }
         const t = await aiRes.text();
-        console.error("AI error:", aiRes.status, t);
+        console.error("AI error level", level, aiRes.status, t);
+        errors.push(`المستوى ${level}: HTTP ${aiRes.status}`);
         continue;
       }
 
       const aiData = await aiRes.json();
       const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
-      if (!toolCall?.function?.arguments) continue;
+      if (!toolCall?.function?.arguments) {
+        console.error("No tool call for level", level, JSON.stringify(aiData).slice(0, 500));
+        errors.push(`المستوى ${level}: لم يتم استلام أسئلة من النموذج`);
+        continue;
+      }
       let parsed: any;
-      try { parsed = JSON.parse(toolCall.function.arguments); } catch { continue; }
+      try { parsed = JSON.parse(toolCall.function.arguments); } catch (e) {
+        console.error("parse error", e, toolCall.function.arguments);
+        errors.push(`المستوى ${level}: خطأ في تحليل الإجابة`);
+        continue;
+      }
       const qs: any[] = parsed?.questions || [];
 
-      // Order per level
-      const orderByLevel: Record<number, number> = {};
-      Object.keys(counts).forEach(k => { orderByLevel[Number(k)] = counts[Number(k)]; });
-
+      let orderStart = counts[level] || 0;
       const rows = qs
         .filter(q => q?.question_text && q?.correct_answer && Array.isArray(q?.wrong_answers) && q.wrong_answers.length === 3)
         .filter(q => !existingSet.has(q.question_text.trim()))
+        .slice(0, need)
         .map((q: any) => {
-          const lvl = Number(q.level_number);
-          const order = (orderByLevel[lvl] = (orderByLevel[lvl] ?? 0) + 1);
           existingSet.add(q.question_text.trim());
           return {
             contest_id: body.contest_id,
-            level_number: lvl,
-            order_in_level: order - 1,
+            level_number: level,
+            order_in_level: orderStart++,
             category: q.category || "عام",
             question_text: q.question_text.trim(),
             correct_answer: q.correct_answer.trim(),
             wrong_answers: q.wrong_answers.map((w: string) => String(w).trim()),
-            difficulty: q.difficulty || "medium",
+            difficulty,
           };
         });
 
       if (rows.length > 0) {
         const { error: insErr } = await admin.from("contest_questions").insert(rows);
-        if (insErr) { console.error("insert error:", insErr); continue; }
+        if (insErr) { console.error("insert error:", insErr); errors.push(`المستوى ${level}: ${insErr.message}`); continue; }
         totalGenerated += rows.length;
+        counts[level] = (counts[level] || 0) + rows.length;
+      } else {
+        errors.push(`المستوى ${level}: لم يتم توليد أسئلة صالحة`);
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, generated: totalGenerated }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      generated: totalGenerated,
+      errors: errors.length ? errors : undefined,
+      message: totalGenerated > 0
+        ? `تم توليد ${totalGenerated} سؤال جديد`
+        : "لم يتم توليد أي أسئلة. راجع السجلات."
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
