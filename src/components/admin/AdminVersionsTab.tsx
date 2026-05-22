@@ -146,19 +146,21 @@ export const AdminVersionsTab = () => {
     }
   };
 
-  const detectNewVersion = async () => {
+  const createNewVersion = async (force: boolean) => {
     setDetecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("detect-app-version", { body: {} });
+      const { data, error } = await supabase.functions.invoke("detect-app-version", {
+        body: { force, bump: "patch" }
+      });
       if (error) { toast.error(error.message); return; }
       if (data?.changed) {
-        toast.success(data.message || "تم إنشاء مسودة جديدة");
+        toast.success(data.message || `تم إنشاء مسودة v${data.version?.version}`);
         fetchRows();
       } else {
         toast.info(data?.message || "لا توجد نسخة جديدة");
       }
     } catch (e: any) {
-      toast.error(e?.message || "فشل الكشف");
+      toast.error(e?.message || "فشل إنشاء الإصدار");
     } finally {
       setDetecting(false);
     }
@@ -220,12 +222,16 @@ export const AdminVersionsTab = () => {
           <p className="text-sm text-muted-foreground">المسودات لا تظهر للمستخدمين. اضغط "نشر" عند الجاهزية.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={detectNewVersion} variant="outline" disabled={detecting} className="gap-2">
+          <Button onClick={() => createNewVersion(false)} variant="outline" disabled={detecting} className="gap-2">
             {detecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radar className="w-4 h-4" />}
             كشف نسخة جديدة
           </Button>
-          <Button onClick={openNew} className="gap-2">
-            <Plus className="w-4 h-4" /> إصدار جديد
+          <Button onClick={() => createNewVersion(true)} disabled={detecting} className="gap-2">
+            {detecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            إنشاء إصدار جديد
+          </Button>
+          <Button onClick={openNew} variant="ghost" className="gap-2">
+            <Edit className="w-4 h-4" /> يدوي
           </Button>
         </div>
       </div>
