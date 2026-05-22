@@ -5,12 +5,14 @@ import { ArrowRight, ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import SEO from "@/components/SEO";
 
 
 const Landing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isAdmin } = useAuth();
+  // SEO is rendered inside the component tree below via the returned JSX
 
 
   const { settings, loading: settingsLoading } = useAppSettings();
