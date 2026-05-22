@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
+import SEO from "@/components/SEO";
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
 import { AdminTransactionsTab } from "@/components/admin/AdminTransactionsTab";
 import { AdminPackagesTab } from "@/components/admin/AdminPackagesTab";
@@ -170,6 +171,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="لوحة التحكم" path="/admin" noIndex />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4">
