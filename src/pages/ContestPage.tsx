@@ -10,6 +10,7 @@ import { ContestLevel } from "@/components/contest/ContestLevel";
 import { SurpriseBox } from "@/components/contest/SurpriseBox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
 
 const formatRemaining = (endsAt: string) => {
   const diff = new Date(endsAt).getTime() - Date.now();
@@ -126,6 +127,11 @@ export default function ContestPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0518] via-background to-background pb-12" dir="rtl">
+      <SEO
+        title={contest.title}
+        description={contest.description || `شارك في ${contest.title} على Advance — ${contest.total_levels} مستوى وجوائز حصرية.`}
+        path={`/app/contest/${contest.id}`}
+      />
       {/* Hero */}
       <div className="relative">
         {contest.banner_url ? (
