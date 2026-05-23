@@ -61,16 +61,33 @@ export const ContestLevel = ({
       setWrongHere(true);
       await supabase.from("contest_progress" as any).update({
         wrong_count: progress.wrong_count + 1,
-        current_question_index: 0,
         last_played_at: new Date().toISOString(),
       } as any).eq("contest_id", contestId).eq("user_id", userId);
-      setTimeout(() => {
-        toast.error("إجابة خاطئة! ستعيد المستوى من البداية");
-        setQIndex(0);
-        setSelected(null);
-        setLocked(false);
-        setWrongHere(false);
-      }, 1400);
+      setTimeout(async () => {
+        toast.error("إجابة خاطئة، تابع للسؤال التالي");
+        const nextIdx = qIndex + 1;
+        if (nextIdx >= levelQuestions.length) {
+          const newCompleted = Array.from(new Set([...progress.completed_levels, level])).sort((a, b) => a - b);
+          const nextLevel = Math.max(progress.current_level, level + 1);
+          await supabase.from("contest_progress" as any).update({
+            completed_levels: newCompleted,
+            current_level: nextLevel,
+            current_question_index: 0,
+            last_played_at: new Date().toISOString(),
+          } as any).eq("contest_id", contestId).eq("user_id", userId);
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+          onLevelComplete(level);
+        } else {
+          await supabase.from("contest_progress" as any).update({
+            current_question_index: nextIdx,
+            last_played_at: new Date().toISOString(),
+          } as any).eq("contest_id", contestId).eq("user_id", userId);
+          setQIndex(nextIdx);
+          setSelected(null);
+          setLocked(false);
+          setWrongHere(false);
+        }
+      }, 1200);
       return;
     }
 
