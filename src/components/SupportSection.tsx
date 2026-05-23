@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { 
   HeadphonesIcon, User, Mail, Phone, IdCard, 
   MessageSquare, Star, Send, Loader2, CheckCircle2,
-  MessageCircle
+  MessageCircle, Sparkles, Bot, ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,14 @@ export const SupportSection = () => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState("ticket");
+  const [activeTab, setActiveTab] = useState("ai");
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  // AI chat state
+  const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
+    { role: "assistant", content: "أهلاً بك! أنا مساعد Advance. اسألني عن أي شيء يخص التطبيق (الباقات، السحب، المهام، الترقية، ...)." },
+  ]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const { user } = useAuth();
 
   const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
@@ -55,9 +63,27 @@ export const SupportSection = () => {
       .maybeSingle();
     if (data) {
       setUserProfile(data);
-      if (["vip1", "vip2", "vip3"].includes(data.account_type)) {
-        setActiveTab("chat");
-      }
+    }
+  };
+
+  const sendAi = async () => {
+    const text = aiInput.trim();
+    if (!text || aiLoading) return;
+    const newMsgs = [...aiMessages, { role: "user" as const, content: text }];
+    setAiMessages(newMsgs);
+    setAiInput("");
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-ai-chat", {
+        body: { messages: newMsgs.map(({ role, content }) => ({ role, content })) },
+      });
+      if (error) throw error;
+      const reply = (data as any)?.reply || (data as any)?.error || "حدث خطأ.";
+      setAiMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+    } catch (e: any) {
+      setAiMessages((prev) => [...prev, { role: "assistant", content: "تعذر الاتصال بالخدمة. حاول لاحقاً أو اترك رسالة للدعم." }]);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -142,24 +168,75 @@ export const SupportSection = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">الدعم الفني</h2>
-            <p className="text-muted-foreground text-sm">نحن هنا لمساعدتك</p>
+            <p className="text-muted-foreground text-sm">مساعد ذكي فوري + دعم بشري عند الحاجة</p>
           </div>
         </div>
       </div>
 
       {/* Tabs for Chat and Tickets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+          <TabsTrigger value="ai" className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            مساعد ذكي
+          </TabsTrigger>
           <TabsTrigger value="chat" className="gap-2" disabled={!canAccessLiveChat}>
             <MessageCircle className="w-4 h-4" />
-            المحادثة المباشرة
+            مباشر
             {!canAccessLiveChat && <span className="text-[10px] mr-1">VIP</span>}
           </TabsTrigger>
           <TabsTrigger value="ticket" className="gap-2">
             <MessageSquare className="w-4 h-4" />
-            إرسال طلب
+            رسالة للإدارة
           </TabsTrigger>
         </TabsList>
+
+        {/* AI Assistant */}
+        <TabsContent value="ai" className="mt-4">
+          <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-3 flex flex-col h-[60vh] min-h-[420px]">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {aiMessages.map((m, i) => (
+                <div key={i} className={`flex gap-2 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === "user" ? "bg-primary/20 text-primary" : "bg-gradient-gold text-primary-foreground"}`}>
+                    {m.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  </div>
+                  <div className={`rounded-2xl px-3.5 py-2.5 max-w-[80%] text-sm leading-relaxed whitespace-pre-line ${m.role === "user" ? "bg-primary/10 text-foreground" : "bg-muted/60 text-foreground"}`}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {aiLoading && (
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center"><Bot className="w-4 h-4 text-primary-foreground" /></div>
+                  <div className="bg-muted/60 rounded-2xl px-4 py-2.5 text-sm flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:120ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:240ms]" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="pt-3 mt-3 border-t border-border/40 flex gap-2">
+              <Input
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") sendAi(); }}
+                placeholder="اكتب سؤالك هنا..."
+                disabled={aiLoading}
+                className="flex-1"
+              />
+              <Button onClick={sendAi} disabled={aiLoading || !aiInput.trim()} className="bg-gradient-gold text-primary-foreground">
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+            <button
+              onClick={() => setActiveTab("ticket")}
+              className="mt-2 text-xs text-amber-300 hover:text-amber-200 self-center"
+            >
+              لم تجد ما تبحث عنه؟ اترك رسالة للدعم →
+            </button>
+          </div>
+        </TabsContent>
 
         <TabsContent value="chat" className="mt-4">
           {canAccessLiveChat ? (
@@ -184,7 +261,7 @@ export const SupportSection = () => {
               >
                 ترقية الباقة الآن
               </Button>
-              <p className="text-xs text-muted-foreground mt-3">يمكنك استخدام "إرسال طلب" للتواصل معنا الآن</p>
+              <p className="text-xs text-muted-foreground mt-3">يمكنك استخدام "مساعد ذكي" أو "رسالة للإدارة" الآن</p>
             </motion.div>
           )}
         </TabsContent>
@@ -205,8 +282,29 @@ export const SupportSection = () => {
                 إرسال رسالة أخرى
               </Button>
             </motion.div>
+          ) : !showTicketForm ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-8 text-center space-y-4"
+            >
+              <MessageSquare className="w-12 h-12 mx-auto text-amber-300" />
+              <h3 className="text-lg font-bold">اترك رسالة للإدارة</h3>
+              <p className="text-sm text-muted-foreground">
+                جرب أولاً المساعد الذكي للحصول على إجابة فورية. إذا احتجت لمراسلة الإدارة بشأن مشكلة محددة، افتح النموذج بالأسفل.
+              </p>
+              <Button onClick={() => setShowTicketForm(true)} className="bg-gradient-gold text-primary-foreground">
+                فتح نموذج الرسالة
+              </Button>
+            </motion.div>
           ) : (
             <>
+              <button
+                onClick={() => setShowTicketForm(false)}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> رجوع
+              </button>
               {/* User Info (Auto-filled) */}
               <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-4">
                 <h4 className="font-bold text-sm text-muted-foreground mb-3">بياناتك المسجلة</h4>
