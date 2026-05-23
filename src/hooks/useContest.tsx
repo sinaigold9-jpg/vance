@@ -51,7 +51,12 @@ export interface ContestProgress {
   wrong_count: number;
   claimed_rewards: number[];
   finished_at: string | null;
+  last_completed_cairo_date?: string | null;
 }
+
+// Returns YYYY-MM-DD in Africa/Cairo timezone. Midnight Cairo = next-day boundary.
+export const getCairoDate = (): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(new Date());
 
 const isVipAudience = (target: string, accountType: string | null | undefined) => {
   if (!accountType) return false;

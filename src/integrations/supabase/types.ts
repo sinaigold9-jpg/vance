@@ -589,6 +589,7 @@ export type Database = {
           current_question_index: number
           finished_at: string | null
           id: string
+          last_completed_cairo_date: string | null
           last_played_at: string
           started_at: string
           user_id: string
@@ -603,6 +604,7 @@ export type Database = {
           current_question_index?: number
           finished_at?: string | null
           id?: string
+          last_completed_cairo_date?: string | null
           last_played_at?: string
           started_at?: string
           user_id: string
@@ -617,6 +619,7 @@ export type Database = {
           current_question_index?: number
           finished_at?: string | null
           id?: string
+          last_completed_cairo_date?: string | null
           last_played_at?: string
           started_at?: string
           user_id?: string
@@ -1738,6 +1741,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      update_posts: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

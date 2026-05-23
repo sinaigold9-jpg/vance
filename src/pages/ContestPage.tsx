@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Trophy, Clock, ArrowRight, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useContestData, ensureProgress } from "@/hooks/useContest";
+import { useContestData, ensureProgress, getCairoDate } from "@/hooks/useContest";
 import { LevelMap } from "@/components/contest/LevelMap";
 import { ContestLevel } from "@/components/contest/ContestLevel";
 import { SurpriseBox } from "@/components/contest/SurpriseBox";
@@ -95,6 +95,14 @@ export default function ContestPage() {
       toast.error("هذا المستوى مغلق");
       return;
     }
+
+    // Daily unlock: only one new level per Cairo day.
+    // If user already completed a level today (Cairo time) and is trying to attempt
+    // a NEW (not previously completed) level beyond level 1, block until tomorrow.
+    if (!isCompleted && lvl > 1 && p.last_completed_cairo_date && p.last_completed_cairo_date === getCairoDate()) {
+      toast.error("يفتح المستوى التالي عند منتصف الليل بتوقيت القاهرة");
+      return;
+    }
     setPlayingLevel(lvl);
   };
 
@@ -108,7 +116,7 @@ export default function ContestPage() {
     if (isNextReward && next <= contest.total_levels) {
       setTimeout(() => handleSelectLevel(next), 600);
     } else {
-      toast.success(`أحسنت! تم فتح المستوى ${next}`);
+      toast.success(`أحسنت! يفتح المستوى ${next} عند منتصف الليل بتوقيت القاهرة`);
     }
   };
 
