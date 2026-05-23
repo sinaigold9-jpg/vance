@@ -84,7 +84,7 @@ export const useActiveContest = (location: "home" | "offers") => {
       .limit(1);
 
     const list = ((data || []) as unknown as Contest[]).filter((c) =>
-      location === "home" ? c.show_on_home : c.show_on_offers
+      location === "home" ? c.show_on_home !== false : c.show_on_offers !== false
     );
     const first = list[0];
     if (first && isVipAudience(first.target_audience, profile?.account_type)) {
