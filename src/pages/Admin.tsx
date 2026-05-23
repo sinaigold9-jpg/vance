@@ -34,6 +34,8 @@ import { AdminInternalLinksTab } from "@/components/admin/AdminInternalLinksTab"
 import { AdminStaffTab } from "@/components/admin/AdminStaffTab";
 import { AdminVersionsTab } from "@/components/admin/AdminVersionsTab";
 import { AdminContestsTab } from "@/components/admin/AdminContestsTab";
+import { AdminUpdatesTab } from "@/components/admin/AdminUpdatesTab";
+import { Sparkles } from "lucide-react";
 
 // All admin tabs definition
 const ALL_TABS = [
@@ -57,6 +59,7 @@ const ALL_TABS = [
   { key: "staff", label: "الموظفين", icon: Shield },
   { key: "versions", label: "الإصدارات", icon: Rocket },
   { key: "contests", label: "المسابقات", icon: Trophy },
+  { key: "updates", label: "التحديثات", icon: Sparkles },
 ];
 
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
@@ -80,6 +83,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   staff: AdminStaffTab,
   versions: AdminVersionsTab,
   contests: AdminContestsTab,
+  updates: AdminUpdatesTab,
 };
 
 const Admin = () => {

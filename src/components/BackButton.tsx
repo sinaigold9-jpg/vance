@@ -23,10 +23,11 @@ export const BackButton = ({ to, label = "رجوع" }: BackButtonProps) => {
       variant="ghost"
       size="sm"
       onClick={handleBack}
-      className="gap-2"
+      className="gap-2 hover:bg-primary/10"
+      aria-label="رجوع"
     >
-      <ArrowRight className="w-4 h-4" />
-      {label}
+      <ArrowRight className="w-5 h-5" />
+      <span className="font-medium">{label}</span>
     </Button>
   );
 };

@@ -29,6 +29,7 @@ import { ContestBanner } from "@/components/contest/ContestBanner";
 import { PromotionBanner } from "@/components/PromotionBanner";
 import { FloatingLuckyWheel } from "@/components/FloatingLuckyWheel";
 import { FAQ } from "@/components/FAQ";
+import { UpdatesFeed } from "@/components/UpdatesFeed";
 import { WithdrawalHistory } from "@/components/WithdrawalHistory";
 import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
@@ -85,6 +86,7 @@ const pathToTab: Record<string, string> = {
   "/app/sponsor": "sponsor",
   "/app/support": "support",
   "/app/faq": "faq",
+  "/app/updates": "updates",
 };
 
 const tabToPath: Record<string, string> = {
@@ -101,6 +103,7 @@ const tabToPath: Record<string, string> = {
   sponsor: "/app/sponsor",
   support: "/app/support",
   faq: "/app/faq",
+  updates: "/app/updates",
 };
 
 const Index = () => {
@@ -558,6 +561,13 @@ const Index = () => {
           <motion.div key="faq" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="الأسئلة الشائعة" subtitle="دليل استخدام التطبيق" onBack={() => handleTabChange("home")} />
             <FAQ />
+          </motion.div>
+        );
+      case "updates":
+        return (
+          <motion.div key="updates" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الجديد" subtitle="آخر تحديثات Advance" onBack={() => handleTabChange("home")} />
+            <UpdatesFeed />
           </motion.div>
         );
       default:

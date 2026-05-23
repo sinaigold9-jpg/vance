@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { shuffleAnswers, type ContestQuestion, type ContestProgress } from "@/hooks/useContest";
+import { shuffleAnswers, getCairoDate, type ContestQuestion, type ContestProgress } from "@/hooks/useContest";
 
 interface Props {
   contestId: string;
@@ -74,6 +74,7 @@ export const ContestLevel = ({
             current_level: nextLevel,
             current_question_index: 0,
             last_played_at: new Date().toISOString(),
+            last_completed_cairo_date: getCairoDate(),
           } as any).eq("contest_id", contestId).eq("user_id", userId);
           confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
           onLevelComplete(level);
@@ -103,6 +104,7 @@ export const ContestLevel = ({
           current_question_index: 0,
           correct_count: progress.correct_count + 1,
           last_played_at: new Date().toISOString(),
+          last_completed_cairo_date: getCairoDate(),
         } as any).eq("contest_id", contestId).eq("user_id", userId);
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         onLevelComplete(level);
