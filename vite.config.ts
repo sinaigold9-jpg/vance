@@ -33,7 +33,6 @@ export default defineConfig(({ mode }) => ({
         dir: "rtl",
         lang: "ar",
         id: "/?v=2025.12.15",
-        version: "2025.12.15",
         icons: [
           {
             src: "/icon-192.png",
