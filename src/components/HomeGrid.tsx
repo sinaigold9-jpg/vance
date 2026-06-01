@@ -12,6 +12,7 @@ import {
   Trophy,
   Tag,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
 
@@ -41,6 +42,7 @@ const gridItems: GridItem[] = [
   { id: "sponsor", icon: Tag, label: "ممول", description: "إنشاء صفحة ممول", gradient: "from-orange-500 to-amber-500" },
   { id: "support", icon: HeadphonesIcon, label: "الدعم", description: "تواصل معنا للمساعدة", gradient: "from-indigo-500 to-blue-600" },
   { id: "faq", icon: HelpCircle, label: "الأسئلة الشائعة", description: "دليل استخدام التطبيق", gradient: "from-teal-500 to-cyan-500" },
+  { id: "updates", icon: Sparkles, label: "الجديد", description: "آخر التحديثات والمزايا", gradient: "from-fuchsia-500 to-pink-500" },
 ];
 
 export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
