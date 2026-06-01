@@ -45,6 +45,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications } from "@/lib/pushNotifications";
 import appIcon from "@/assets/app-icon.png";
 import { toast } from "sonner";
+import { PermissionsRequest } from "@/components/PermissionsRequest";
+import { CURRENT_VERSION } from "@/lib/appVersion";
+
+const OWNER_EMAIL = "sinaigold9@gmail.com";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 
