@@ -48,6 +48,15 @@ export const SupportSection = () => {
 
   const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
 
+  const suggestedQuestions = [
+    "كيف أسحب أرباحي؟",
+    "ما الفرق بين الباقات؟",
+    "كيف أرقّي حسابي إلى VIP؟",
+    "كيف أكسب نقاط أكثر؟",
+    "متى تتجدد المهام اليومية؟",
+    "كيف أفعّل بوت التليجرام؟",
+  ];
+
   useEffect(() => {
     if (user) {
       fetchUserProfile();
@@ -66,8 +75,8 @@ export const SupportSection = () => {
     }
   };
 
-  const sendAi = async () => {
-    const text = aiInput.trim();
+  const sendAi = async (override?: string) => {
+    const text = (override ?? aiInput).trim();
     if (!text || aiLoading) return;
     const newMsgs = [...aiMessages, { role: "user" as const, content: text }];
     setAiMessages(newMsgs);
@@ -216,6 +225,19 @@ export const SupportSection = () => {
                 </div>
               )}
             </div>
+            {/* Suggested questions */}
+            <div className="pt-3 flex flex-wrap gap-2">
+              {suggestedQuestions.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => sendAi(q)}
+                  disabled={aiLoading}
+                  className="text-xs px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 transition disabled:opacity-50"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
             <div className="pt-3 mt-3 border-t border-border/40 flex gap-2">
               <Input
                 value={aiInput}
@@ -225,7 +247,7 @@ export const SupportSection = () => {
                 disabled={aiLoading}
                 className="flex-1"
               />
-              <Button onClick={sendAi} disabled={aiLoading || !aiInput.trim()} className="bg-gradient-gold text-primary-foreground">
+              <Button onClick={() => sendAi()} disabled={aiLoading || !aiInput.trim()} className="bg-gradient-gold text-primary-foreground">
                 <Send className="w-4 h-4" />
               </Button>
             </div>
