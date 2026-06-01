@@ -45,6 +45,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications } from "@/lib/pushNotifications";
 import appIcon from "@/assets/app-icon.png";
 import { toast } from "sonner";
+import { PermissionsRequest } from "@/components/PermissionsRequest";
+import { CURRENT_VERSION } from "@/lib/appVersion";
+
+const OWNER_EMAIL = "sinaigold9@gmail.com";
 
 type AccountType = "beginner" | "vip1" | "vip2" | "vip3";
 
@@ -279,8 +283,11 @@ const Index = () => {
   // Points to EGP conversion
   const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
 
+  // Owner bypass: never lock out the project owner
+  const isOwner = user?.email === OWNER_EMAIL;
+
   // Check if app is disabled
-  if (!appSettings.appEnabled) {
+  if (!appSettings.appEnabled && !isOwner) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <motion.div 
@@ -297,7 +304,7 @@ const Index = () => {
   }
 
   // Check if user's app access is blocked by admin
-  if (isAppBlocked) {
+  if (isAppBlocked && !isOwner) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <motion.div 
@@ -358,7 +365,7 @@ const Index = () => {
           <motion.div key="packages" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
             <PageHeader title="الباقات" subtitle="كلما زادت الباقة، زادت الأرباح" onBack={() => handleTabChange("home")} />
             <div className="grid gap-4">
-              {packagesData.map((pkg) => {
+              {packagesData.filter((p) => p.account_type !== "beginner").map((pkg) => {
                 const vipLevel = getVipLevel(pkg.account_type);
                 const isHighlighted = highlightPkg === pkg.account_type;
                 const appliedDiscount = isHighlighted ? discountPct : 0;
@@ -623,10 +630,12 @@ const Index = () => {
       <div className="max-w-4xl mx-auto px-4 pb-6">
         <div className="text-center py-4 border-t border-border/30">
           <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
+          <p className="text-[10px] text-muted-foreground/70 mt-1">إصدار التطبيق: {CURRENT_VERSION}</p>
         </div>
       </div>
 
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
+      <PermissionsRequest />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
       {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
       {user && showPointsConverter && (

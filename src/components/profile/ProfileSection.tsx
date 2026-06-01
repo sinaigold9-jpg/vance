@@ -12,6 +12,7 @@ import {
   User, Mail, Phone, CreditCard, 
   Gift, Crown, Clock, Lock, Shield, Settings
 } from "lucide-react";
+import { CURRENT_VERSION } from "@/lib/appVersion";
 
 interface ProfileSectionProps {
   userProfile: {
@@ -149,17 +150,12 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
         </Card>
       )}
 
-      {/* Coming Soon - Offers */}
-      <Card className="border-border/50 border-dashed">
-        <CardContent className="py-8 text-center">
-          <Gift className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <h3 className="font-bold mb-1">العروض والمسابقات</h3>
-          <Badge variant="secondary" className="gap-1">
-            <Clock className="w-3 h-3" />
-            قريباً
-          </Badge>
-        </CardContent>
-      </Card>
+      {/* App version footer */}
+      <div className="text-center py-2">
+        <p className="text-xs text-muted-foreground">
+          إصدار التطبيق: <span className="font-mono font-bold text-foreground">{CURRENT_VERSION}</span>
+        </p>
+      </div>
       {/* Settings Dialog */}
       <ProfileSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
