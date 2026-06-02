@@ -32,7 +32,8 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         dir: "rtl",
         lang: "ar",
-        id: "/?v=2025.12.15",
+        id: "/?v=26.12.15",
+        version: "26.12.15",
         icons: [
           {
             src: "/icon-192.png",
