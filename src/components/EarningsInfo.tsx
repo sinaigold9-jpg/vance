@@ -99,8 +99,6 @@ export const EarningsInfo = () => {
 
   return (
     <div className="space-y-6">
-      <BackButton />
-      
       <div className="text-center mb-4">
         <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold mb-4">
           <Calculator className="w-8 h-8 text-primary-foreground" />

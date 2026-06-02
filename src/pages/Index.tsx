@@ -630,7 +630,6 @@ const Index = () => {
       <div className="max-w-4xl mx-auto px-4 pb-6">
         <div className="text-center py-4 border-t border-border/30">
           <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
-          <p className="text-[10px] text-muted-foreground/70 mt-1">إصدار التطبيق: {CURRENT_VERSION}</p>
         </div>
       </div>
 
