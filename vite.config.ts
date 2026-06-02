@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
         dir: "rtl",
         lang: "ar",
         id: "/?v=26.12.15",
+        // @ts-expect-error - non-standard but read by some PWA installers
         version: "26.12.15",
         icons: [
           {
