@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Image as ImageIcon, FileText, X, Shield } from "lucide-react";
+import { MapPin, Image as ImageIcon, FileText, X, Shield, Camera, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const LS_KEY = "advance_permissions_asked_v1";
@@ -16,11 +16,12 @@ const LS_KEY = "advance_permissions_asked_v1";
  */
 export const PermissionsRequest = () => {
   const [open, setOpen] = useState(false);
+  const [granted, setGranted] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
       if (!localStorage.getItem(LS_KEY)) {
-        const t = setTimeout(() => setOpen(true), 1500);
+        const t = setTimeout(() => setOpen(true), 2000);
         return () => clearTimeout(t);
       }
     } catch {
@@ -40,10 +41,20 @@ export const PermissionsRequest = () => {
   const askLocation = () => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
-      () => {},
-      () => {},
+      () => setGranted((g) => ({ ...g, location: true })),
+      () => setGranted((g) => ({ ...g, location: false })),
       { timeout: 10000 }
     );
+  };
+
+  const askCamera = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: true });
+      s.getTracks().forEach((t) => t.stop());
+      setGranted((g) => ({ ...g, camera: true }));
+    } catch {
+      setGranted((g) => ({ ...g, camera: false }));
+    }
   };
 
   const askPhotos = () => {
@@ -54,6 +65,7 @@ export const PermissionsRequest = () => {
     input.style.display = "none";
     document.body.appendChild(input);
     input.click();
+    setGranted((g) => ({ ...g, photos: true }));
     setTimeout(() => input.remove(), 1000);
   };
 
@@ -65,91 +77,66 @@ export const PermissionsRequest = () => {
     input.style.display = "none";
     document.body.appendChild(input);
     input.click();
+    setGranted((g) => ({ ...g, files: true }));
     setTimeout(() => input.remove(), 1000);
-  };
-
-  const grantAll = async () => {
-    askLocation();
-    finish();
   };
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          initial={{ y: 120, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 120, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 28 }}
+          className="fixed bottom-20 inset-x-0 z-[60] px-3 pointer-events-none"
         >
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl w-full max-w-md p-5 shadow-2xl"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-gold flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-foreground">أذونات التطبيق</h3>
-                  <p className="text-xs text-muted-foreground">لتجربة استخدام أفضل وأسرع</p>
-                </div>
+          <div className="mx-auto max-w-md pointer-events-auto rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden">
+            <div className="flex items-center gap-3 p-3 border-b border-border/50">
+              <div className="w-9 h-9 rounded-xl bg-gradient-gold flex items-center justify-center shrink-0">
+                <Shield className="w-4 h-4 text-primary-foreground" />
               </div>
-              <button onClick={finish} className="text-muted-foreground hover:text-foreground">
-                <X className="w-5 h-5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground">السماح للتطبيق بالوصول</p>
+                <p className="text-[11px] text-muted-foreground">اضغط على الأذونات التي تريد تفعيلها</p>
+              </div>
+              <button onClick={finish} className="p-1 text-muted-foreground hover:text-foreground" aria-label="إغلاق">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-2">
-              <button
-                onClick={askLocation}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition text-right"
-              >
-                <MapPin className="w-5 h-5 text-emerald-400" />
-                <div className="flex-1">
-                  <p className="font-bold text-sm">الموقع الجغرافي</p>
-                  <p className="text-xs text-muted-foreground">لتحسين الخدمات حسب منطقتك</p>
-                </div>
-              </button>
-
-              <button
-                onClick={askPhotos}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition text-right"
-              >
-                <ImageIcon className="w-5 h-5 text-amber-400" />
-                <div className="flex-1">
-                  <p className="font-bold text-sm">الصور</p>
-                  <p className="text-xs text-muted-foreground">لرفع إيصالات الدفع وصور الإعلانات</p>
-                </div>
-              </button>
-
-              <button
-                onClick={askFiles}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition text-right"
-              >
-                <FileText className="w-5 h-5 text-blue-400" />
-                <div className="flex-1">
-                  <p className="font-bold text-sm">المستندات والملفات</p>
-                  <p className="text-xs text-muted-foreground">لرفع المستندات عند الحاجة</p>
-                </div>
-              </button>
+            <div className="grid grid-cols-4 gap-1 p-2">
+              {[
+                { key: "location", icon: MapPin, label: "الموقع", color: "text-emerald-400", fn: askLocation },
+                { key: "camera", icon: Camera, label: "الكاميرا", color: "text-rose-400", fn: askCamera },
+                { key: "photos", icon: ImageIcon, label: "الصور", color: "text-amber-400", fn: askPhotos },
+                { key: "files", icon: FileText, label: "الملفات", color: "text-blue-400", fn: askFiles },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  onClick={p.fn}
+                  className="relative flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-secondary/60 active:scale-95 transition"
+                >
+                  <p.icon className={`w-5 h-5 ${p.color}`} />
+                  <span className="text-[10px] font-medium text-foreground">{p.label}</span>
+                  {granted[p.key] && (
+                    <span className="absolute top-1 left-1 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
 
-            <div className="flex gap-2 mt-4">
-              <Button onClick={grantAll} className="flex-1 bg-gradient-gold text-primary-foreground">
-                السماح
-              </Button>
-              <Button onClick={finish} variant="outline" className="flex-1">
-                لاحقاً
+            <div className="flex items-center justify-between gap-2 px-3 pb-3">
+              <button onClick={finish} className="text-[11px] text-muted-foreground hover:text-foreground">
+                ليس الآن
+              </button>
+              <Button size="sm" onClick={finish} className="h-8 px-4 bg-gradient-gold text-primary-foreground text-xs">
+                تم
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-3">
-              يمكنك تغيير هذه الأذونات في أي وقت من إعدادات المتصفح أو الجهاز
-            </p>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
