@@ -1,7 +1,7 @@
 // النسخة الحالية من التطبيق - يجب تحديث هذا الرقم مع كل إصدار جديد
 // version_code يجب أن يساوي أو يكون أقل من أعلى إصدار في قاعدة البيانات
-export const CURRENT_VERSION = "2025.12.15";
-export const CURRENT_VERSION_CODE = 20251215;
+export const CURRENT_VERSION = "26.12.15";
+export const CURRENT_VERSION_CODE = 261215;
 
 const LS_KEY = "advance_seen_version_code";
 const LS_DOWNLOADED_KEY = "advance_downloaded_version_code";
