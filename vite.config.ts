@@ -33,11 +33,9 @@ export default defineConfig(({ mode }) => ({
         dir: "rtl",
         lang: "ar",
         id: "/",
-        // @ts-expect-error - non-standard but read by some PWA installers
+        // @ts-expect-error - non-standard fields read by PWA installers / Android WebAPK
         version: "26.12.15",
-        // @ts-expect-error - read by Android WebAPK minting for app info screen
         version_name: "26.12.15",
-        // @ts-expect-error - integer version code for Android
         version_code: 261215,
         icons: [
           {
