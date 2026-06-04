@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Image as ImageIcon, FileText, X, Shield, Camera, Check } from "lucide-react";
+import { MapPin, Image as ImageIcon, FileText, X, Shield, Camera, Check, Bell, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { registerPushNotifications } from "@/lib/pushNotifications";
+import { toast } from "sonner";
 
-const LS_KEY = "advance_permissions_asked_v1";
+const LS_KEY = "advance_permissions_asked_v2";
 
 /**
  * One-time prompt asking the user to grant the app access to:
@@ -41,10 +44,62 @@ export const PermissionsRequest = () => {
   const askLocation = () => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
-      () => setGranted((g) => ({ ...g, location: true })),
-      () => setGranted((g) => ({ ...g, location: false })),
+      (pos) => {
+        setGranted((g) => ({ ...g, location: true }));
+        // store last known location so the app can use it
+        try {
+          localStorage.setItem(
+            "advance_last_location",
+            JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() })
+          );
+        } catch {}
+        toast.success("تم منح إذن الموقع");
+      },
+      () => {
+        setGranted((g) => ({ ...g, location: false }));
+        toast.error("تم رفض إذن الموقع");
+      },
       { timeout: 10000 }
     );
+  };
+
+  const askNotifications = async () => {
+    if (!("Notification" in window)) {
+      toast.error("الإشعارات غير مدعومة على هذا الجهاز");
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setGranted((g) => ({ ...g, notifications: false }));
+        toast.error("تم رفض إذن الإشعارات");
+        return;
+      }
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.id) {
+        const ok = await registerPushNotifications(data.user.id);
+        setGranted((g) => ({ ...g, notifications: ok }));
+        if (ok) {
+          // immediate test notification so user sees a real OS notification
+          try {
+            const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
+            await reg?.showNotification("Advance", {
+              body: "تم تفعيل الإشعارات بنجاح ✅",
+              icon: "/icon-192.png",
+              badge: "/icon-192.png",
+              vibrate: [200, 100, 200],
+              tag: "advance-welcome",
+            } as any);
+          } catch {}
+          toast.success("تم تفعيل الإشعارات");
+        }
+      } else {
+        setGranted((g) => ({ ...g, notifications: true }));
+        toast.success("تم تفعيل الإشعارات");
+      }
+    } catch {
+      toast.error("فشل تفعيل الإشعارات");
+    }
   };
 
   const askCamera = async () => {
@@ -52,8 +107,10 @@ export const PermissionsRequest = () => {
       const s = await navigator.mediaDevices.getUserMedia({ video: true });
       s.getTracks().forEach((t) => t.stop());
       setGranted((g) => ({ ...g, camera: true }));
+      toast.success("تم منح إذن الكاميرا");
     } catch {
       setGranted((g) => ({ ...g, camera: false }));
+      toast.error("تم رفض إذن الكاميرا");
     }
   };
 
@@ -66,6 +123,18 @@ export const PermissionsRequest = () => {
     document.body.appendChild(input);
     input.click();
     setGranted((g) => ({ ...g, photos: true }));
+    setTimeout(() => input.remove(), 1000);
+  };
+
+  const askVideos = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
+    input.multiple = true;
+    input.style.display = "none";
+    document.body.appendChild(input);
+    input.click();
+    setGranted((g) => ({ ...g, videos: true }));
     setTimeout(() => input.remove(), 1000);
   };
 
@@ -105,11 +174,13 @@ export const PermissionsRequest = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 p-2">
+            <div className="grid grid-cols-6 gap-1 p-2">
               {[
+                { key: "notifications", icon: Bell, label: "الإشعارات", color: "text-fuchsia-400", fn: askNotifications },
                 { key: "location", icon: MapPin, label: "الموقع", color: "text-emerald-400", fn: askLocation },
                 { key: "camera", icon: Camera, label: "الكاميرا", color: "text-rose-400", fn: askCamera },
                 { key: "photos", icon: ImageIcon, label: "الصور", color: "text-amber-400", fn: askPhotos },
+                { key: "videos", icon: Video, label: "الفيديو", color: "text-cyan-400", fn: askVideos },
                 { key: "files", icon: FileText, label: "الملفات", color: "text-blue-400", fn: askFiles },
               ].map((p) => (
                 <button
