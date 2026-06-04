@@ -32,9 +32,13 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         dir: "rtl",
         lang: "ar",
-        id: "/?v=26.12.15",
+        id: "/",
         // @ts-expect-error - non-standard but read by some PWA installers
         version: "26.12.15",
+        // @ts-expect-error - read by Android WebAPK minting for app info screen
+        version_name: "26.12.15",
+        // @ts-expect-error - integer version code for Android
+        version_code: 261215,
         icons: [
           {
             src: "/icon-192.png",
