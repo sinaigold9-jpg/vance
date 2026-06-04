@@ -1,17 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/telegram';
+const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const MAX_RUNTIME_MS = 55_000;
 const MIN_REMAINING_MS = 5_000;
 
 Deno.serve(async () => {
   const startTime = Date.now();
 
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), { status: 500 });
-
-  const TELEGRAM_API_KEY = Deno.env.get('TELEGRAM_API_KEY');
-  if (!TELEGRAM_API_KEY) return new Response(JSON.stringify({ error: 'TELEGRAM_API_KEY not configured' }), { status: 500 });
+  const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  if (!TELEGRAM_BOT_TOKEN) return new Response(JSON.stringify({ error: 'TELEGRAM_BOT_TOKEN not configured' }), { status: 500 });
+  const BOT_URL = `${TELEGRAM_API_BASE}/bot${TELEGRAM_BOT_TOKEN}`;
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,13 +37,9 @@ Deno.serve(async () => {
     const timeout = Math.min(50, Math.floor(remainingMs / 1000) - 5);
     if (timeout < 1) break;
 
-    const response = await fetch(`${GATEWAY_URL}/getUpdates`, {
+    const response = await fetch(`${BOT_URL}/getUpdates`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'X-Connection-Api-Key': TELEGRAM_API_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         offset: currentOffset,
         timeout,
@@ -70,7 +64,7 @@ Deno.serve(async () => {
 
         if (callbackData?.startsWith('confirm_account_')) {
           const linkCode = callbackData.replace('confirm_account_', '');
-          await handleAccountConfirmation(supabase, chatId, linkCode, callbackQueryId, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+          await handleAccountConfirmation(supabase, chatId, linkCode, callbackQueryId, BOT_URL);
         }
 
         totalProcessed++;
@@ -107,7 +101,7 @@ Deno.serve(async () => {
             .maybeSingle();
 
           if (existingProfile) {
-            await sendTelegramMessage(chatId, '❌ حساب تليجرام هذا مرتبط بحساب آخر بالفعل.\nلا يمكن استخدام نفس حساب تليجرام لأكثر من حساب واحد.', LOVABLE_API_KEY, TELEGRAM_API_KEY);
+            await sendTelegramMessage(chatId, '❌ حساب تليجرام هذا مرتبط بحساب آخر بالفعل.\nلا يمكن استخدام نفس حساب تليجرام لأكثر من حساب واحد.', BOT_URL);
           } else {
             // Link telegram chat_id to user profile (but don't verify yet)
             await supabase
@@ -127,17 +121,16 @@ Deno.serve(async () => {
               '✅ تم ربط حسابك بنجاح!\n\n🔐 لتفعيل حسابك بالكامل، اضغط على الزر أدناه:',
               'تأكيد الحساب ✅',
               `confirm_account_${linkCode}`,
-              LOVABLE_API_KEY,
-              TELEGRAM_API_KEY
+              BOT_URL
             );
           }
         } else {
-          await sendTelegramMessage(chatId, '❌ رمز الربط غير صالح أو منتهي الصلاحية.\nيرجى إعادة المحاولة من داخل التطبيق.', LOVABLE_API_KEY, TELEGRAM_API_KEY);
+          await sendTelegramMessage(chatId, '❌ رمز الربط غير صالح أو منتهي الصلاحية.\nيرجى إعادة المحاولة من داخل التطبيق.', BOT_URL);
         }
       }
       // Handle "بدأ" or /start without code
       else if (text === 'بدأ' || text === '/start') {
-        await sendTelegramMessage(chatId, '👋 مرحباً بك في بوت Advance!\n\nلربط حسابك وتفعيله، استخدم الرابط من داخل التطبيق.\n\nبعد الربط والتفعيل، سنرسل لك رموز التحقق هنا.', LOVABLE_API_KEY, TELEGRAM_API_KEY);
+        await sendTelegramMessage(chatId, '👋 مرحباً بك في بوت Advance!\n\nلربط حسابك وتفعيله، استخدم الرابط من داخل التطبيق.\n\nبعد الربط والتفعيل، سنرسل لك رموز التحقق هنا (تسجيل الدخول، السحب، إعادة تعيين كلمة المرور).', BOT_URL);
       }
 
       totalProcessed++;
@@ -160,17 +153,11 @@ async function handleAccountConfirmation(
   chatId: number,
   linkCode: string,
   callbackQueryId: string,
-  lovableKey: string,
-  telegramKey: string
+  botUrl: string
 ) {
-  // Answer the callback query first
-  await fetch(`${GATEWAY_URL}/answerCallbackQuery`, {
+  await fetch(`${botUrl}/answerCallbackQuery`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableKey}`,
-      'X-Connection-Api-Key': telegramKey,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ callback_query_id: callbackQueryId }),
   });
 
@@ -182,12 +169,12 @@ async function handleAccountConfirmation(
     .maybeSingle();
 
   if (!profile) {
-    await sendTelegramMessage(chatId, '❌ لم يتم العثور على حساب مرتبط.\nيرجى إعادة الربط من التطبيق.', lovableKey, telegramKey);
+    await sendTelegramMessage(chatId, '❌ لم يتم العثور على حساب مرتبط.\nيرجى إعادة الربط من التطبيق.', botUrl);
     return;
   }
 
   if (profile.is_verified) {
-    await sendTelegramMessage(chatId, '✅ حسابك مفعل بالفعل!\nيمكنك استخدام التطبيق بشكل كامل.', lovableKey, telegramKey);
+    await sendTelegramMessage(chatId, '✅ حسابك مفعل بالفعل!\nيمكنك استخدام التطبيق بشكل كامل.', botUrl);
     return;
   }
 
@@ -197,17 +184,13 @@ async function handleAccountConfirmation(
     .update({ is_verified: true })
     .eq('id', profile.id);
 
-  await sendTelegramMessage(chatId, '🎉 تم تفعيل حسابك بنجاح!\n\nيمكنك الآن استخدام جميع خدمات التطبيق.\nمرحباً بك في Advance! 🚀', lovableKey, telegramKey);
+  await sendTelegramMessage(chatId, '🎉 تم تفعيل حسابك بنجاح!\n\nيمكنك الآن استخدام جميع خدمات التطبيق.\nمرحباً بك في Advance! 🚀', botUrl);
 }
 
-async function sendTelegramMessage(chatId: number, text: string, lovableKey: string, telegramKey: string) {
-  await fetch(`${GATEWAY_URL}/sendMessage`, {
+async function sendTelegramMessage(chatId: number, text: string, botUrl: string) {
+  await fetch(`${botUrl}/sendMessage`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableKey}`,
-      'X-Connection-Api-Key': telegramKey,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
 }
@@ -217,16 +200,11 @@ async function sendTelegramMessageWithButton(
   text: string,
   buttonText: string,
   callbackData: string,
-  lovableKey: string,
-  telegramKey: string
+  botUrl: string
 ) {
-  await fetch(`${GATEWAY_URL}/sendMessage`, {
+  await fetch(`${botUrl}/sendMessage`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableKey}`,
-      'X-Connection-Api-Key': telegramKey,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
       text,
