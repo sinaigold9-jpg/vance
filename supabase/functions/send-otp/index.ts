@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/telegram';
+const TELEGRAM_API_BASE = 'https://api.telegram.org';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     const { purpose } = await req.json();
-    const validPurposes = ['login', 'withdrawal', 'registration', 'data_change', 'telegram_link'];
+    const validPurposes = ['login', 'withdrawal', 'registration', 'data_change', 'telegram_link', 'password_reset'];
     if (!validPurposes.includes(purpose)) {
       return new Response(JSON.stringify({ error: 'Invalid purpose' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -93,12 +93,10 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + 60 * 1000).toISOString(),
     });
 
-    // Send via Telegram
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const TELEGRAM_API_KEY = Deno.env.get('TELEGRAM_API_KEY');
-
-    if (!LOVABLE_API_KEY || !TELEGRAM_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Telegram not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Send via Telegram (direct bot token)
+    const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    if (!TELEGRAM_BOT_TOKEN) {
+      return new Response(JSON.stringify({ error: 'Telegram bot not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const purposeLabels: Record<string, string> = {
@@ -106,17 +104,14 @@ Deno.serve(async (req) => {
       withdrawal: 'سحب الأموال',
       registration: 'التسجيل',
       data_change: 'تغيير البيانات',
+      password_reset: 'إعادة تعيين كلمة المرور',
     };
 
     const message = `🔐 رمز التحقق الخاص بك:\n\n<b>${otpCode}</b>\n\n📌 الغرض: ${purposeLabels[purpose] || purpose}\n⏱ صالح لمدة دقيقة واحدة فقط\n\n⚠️ لا تشارك هذا الرمز مع أي شخص.`;
 
-    const tgResponse = await fetch(`${GATEWAY_URL}/sendMessage`, {
+    const tgResponse = await fetch(`${TELEGRAM_API_BASE}/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'X-Connection-Api-Key': TELEGRAM_API_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: profile.telegram_chat_id,
         text: message,
