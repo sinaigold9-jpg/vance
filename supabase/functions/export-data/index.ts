@@ -93,14 +93,28 @@ Deno.serve(async (req) => {
       "push_subscriptions",
     ];
 
+    // Columns to exclude per table (sensitive secrets/hashes)
+    const sensitiveFields: Record<string, string[]> = {
+      profiles: ["withdrawal_pin"],
+    };
+
     const exportData: Record<string, unknown[]> = {};
 
     for (const table of tables) {
       const { data, error } = await supabaseAdmin.from(table).select("*");
-      if (!error) {
-        exportData[table] = data || [];
-      } else {
+      if (error) {
         exportData[table] = [];
+        continue;
+      }
+      const excluded = sensitiveFields[table];
+      if (excluded && data && data.length > 0) {
+        exportData[table] = data.map((row: Record<string, unknown>) => {
+          const safe: Record<string, unknown> = { ...row };
+          for (const f of excluded) delete safe[f];
+          return safe;
+        });
+      } else {
+        exportData[table] = data || [];
       }
     }
 
