@@ -83,9 +83,11 @@ export const BotWidget = () => {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            <div 
-              className="w-full h-[calc(100%-52px)]"
-              dangerouslySetInnerHTML={{ __html: botCode }}
+            <iframe
+              srcDoc={botCode}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              className="w-full h-[calc(100%-52px)] border-0"
+              title="Bot Widget"
             />
           </motion.div>
         )}

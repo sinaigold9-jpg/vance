@@ -80,11 +80,11 @@ export const AdminUpgradeRequestsTab = () => {
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0];
       
-      const { data } = supabase.storage
+      const { data } = await supabase.storage
         .from("receipts")
-        .getPublicUrl(`${userId}/${latestFile.name}`);
-      
-      setReceiptUrl(data.publicUrl);
+        .createSignedUrl(`${userId}/${latestFile.name}`, 3600);
+
+      setReceiptUrl(data?.signedUrl ?? null);
     } else {
       setReceiptUrl(null);
     }
