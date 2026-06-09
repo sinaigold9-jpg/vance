@@ -206,3 +206,8 @@
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+@keyframes bulb-blink {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
