@@ -154,13 +154,46 @@ export const LuckyWheel = ({
           }}
         />
 
-        {/* Pointer - Premium triangle */}
-        <div className="relative z-20 mb-[-14px]">
-          <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[28px] border-l-transparent border-r-transparent border-t-primary drop-shadow-lg" />
+        {/* Pointer — real casino ticker arm */}
+        <div className="relative z-20 mb-[-18px] flex flex-col items-center" style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.6))" }}>
+          <div className="w-3 h-3 rounded-full bg-gradient-to-br from-yellow-200 to-amber-600 border border-amber-900" />
+          <div
+            className="w-0 h-0 border-l-[16px] border-r-[16px] border-t-[34px] border-l-transparent border-r-transparent -mt-1"
+            style={{ borderTopColor: "#dc2626" }}
+          />
         </div>
 
-        {/* Wheel container with decorative ring */}
-        <div className="relative w-[290px] h-[290px]">
+        {/* Wheel container with brass bezel + light bulbs */}
+        <div className="relative w-[300px] h-[300px]">
+          {/* Brass bezel — conic gradient mimicking polished brass */}
+          <div
+            className="absolute -inset-3 rounded-full"
+            style={{
+              background: "conic-gradient(from 0deg, #fde68a, #92400e, #fbbf24, #78350f, #fde68a, #b45309, #fde68a, #92400e, #fbbf24, #78350f, #fde68a)",
+              boxShadow: "0 0 40px hsl(45 93% 47% / 0.4), inset 0 0 20px rgba(0,0,0,0.4)",
+            }}
+          />
+          <div className="absolute -inset-1 rounded-full bg-[hsl(222_50%_4%)]" />
+
+          {/* Blinking light bulbs around bezel — classic carnival look */}
+          {Array.from({ length: 20 }).map((_, i) => {
+            const angle = (i * 18 * Math.PI) / 180;
+            const r = 156;
+            return (
+              <div
+                key={`bulb-${i}`}
+                className="absolute w-3 h-3 rounded-full z-10"
+                style={{
+                  left: `calc(50% + ${r * Math.cos(angle)}px - 6px)`,
+                  top: `calc(50% + ${r * Math.sin(angle)}px - 6px)`,
+                  background: "radial-gradient(circle at 30% 30%, #fffbeb, #fbbf24 60%, #b45309)",
+                  boxShadow: "0 0 10px #fde047, 0 0 18px #fbbf24",
+                  animation: `bulb-blink 1.2s ease-in-out ${i * 0.06}s infinite`,
+                }}
+              />
+            );
+          })}
+
           {(isBeginnerLocked || isTrialLocked) && (
             <div className="absolute inset-0 bg-background/70 backdrop-blur-sm rounded-full z-20 flex items-center justify-center">
               <div className="text-center">
@@ -172,28 +205,6 @@ export const LuckyWheel = ({
             </div>
           )}
 
-          {/* Decorative outer ring with dots */}
-          <div className="absolute inset-0 rounded-full border-[6px] border-primary/40 z-10" />
-          <div className="absolute inset-[-3px] rounded-full z-10">
-            {Array.from({ length: 24 }).map((_, i) => {
-              const angle = (i * 15) * Math.PI / 180;
-              const x = 50 + 50 * Math.cos(angle);
-              const y = 50 + 50 * Math.sin(angle);
-              return (
-                <div
-                  key={i}
-                  className={`absolute w-2 h-2 rounded-full ${i % 2 === 0 ? "bg-primary" : "bg-primary/40"}`}
-                  style={{
-                    left: `${x}%`,
-                    top: `${y}%`,
-                    transform: "translate(-50%, -50%)",
-                    animation: isSpinning ? `pulse 0.5s ease-in-out ${i * 0.05}s infinite` : undefined,
-                  }}
-                />
-              );
-            })}
-          </div>
-
           {/* SVG Wheel */}
           <motion.div
             ref={wheelRef}
@@ -201,6 +212,7 @@ export const LuckyWheel = ({
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? "transform 4.5s cubic-bezier(0.15, 0.6, 0.15, 1)" : "none",
+              boxShadow: "inset 0 0 30px rgba(0,0,0,0.5), 0 0 25px hsl(45 93% 47% / 0.3)",
             }}
           >
             <svg viewBox="0 0 200 200" className="w-full h-full">
