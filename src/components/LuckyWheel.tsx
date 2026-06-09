@@ -22,13 +22,14 @@ type PrizeType = {
   icon: string;
 };
 
+// Real casino-style palette — alternating red / black / gold like classic lottery wheels
 const wheelPrizes: PrizeType[] = [
-  { label: "3 جنيه", value: 3, type: "cash", color: "#FFFFFF", bgColor: "#6366f1", icon: "💰" },
-  { label: "إعادة", value: 0, type: "retry", color: "#FFFFFF", bgColor: "#ef4444", icon: "🔄" },
-  { label: "5 جنيه", value: 5, type: "cash", color: "#FFFFFF", bgColor: "#8b5cf6", icon: "💵" },
-  { label: "1 جنيه", value: 1, type: "cash", color: "#FFFFFF", bgColor: "#0ea5e9", icon: "🪙" },
-  { label: "10 جنيه", value: 10, type: "cash", color: "#1a1a2e", bgColor: "#f59e0b", icon: "💎" },
-  { label: "صندوق", value: 0, type: "box", color: "#FFFFFF", bgColor: "#10b981", icon: "🎁" },
+  { label: "3 جنيه", value: 3, type: "cash", color: "#FFFFFF", bgColor: "#b91c1c", icon: "💰" },
+  { label: "إعادة", value: 0, type: "retry", color: "#fbbf24", bgColor: "#0f172a", icon: "🔄" },
+  { label: "5 جنيه", value: 5, type: "cash", color: "#0f172a", bgColor: "#fbbf24", icon: "💵" },
+  { label: "1 جنيه", value: 1, type: "cash", color: "#FFFFFF", bgColor: "#b91c1c", icon: "🪙" },
+  { label: "10 جنيه", value: 10, type: "cash", color: "#FFFFFF", bgColor: "#0f172a", icon: "💎" },
+  { label: "صندوق", value: 0, type: "box", color: "#0f172a", bgColor: "#fbbf24", icon: "🎁" },
 ];
 
 type BoxPrize = "extra_spin" | "cash_5" | "nothing";
