@@ -13,8 +13,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Bell, Send, Search, MessageSquare, 
-  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save, Gift, Gamepad2, Zap
+  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save, Gift, Gamepad2, Zap, Smartphone
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -46,6 +47,8 @@ export const AdminNotificationsTab = () => {
   const [notifLink, setNotifLink] = useState("");
   const [notifType, setNotifType] = useState("general");
   const [isSending, setIsSending] = useState(false);
+  const [alsoSendTelegram, setAlsoSendTelegram] = useState(true);
+  const [alsoSendPush, setAlsoSendPush] = useState(true);
 
   // Welcome message settings
   const [welcomeTitle, setWelcomeTitle] = useState("");
@@ -146,9 +149,16 @@ export const AdminNotificationsTab = () => {
 
         if (error) throw error;
 
-        supabase.functions.invoke("send-push", {
-          body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
-        }).catch(() => {});
+        if (alsoSendPush) {
+          supabase.functions.invoke("send-push", {
+            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+          }).catch(() => {});
+        }
+        if (alsoSendTelegram) {
+          supabase.functions.invoke("broadcast-telegram", {
+            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || null }
+          }).catch(() => {});
+        }
 
         toast.success("تم إرسال الرسالة الخاصة");
       } else if (targetType === "all") {
@@ -163,9 +173,16 @@ export const AdminNotificationsTab = () => {
         const { error } = await supabase.from("notifications").insert(notifications);
         if (error) throw error;
 
-        for (const u of users) {
-          supabase.functions.invoke("send-push", {
-            body: { user_id: u.id, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+        if (alsoSendPush) {
+          for (const u of users) {
+            supabase.functions.invoke("send-push", {
+              body: { user_id: u.id, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+            }).catch(() => {});
+          }
+        }
+        if (alsoSendTelegram) {
+          supabase.functions.invoke("broadcast-telegram", {
+            body: { title: notifTitle, message: notifMessage, link: notifLink || null }
           }).catch(() => {});
         }
 
@@ -181,9 +198,16 @@ export const AdminNotificationsTab = () => {
 
         if (error) throw error;
 
-        supabase.functions.invoke("send-push", {
-          body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
-        }).catch(() => {});
+        if (alsoSendPush) {
+          supabase.functions.invoke("send-push", {
+            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
+          }).catch(() => {});
+        }
+        if (alsoSendTelegram) {
+          supabase.functions.invoke("broadcast-telegram", {
+            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || null }
+          }).catch(() => {});
+        }
 
         toast.success("تم إرسال الإشعار");
       }
@@ -497,6 +521,21 @@ export const AdminNotificationsTab = () => {
                   : "إرسال"
               }
             </Button>
+
+            <div className="rounded-lg border border-border/50 p-3 space-y-2 bg-muted/20">
+              <p className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5" />
+                قنوات الإرسال الإضافية
+              </p>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">إشعار خارجي (Android / iOS)</Label>
+                <Switch checked={alsoSendPush} onCheckedChange={setAlsoSendPush} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">إرسال عبر بوت تليجرام</Label>
+                <Switch checked={alsoSendTelegram} onCheckedChange={setAlsoSendTelegram} />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
