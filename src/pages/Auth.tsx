@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
 import appIcon from "@/assets/app-icon.png";
 import { lovable } from "@/integrations/lovable/index";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "الاسم يجب أن يكون أكثر من حرفين").max(50, "الاسم طويل جداً"),
@@ -46,6 +47,7 @@ const Auth = () => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [registeredViaReferral, setRegisteredViaReferral] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -417,6 +419,18 @@ const Auth = () => {
                 </motion.div>
               </AnimatePresence>
 
+              {isLogin && (
+                <div className="text-left">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(true)}
+                    className="text-xs text-primary hover:underline font-semibold"
+                  >
+                    نسيت كلمة المرور؟
+                  </button>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12 rounded-lg mt-4"
@@ -478,6 +492,7 @@ const Auth = () => {
           isOpen={showPrivacyPolicy} 
           onAccept={handlePrivacyAccept}
         />
+        <ForgotPasswordDialog isOpen={showForgot} onClose={() => setShowForgot(false)} />
       </motion.div>
     </div>
   );
