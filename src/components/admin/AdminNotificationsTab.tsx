@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Bell, Send, Search, MessageSquare, 
-  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save
+  Megaphone, DollarSign, Filter, Mail, Sparkles, PartyPopper, Save, Gift, Gamepad2, Zap
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -227,6 +227,9 @@ export const AdminNotificationsTab = () => {
       private_message: "رسالة خاصة",
       chat: "محادثة",
       offer: "عرض",
+      marketing: "تسويق",
+      gift: "هدية",
+      game: "لعبة",
       update: "تحديث",
       ad_interaction: "تفاعل إعلان",
       ad_click: "نقرة إعلان",
@@ -386,10 +389,51 @@ export const AdminNotificationsTab = () => {
                     <SelectContent>
                       <SelectItem value="general">عام</SelectItem>
                       <SelectItem value="offer">عرض خاص</SelectItem>
+                      <SelectItem value="marketing">تسويق</SelectItem>
+                      <SelectItem value="gift">هدية</SelectItem>
+                      <SelectItem value="game">لعبة / مسابقة</SelectItem>
                       <SelectItem value="update">تحديث / تطوير</SelectItem>
                       <SelectItem value="transaction">معاملة</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs">قوالب سريعة</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1.5">
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => {
+                      setNotifType("marketing");
+                      setNotifTitle("🎁 عرض حصري ليوم واحد");
+                      setNotifMessage("احصل على خصم خاص عند ترقية باقتك اليوم! استخدم كود الخصم الآن.");
+                      setNotifLink("/app/packages");
+                    }}>
+                      <Zap className="w-3 h-3" /> عرض ترقية
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => {
+                      setNotifType("gift");
+                      setNotifTitle("🎁 هدية لك!");
+                      setNotifMessage("لقد منحناك هدية مجانية، افتح التطبيق للاستلام.");
+                      setNotifLink("/app/wheel");
+                    }}>
+                      <Gift className="w-3 h-3" /> هدية
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => {
+                      setNotifType("game");
+                      setNotifTitle("🎰 جرّب عجلة الحظ الآن");
+                      setNotifMessage("دور العجلة وفز بمكافآت يومية مذهلة!");
+                      setNotifLink("/app/wheel");
+                    }}>
+                      <Gamepad2 className="w-3 h-3" /> عجلة الحظ
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => {
+                      setNotifType("update");
+                      setNotifTitle("✨ تحديث جديد متاح");
+                      setNotifMessage("اكتشف الميزات الجديدة في آخر إصدار من التطبيق.");
+                      setNotifLink("/app/updates");
+                    }}>
+                      <Sparkles className="w-3 h-3" /> تحديث
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
 
