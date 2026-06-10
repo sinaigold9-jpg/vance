@@ -856,6 +856,48 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          applies_to_package: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          used_count: number
+        }
+        Insert: {
+          applies_to_package?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Update: {
+          applies_to_package?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Relationships: []
+      }
       download_counter: {
         Row: {
           count: number
@@ -1207,6 +1249,8 @@ export type Database = {
           amount: number | null
           created_at: string
           current_package: Database["public"]["Enums"]["account_type"]
+          discount_amount: number
+          discount_code: string | null
           id: string
           processed_at: string | null
           processed_by: string | null
@@ -1219,6 +1263,8 @@ export type Database = {
           amount?: number | null
           created_at?: string
           current_package: Database["public"]["Enums"]["account_type"]
+          discount_amount?: number
+          discount_code?: string | null
           id?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1231,6 +1277,8 @@ export type Database = {
           amount?: number | null
           created_at?: string
           current_package?: Database["public"]["Enums"]["account_type"]
+          discount_amount?: number
+          discount_code?: string | null
           id?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1815,10 +1863,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_discount_code: {
+        Args: { _base_price: number; _code: string; _package: string }
+        Returns: Json
+      }
       claim_contest_reward: {
         Args: { _contest_id: string; _level: number }
         Returns: Json
       }
+      consume_discount_code: { Args: { _code: string }; Returns: undefined }
       generate_membership_id: { Args: never; Returns: string }
       generate_transaction_number: { Args: never; Returns: string }
       has_role: {
