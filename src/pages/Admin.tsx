@@ -37,6 +37,7 @@ import { AdminContestsTab } from "@/components/admin/AdminContestsTab";
 import { AdminUpdatesTab } from "@/components/admin/AdminUpdatesTab";
 import { AdminDiscountCodesTab } from "@/components/admin/AdminDiscountCodesTab";
 import { Sparkles } from "lucide-react";
+import { Tag } from "lucide-react";
 
 // All admin tabs definition
 const ALL_TABS = [
