@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkGs-GDAAHZkJXW_e5bG__mSr3KOHcC-qqkH3d8TXQ';
+let cachedVapidPublic: string | null = null;
+async function getVapidPublicKey(): Promise<string> {
+  if (cachedVapidPublic) return cachedVapidPublic;
+  const { data } = await supabase.functions.invoke('get-vapid-key');
+  cachedVapidPublic = (data as any)?.publicKey || '';
+  return cachedVapidPublic;
+}
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -20,6 +26,11 @@ export async function registerPushNotifications(userId: string) {
   }
 
   try {
+    const publicKey = await getVapidPublicKey();
+    if (!publicKey) {
+      console.warn('VAPID public key not configured');
+      return false;
+    }
     // Register service worker
     const registration = await navigator.serviceWorker.register('/sw-push.js');
     await navigator.serviceWorker.ready;
@@ -34,7 +45,7 @@ export async function registerPushNotifications(userId: string) {
     // Subscribe to push
     const subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
 
     const subJson = subscription.toJSON();
