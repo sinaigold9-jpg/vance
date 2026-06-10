@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Loader2, User, Mail, Phone, IdCard, Upload, CreditCard } from "lucide-react";
+import { CheckCircle, Loader2, User, Mail, Phone, IdCard, Upload, CreditCard, Copy, Tag, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,11 +21,23 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
   const [success, setSuccess] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [userProfile, setUserProfile] = useState<{ full_name: string; email: string | null; phone: string | null; membership_id: string | null; } | null>(null);
+  const [discountInput, setDiscountInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [checkingCode, setCheckingCode] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { user } = useAuth();
+
+  const finalPrice = Math.max(0, packagePrice - discountAmount);
 
   useEffect(() => {
     if (isOpen && user) {
       fetchUserProfile();
+    }
+    if (!isOpen) {
+      setDiscountInput("");
+      setAppliedCode(null);
+      setDiscountAmount(0);
     }
   }, [isOpen, user]);
 
@@ -39,6 +51,49 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
     if (e.target.files && e.target.files[0]) {
       setReceiptFile(e.target.files[0]);
     }
+  };
+
+  const handleCopyNumber = async () => {
+    try {
+      await navigator.clipboard.writeText("01080048591");
+      setCopied(true);
+      toast({ title: "تم النسخ", description: "تم نسخ رقم المحفظة" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const handleApplyCode = async () => {
+    const code = discountInput.trim();
+    if (!code) return;
+    setCheckingCode(true);
+    try {
+      const { data, error } = await supabase.rpc("apply_discount_code", {
+        _code: code,
+        _package: targetAccountType,
+        _base_price: packagePrice,
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (!res?.success) {
+        toast({ title: "كود غير صالح", description: res?.error || "تعذر تطبيق الكود", variant: "destructive" });
+        setAppliedCode(null);
+        setDiscountAmount(0);
+        return;
+      }
+      setAppliedCode(res.code);
+      setDiscountAmount(Number(res.discount_amount) || 0);
+      toast({ title: "تم تطبيق الخصم 🎉", description: `وفّرت ${res.discount_amount} جنيه` });
+    } catch (e: any) {
+      toast({ title: "خطأ", description: e.message || "تعذر التحقق من الكود", variant: "destructive" });
+    } finally {
+      setCheckingCode(false);
+    }
+  };
+
+  const removeCode = () => {
+    setAppliedCode(null);
+    setDiscountAmount(0);
+    setDiscountInput("");
   };
 
   const handleSubmit = async () => {
@@ -62,10 +117,12 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
         current_package: profile?.account_type || 'beginner',
         requested_package: targetAccountType as "beginner" | "vip1" | "vip2" | "vip3",
         receipt_url: publicUrl,
-        amount: packagePrice,
+        amount: finalPrice,
+        discount_code: appliedCode,
+        discount_amount: discountAmount,
       }]);
 
-      await supabase.from("activity_logs").insert({ user_id: user.id, action: "طلب ترقية باقة", details: { package: packageName, price: packagePrice }, amount: packagePrice });
+      await supabase.from("activity_logs").insert({ user_id: user.id, action: "طلب ترقية باقة", details: { package: packageName, base_price: packagePrice, discount_code: appliedCode, discount_amount: discountAmount, final_price: finalPrice }, amount: finalPrice });
 
       setSuccess(true);
     } catch (error) {
@@ -97,12 +154,22 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md" dir="rtl">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">ترقية إلى {packageName}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-2">
+          {/* Stepper */}
+          <div className="flex items-center justify-between text-[11px] font-medium">
+            {["تأكيد البيانات","التحويل","رفع الإيصال"].map((s, i) => (
+              <div key={s} className="flex items-center gap-1.5 flex-1">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${i===0||(i===1)||(i===2&&receiptFile) ? "bg-gradient-gold text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i+1}</div>
+                <span className="text-muted-foreground">{s}</span>
+              </div>
+            ))}
+          </div>
+
           <div className="p-4 rounded-xl bg-muted/50 border border-border">
             <h4 className="font-bold text-sm text-muted-foreground mb-3">بيانات المستخدم</h4>
             <div className="space-y-2 text-sm">
@@ -113,24 +180,69 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
             </div>
           </div>
 
-          <div className="text-center p-4 rounded-xl bg-gradient-gold/10 border border-gold/30">
-            <p className="text-muted-foreground mb-1">قيمة الباقة</p>
-            <p className="text-3xl font-black text-gradient-gold">{packagePrice} جنيه</p>
+          {/* Discount code */}
+          <div className="p-3 rounded-xl bg-muted/30 border border-border space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Tag className="w-4 h-4 text-primary" />
+              كود الخصم (اختياري)
+            </label>
+            {appliedCode ? (
+              <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald/10 border border-emerald/30">
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="w-4 h-4 text-emerald" />
+                  <span className="font-bold">{appliedCode}</span>
+                  <span className="text-emerald">-{discountAmount} جنيه</span>
+                </div>
+                <Button size="sm" variant="ghost" onClick={removeCode}>إلغاء</Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  value={discountInput}
+                  onChange={e => setDiscountInput(e.target.value.toUpperCase())}
+                  placeholder="أدخل الكود"
+                  className="font-mono"
+                />
+                <Button onClick={handleApplyCode} disabled={checkingCode || !discountInput.trim()} variant="outline">
+                  {checkingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Price summary */}
+          <div className="p-4 rounded-xl bg-gradient-gold/10 border border-gold/30 space-y-1">
+            {discountAmount > 0 && (
+              <>
+                <div className="flex justify-between text-sm text-muted-foreground"><span>السعر الأصلي</span><span className="line-through">{packagePrice} جنيه</span></div>
+                <div className="flex justify-between text-sm text-emerald"><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
+              </>
+            )}
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-muted-foreground">المبلغ المطلوب</span>
+              <span className="text-3xl font-black text-gradient-gold">{finalPrice} جنيه</span>
+            </div>
           </div>
 
           <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <p className="font-bold">أرسل المبلغ على الرقم:</p>
+              <p className="font-bold">حوّل المبلغ على هذا الرقم:</p>
             </div>
-            <p className="text-2xl font-black text-primary text-center" dir="ltr">01080048591</p>
-            <p className="text-xs text-muted-foreground text-center mt-1">فودافون كاش</p>
+            <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background/60">
+              <p className="text-2xl font-black text-primary" dir="ltr">01080048591</p>
+              <Button size="sm" variant="outline" onClick={handleCopyNumber} className="gap-1">
+                {copied ? <Check className="w-4 h-4 text-emerald" /> : <Copy className="w-4 h-4" />}
+                {copied ? "تم" : "نسخ"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-2">فودافون كاش / اتصالات / أورنج / WE</p>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <Upload className="w-4 h-4" />
-              رفع إيصال الدفع
+              رفع صورة إيصال التحويل
             </label>
             <Input type="file" accept="image/*" onChange={handleFileChange} className="cursor-pointer" />
             {receiptFile && <p className="text-xs text-emerald">✓ تم اختيار: {receiptFile.name}</p>}
@@ -139,6 +251,7 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
           <Button onClick={handleSubmit} disabled={uploading || !receiptFile} className="w-full bg-gradient-gold text-primary-foreground h-12 text-lg">
             {uploading ? <><Loader2 className="w-5 h-5 animate-spin ml-2" />جاري الإرسال...</> : "إرسال طلب الترقية"}
           </Button>
+          <p className="text-[11px] text-muted-foreground text-center">ستتم مراجعة الإيصال خلال دقائق وتفعيل الباقة تلقائياً عند القبول.</p>
         </div>
       </DialogContent>
     </Dialog>
