@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2, Wifi } from "lucide-react";
+import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2, Wifi, BatteryCharging, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications, unregisterPushNotifications } from "@/lib/pushNotifications";
@@ -62,6 +62,10 @@ export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
   const { enabled: dataSaver, toggle: toggleDataSaver } = useDataSaver();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [batteryOptDisabled, setBatteryOptDisabled] = useState<boolean>(() => {
+    try { return localStorage.getItem("advance_battery_opt_off") === "1"; } catch { return false; }
+  });
+  const [showBatteryHelp, setShowBatteryHelp] = useState(false);
   const [selectedField, setSelectedField] = useState<string>("");
   const [newValue, setNewValue] = useState("");
   const [showChangeDialog, setShowChangeDialog] = useState(false);
@@ -97,11 +101,11 @@ export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
         toast.success("تم إيقاف الإشعارات");
       } else {
         const result = await registerPushNotifications(user.id);
-        if (result) {
+        if (result.ok) {
           setPushEnabled(true);
           toast.success("تم تفعيل الإشعارات");
         } else {
-          toast.error("فشل تفعيل الإشعارات - تأكد من السماح بالإشعارات في المتصفح");
+          toast.error(result.message || "فشل تفعيل الإشعارات");
         }
       }
     } catch {
@@ -267,6 +271,60 @@ export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Battery Optimization */}
+          <Card className="border-border/50">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <BatteryCharging className={`w-5 h-5 ${batteryOptDisabled ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <p className="font-medium">إيقاف تحسين البطارية (أندرويد)</p>
+                    <p className="text-xs text-muted-foreground">
+                      {batteryOptDisabled ? "مفعّل — تصل الإشعارات فوراً" : "قد تتأخر الإشعارات في الخلفية"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={batteryOptDisabled}
+                  onCheckedChange={(v) => {
+                    setBatteryOptDisabled(v);
+                    try { localStorage.setItem("advance_battery_opt_off", v ? "1" : "0"); } catch {}
+                    if (v) setShowBatteryHelp(true);
+                    toast.success(v ? "افتح الإعدادات لإتمام الاستثناء" : "تم الإيقاف");
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => setShowBatteryHelp(true)}
+                className="text-xs text-primary flex items-center gap-1 hover:underline"
+              >
+                <Info className="w-3 h-3" />
+                كيف أستثني التطبيق من تحسين البطارية؟
+              </button>
+            </CardContent>
+          </Card>
+
+          {showBatteryHelp && (
+            <Card className="border-primary/40 bg-primary/5">
+              <CardContent className="p-4 space-y-2 text-sm">
+                <p className="font-bold">خطوات إيقاف تحسين البطارية (Android):</p>
+                <ol className="list-decimal pr-4 space-y-1 text-xs text-muted-foreground">
+                  <li>افتح <b>إعدادات الهاتف</b> ← <b>البطارية</b>.</li>
+                  <li>اختر <b>تحسين البطارية</b> أو <b>Battery optimization</b>.</li>
+                  <li>ابحث عن تطبيق <b>Advance</b> (أو المتصفح الذي ثبّت منه التطبيق).</li>
+                  <li>اختر <b>عدم التحسين</b> / <b>Don't optimize</b>.</li>
+                  <li>عد إلى التطبيق — الإشعارات الآن ستصلك حتى لو كان مغلقاً.</li>
+                </ol>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  على iPhone: الإشعارات تعمل تلقائياً بعد الموافقة، لا يوجد إعداد بطارية إضافي.
+                </p>
+                <Button size="sm" variant="outline" onClick={() => setShowBatteryHelp(false)} className="mt-2">
+                  فهمت
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Separator />
 

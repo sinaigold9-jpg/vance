@@ -19,30 +19,43 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export async function registerPushNotifications(userId: string) {
+export type PushResult = { ok: boolean; reason?: 'unsupported' | 'preview' | 'no_vapid' | 'permission_denied' | 'sw_redirect' | 'error'; message?: string };
+
+function isPreviewHost() {
+  const h = typeof location !== 'undefined' ? location.hostname : '';
+  return h.startsWith('id-preview--') || h.startsWith('preview--') || h.endsWith('.lovableproject.com');
+}
+
+export async function registerPushNotifications(userId: string): Promise<PushResult> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Push notifications not supported');
-    return false;
+    return { ok: false, reason: 'unsupported', message: 'المتصفح لا يدعم الإشعارات. جرّب Chrome على أندرويد أو Safari على iOS 16.4+ بعد تثبيت التطبيق للشاشة الرئيسية.' };
+  }
+  if (isPreviewHost()) {
+    return { ok: false, reason: 'preview', message: 'الإشعارات لا تعمل داخل معاينة المحرر. افتح التطبيق من الرابط الرسمي (vance.lovable.app) أو بعد تثبيته كتطبيق.' };
   }
 
   try {
     const publicKey = await getVapidPublicKey();
     if (!publicKey) {
-      console.warn('VAPID public key not configured');
-      return false;
+      return { ok: false, reason: 'no_vapid', message: 'مفتاح الإشعارات غير مُهيّأ. تواصل مع الإدارة.' };
     }
-    // Register service worker
-    const registration = await navigator.serviceWorker.register('/sw-push.js');
+
+    let registration: ServiceWorkerRegistration;
+    try {
+      registration = await navigator.serviceWorker.register('/sw-push.js', { scope: '/' });
+    } catch (e: any) {
+      if (String(e?.message || '').includes('redirect')) {
+        return { ok: false, reason: 'sw_redirect', message: 'تعذّر تسجيل خدمة الإشعارات (إعادة توجيه). افتح التطبيق من الرابط الرسمي بدون إعادة توجيه.' };
+      }
+      throw e;
+    }
     await navigator.serviceWorker.ready;
 
-    // Request permission
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      console.log('Notification permission denied');
-      return false;
+      return { ok: false, reason: 'permission_denied', message: 'تم رفض إذن الإشعارات. فعّلها يدوياً من إعدادات الموقع في المتصفح.' };
     }
 
-    // Subscribe to push
     const subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -50,19 +63,16 @@ export async function registerPushNotifications(userId: string) {
 
     const subJson = subscription.toJSON();
 
-    // Save subscription to database
     await supabase.from('push_subscriptions').upsert({
       user_id: userId,
       endpoint: subJson.endpoint!,
       keys: subJson.keys as any,
-    }, {
-      onConflict: 'user_id,endpoint',
-    });
+    }, { onConflict: 'user_id,endpoint' });
 
-    return true;
-  } catch (error) {
+    return { ok: true };
+  } catch (error: any) {
     console.error('Failed to register push notifications:', error);
-    return false;
+    return { ok: false, reason: 'error', message: error?.message || 'فشل غير متوقع' };
   }
 }
 

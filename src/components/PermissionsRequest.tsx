@@ -77,9 +77,9 @@ export const PermissionsRequest = () => {
       }
       const { data } = await supabase.auth.getUser();
       if (data.user?.id) {
-        const ok = await registerPushNotifications(data.user.id);
-        setGranted((g) => ({ ...g, notifications: ok }));
-        if (ok) {
+        const result = await registerPushNotifications(data.user.id);
+        setGranted((g) => ({ ...g, notifications: result.ok }));
+        if (result.ok) {
           // immediate test notification so user sees a real OS notification
           try {
             const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
@@ -92,6 +92,8 @@ export const PermissionsRequest = () => {
             } as any);
           } catch {}
           toast.success("تم تفعيل الإشعارات");
+        } else if (!result.ok) {
+          toast.error(result.message);
         }
       } else {
         setGranted((g) => ({ ...g, notifications: true }));
