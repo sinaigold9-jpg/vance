@@ -19,9 +19,7 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export type PushResult =
-  | { ok: true }
-  | { ok: false; reason: 'unsupported' | 'preview' | 'no_vapid' | 'permission_denied' | 'sw_redirect' | 'error'; message: string };
+export type PushResult = { ok: boolean; reason?: 'unsupported' | 'preview' | 'no_vapid' | 'permission_denied' | 'sw_redirect' | 'error'; message?: string };
 
 function isPreviewHost() {
   const h = typeof location !== 'undefined' ? location.hostname : '';
