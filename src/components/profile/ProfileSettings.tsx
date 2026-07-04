@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2, Wifi } from "lucide-react";
+import { Settings, Bell, BellOff, Edit, User, Mail, Phone, Key, Lock, Clock, CheckCircle, XCircle, Loader2, Wifi, BatteryCharging, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications, unregisterPushNotifications } from "@/lib/pushNotifications";
@@ -97,11 +97,11 @@ export const ProfileSettings = ({ isOpen, onClose }: ProfileSettingsProps) => {
         toast.success("تم إيقاف الإشعارات");
       } else {
         const result = await registerPushNotifications(user.id);
-        if (result) {
+        if (result.ok) {
           setPushEnabled(true);
           toast.success("تم تفعيل الإشعارات");
         } else {
-          toast.error("فشل تفعيل الإشعارات - تأكد من السماح بالإشعارات في المتصفح");
+          toast.error(result.message || "فشل تفعيل الإشعارات");
         }
       }
     } catch {
