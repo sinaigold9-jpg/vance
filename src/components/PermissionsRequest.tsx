@@ -92,7 +92,7 @@ export const PermissionsRequest = () => {
             } as any);
           } catch {}
           toast.success("تم تفعيل الإشعارات");
-        } else {
+        } else if (!result.ok) {
           toast.error(result.message);
         }
       } else {
