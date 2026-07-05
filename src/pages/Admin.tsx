@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
-  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
+  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
   Megaphone, Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
 } from "lucide-react";
 import { Trophy } from "lucide-react";

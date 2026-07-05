@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Bug, CheckCircle2, Loader2, RefreshCw, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Bug, CheckCircle2, Loader2, RefreshCw, ShieldAlert, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,7 +187,7 @@ export const AdminAppIssuesTab = () => {
   );
 };
 
-const StatCard = ({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Bug }) => (
+const StatCard = ({ label, value, icon: Icon }: { label: string; value: number; icon: LucideIcon }) => (
   <Card className="border-border/50">
     <CardContent className="p-4 flex items-center gap-3">
       <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">

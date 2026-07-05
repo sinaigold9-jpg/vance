@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Bell, Bot, CheckCircle2, Loader2, RefreshCw, Send, Smartphone, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Bot, CheckCircle2, Loader2, RefreshCw, Send, Smartphone, XCircle, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -193,11 +193,13 @@ export const AdminNotificationDiagnosticsTab = () => {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricCards.map(card => (
+        {metricCards.map(card => {
+          const Icon = card.icon;
+          return (
           <Card key={card.label} className="border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                <card.icon className="w-5 h-5 text-primary" />
+                <Icon className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{card.label}</p>
@@ -206,7 +208,7 @@ export const AdminNotificationDiagnosticsTab = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+        );})}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
