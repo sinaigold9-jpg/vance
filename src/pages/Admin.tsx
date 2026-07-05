@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
-  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Settings, Power, MessageCircle,
-  Megaphone, Bell, Gift, Key, Edit, Mail, Shield, Rocket
+  ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
+  Megaphone, Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
 } from "lucide-react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ import { AdminContestsTab } from "@/components/admin/AdminContestsTab";
 import { AdminUpdatesTab } from "@/components/admin/AdminUpdatesTab";
 import { AdminDiscountCodesTab } from "@/components/admin/AdminDiscountCodesTab";
 import { AdminExternalMessagesTab } from "@/components/admin/AdminExternalMessagesTab";
+import { AdminNotificationDiagnosticsTab } from "@/components/admin/AdminNotificationDiagnosticsTab";
+import { AdminAppIssuesTab } from "@/components/admin/AdminAppIssuesTab";
 import { Sparkles } from "lucide-react";
 import { Tag, Send } from "lucide-react";
 
@@ -48,6 +50,7 @@ const ALL_TABS = [
   { key: "packages", label: "الباقات", icon: Package },
   { key: "ads", label: "الإعلانات", icon: Megaphone },
   { key: "notifications", label: "الإشعارات", icon: Bell },
+  { key: "notification-diagnostics", label: "تشخيص الإشعارات", icon: Stethoscope },
   { key: "promotions", label: "العروض", icon: Gift },
   { key: "support", label: "الدعم", icon: HeadphonesIcon },
   { key: "chat", label: "المحادثات", icon: MessageCircle },
@@ -65,6 +68,7 @@ const ALL_TABS = [
   { key: "updates", label: "التحديثات", icon: Sparkles },
   { key: "discount-codes", label: "أكواد الخصم", icon: Tag },
   { key: "external-messages", label: "الرسائل الخارجية", icon: Send },
+  { key: "app-issues", label: "الأخطاء والثغرات", icon: Bug },
 ];
 
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
@@ -74,6 +78,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   packages: AdminPackagesTab,
   ads: AdminAdsTab,
   notifications: AdminNotificationsTab,
+  "notification-diagnostics": AdminNotificationDiagnosticsTab,
   promotions: AdminPromotionsTab,
   support: AdminSupportTab,
   chat: AdminChatTab,
@@ -91,6 +96,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   updates: AdminUpdatesTab,
   "discount-codes": AdminDiscountCodesTab,
   "external-messages": AdminExternalMessagesTab,
+  "app-issues": AdminAppIssuesTab,
 };
 
 const Admin = () => {

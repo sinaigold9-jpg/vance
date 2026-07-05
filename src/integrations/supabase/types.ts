@@ -403,6 +403,57 @@ export type Database = {
           },
         ]
       }
+      app_error_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          resolved_at: string | null
+          severity: string
+          source: string
+          stack: string | null
+          status: string
+          title: string
+          updated_at: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity: string
+          source: string
+          stack?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          stack?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -1030,6 +1081,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_delivery_logs: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          error_details: Json
+          expired_count: number
+          failed_count: number
+          id: string
+          message: string | null
+          sent_count: number
+          status: string
+          target_count: number
+          target_user_id: string | null
+          title: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          error_details?: Json
+          expired_count?: number
+          failed_count?: number
+          id?: string
+          message?: string | null
+          sent_count?: number
+          status: string
+          target_count?: number
+          target_user_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          error_details?: Json
+          expired_count?: number
+          failed_count?: number
+          id?: string
+          message?: string | null
+          sent_count?: number
+          status?: string
+          target_count?: number
+          target_user_id?: string | null
+          title?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {

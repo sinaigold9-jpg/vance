@@ -71,24 +71,35 @@ export const AdminExternalMessagesTab = () => {
     const results: string[] = [];
 
     try {
+      let allOk = true;
+
       if (sendTelegram) {
         const { data, error } = await supabase.functions.invoke("broadcast-telegram", {
           body: { title, message, link: link || undefined },
         });
-        if (error) results.push(`❌ تليجرام: ${error.message}`);
-        else results.push(`✅ تليجرام: تم الإرسال إلى ${data?.sent ?? 0} / ${data?.total ?? 0}`);
+        const sent = data?.sent_count ?? data?.sent ?? 0;
+        const total = data?.target_count ?? data?.total ?? 0;
+        if (error || sent === 0 || data?.failed_count > 0) {
+          allOk = false;
+          results.push(`❌ تليجرام: ${data?.message || data?.error_details?.[0]?.message || error?.message || "فشل الإرسال"}`);
+        } else results.push(`✅ تليجرام: تم الإرسال إلى ${sent} / ${total}`);
       }
 
       if (sendPush) {
         const { data, error } = await supabase.functions.invoke("send-push", {
           body: { title: title || "Advance", message, link: link || "/app", type: "marketing" },
         });
-        if (error) results.push(`❌ Push: ${error.message}`);
-        else results.push(`✅ Push: تم إلى ${data?.sent ?? 0} / ${data?.total ?? 0}`);
+        const sent = data?.sent_count ?? data?.sent ?? 0;
+        const total = data?.target_count ?? data?.total ?? 0;
+        if (error || sent === 0 || data?.failed_count > 0 || data?.expired_count > 0) {
+          allOk = false;
+          results.push(`❌ Push: ${data?.message || data?.error_details?.[0]?.message || error?.message || "فشل الإرسال"}`);
+        } else results.push(`✅ Push: تم إلى ${sent} / ${total}`);
       }
 
       setLastResult(results.join("\n"));
-      toast.success("تم تنفيذ الإرسال");
+      if (allOk) toast.success("تم الإرسال فعلياً");
+      else toast.error("لم تكتمل كل قنوات الإرسال — راجع التقرير");
     } catch (e: any) {
       toast.error(e?.message || "فشل الإرسال");
     } finally {

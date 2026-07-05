@@ -135,6 +135,34 @@ export const AdminNotificationsTab = () => {
     setIsSending(true);
 
     const finalType = sendTab === "messages" ? "private_message" : notifType;
+    const externalTargetUser = sendTab === "messages" || targetType === "single" ? targetUser : undefined;
+    const externalResults: string[] = [];
+
+    const invokeExternal = async (name: "send-push" | "broadcast-telegram", label: string) => {
+      const { data, error } = await supabase.functions.invoke(name, {
+        body: {
+          user_id: externalTargetUser,
+          title: notifTitle,
+          message: notifMessage,
+          link: notifLink || (name === "send-push" ? "/app" : null),
+          type: finalType,
+        },
+      });
+
+      const sent = Number((data as any)?.sent_count ?? (data as any)?.sent ?? 0);
+      const total = Number((data as any)?.target_count ?? (data as any)?.total ?? 0);
+      const failed = Number((data as any)?.failed_count ?? (data as any)?.failed ?? 0);
+      const expired = Number((data as any)?.expired_count ?? (data as any)?.expired ?? 0);
+      const detail = (data as any)?.message || (data as any)?.error_details?.[0]?.message || error?.message;
+
+      if (error || sent === 0 || failed > 0 || expired > 0) {
+        externalResults.push(`❌ ${label}: ${detail || `تم ${sent}/${total} وفشل ${failed + expired}`}`);
+        return false;
+      }
+
+      externalResults.push(`✅ ${label}: وصل إلى ${sent}/${total}`);
+      return true;
+    };
 
     try {
       if (sendTab === "messages") {
@@ -149,18 +177,12 @@ export const AdminNotificationsTab = () => {
 
         if (error) throw error;
 
-        if (alsoSendPush) {
-          supabase.functions.invoke("send-push", {
-            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
-          }).catch(() => {});
-        }
-        if (alsoSendTelegram) {
-          supabase.functions.invoke("broadcast-telegram", {
-            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || null }
-          }).catch(() => {});
-        }
-
-        toast.success("تم إرسال الرسالة الخاصة");
+        const tasks = [];
+        if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
+        if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
+        const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
+        const message = ["تم حفظ الرسالة الخاصة داخلياً", ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       } else if (targetType === "all") {
         const notifications = users.map(user => ({
           user_id: user.id,
@@ -173,20 +195,12 @@ export const AdminNotificationsTab = () => {
         const { error } = await supabase.from("notifications").insert(notifications);
         if (error) throw error;
 
-        if (alsoSendPush) {
-          for (const u of users) {
-            supabase.functions.invoke("send-push", {
-              body: { user_id: u.id, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
-            }).catch(() => {});
-          }
-        }
-        if (alsoSendTelegram) {
-          supabase.functions.invoke("broadcast-telegram", {
-            body: { title: notifTitle, message: notifMessage, link: notifLink || null }
-          }).catch(() => {});
-        }
-
-        toast.success(`تم إرسال الإشعار إلى ${users.length} مستخدم`);
+        const tasks = [];
+        if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
+        if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
+        const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
+        const message = [`تم حفظ الإشعار داخلياً إلى ${users.length} مستخدم`, ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       } else {
         const { error } = await supabase.from("notifications").insert({
           user_id: targetUser,
@@ -198,18 +212,12 @@ export const AdminNotificationsTab = () => {
 
         if (error) throw error;
 
-        if (alsoSendPush) {
-          supabase.functions.invoke("send-push", {
-            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || "/app" }
-          }).catch(() => {});
-        }
-        if (alsoSendTelegram) {
-          supabase.functions.invoke("broadcast-telegram", {
-            body: { user_id: targetUser, title: notifTitle, message: notifMessage, link: notifLink || null }
-          }).catch(() => {});
-        }
-
-        toast.success("تم إرسال الإشعار");
+        const tasks = [];
+        if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
+        if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
+        const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
+        const message = ["تم حفظ الإشعار داخلياً", ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       }
 
       setNotifTitle("");
