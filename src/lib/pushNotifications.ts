@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { reportClientError } from "@/lib/errorReporting";
 
 let cachedVapidPublic: string | null = null;
 async function getVapidPublicKey(): Promise<string> {
@@ -49,29 +50,61 @@ export async function registerPushNotifications(userId: string): Promise<PushRes
       }
       throw e;
     }
-    await navigator.serviceWorker.ready;
+    registration = await navigator.serviceWorker.ready;
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       return { ok: false, reason: 'permission_denied', message: 'تم رفض إذن الإشعارات. فعّلها يدوياً من إعدادات الموقع في المتصفح.' };
     }
 
-    const subscription = await (registration as any).pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
+    let subscription = await (registration as any).pushManager.getSubscription();
+    if (subscription) {
+      const existingKey = subscription.options?.applicationServerKey;
+      const nextKey = urlBase64ToUint8Array(publicKey);
+      const sameKey = existingKey && existingKey.byteLength === nextKey.byteLength &&
+        Array.from(new Uint8Array(existingKey)).every((v, i) => v === nextKey[i]);
+      if (!sameKey) {
+        await subscription.unsubscribe();
+        subscription = null;
+      }
+    }
+
+    if (!subscription) {
+      subscription = await (registration as any).pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
 
     const subJson = subscription.toJSON();
 
-    await supabase.from('push_subscriptions').upsert({
+    const { error: saveError } = await supabase.from('push_subscriptions').upsert({
       user_id: userId,
       endpoint: subJson.endpoint!,
       keys: subJson.keys as any,
     }, { onConflict: 'user_id,endpoint' });
 
+    if (saveError) {
+      await reportClientError({
+        source: 'notification',
+        severity: 'error',
+        title: 'فشل حفظ اشتراك الإشعارات',
+        message: saveError.message,
+        metadata: { endpoint: subJson.endpoint },
+      });
+      return { ok: false, reason: 'error', message: `تم السماح بالإشعارات لكن فشل حفظ الاشتراك: ${saveError.message}` };
+    }
+
     return { ok: true };
   } catch (error: any) {
     console.error('Failed to register push notifications:', error);
+    await reportClientError({
+      source: 'notification',
+      severity: 'error',
+      title: 'فشل تفعيل إشعارات الهاتف',
+      message: error?.message || 'فشل غير متوقع',
+      stack: error?.stack,
+    });
     return { ok: false, reason: 'error', message: error?.message || 'فشل غير متوقع' };
   }
 }
@@ -79,7 +112,7 @@ export async function registerPushNotifications(userId: string): Promise<PushRes
 export async function unregisterPushNotifications() {
   if (!('serviceWorker' in navigator)) return;
   
-  const registration = await navigator.serviceWorker.getRegistration('/sw-push.js');
+  const registration = await navigator.serviceWorker.getRegistration('/');
   if (registration) {
     const subscription = await (registration as any).pushManager.getSubscription();
     if (subscription) {
