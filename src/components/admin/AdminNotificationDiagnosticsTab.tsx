@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Bell, Bot, CheckCircle2, Loader2, RefreshCw, Send, Smartphone, XCircle, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Bell, Bot, CheckCircle2, Loader2, RefreshCw, Send, Smartphone, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -151,7 +151,8 @@ export const AdminNotificationDiagnosticsTab = () => {
       setTestReport(report);
 
       const ok = report.every(item => item.startsWith("✅"));
-      toast[ok ? "success" : "error"](ok ? "نجح اختبار الإشعارات فعلياً" : "فشل جزء من الاختبار — راجع التقرير");
+      if (ok) toast.success("نجح اختبار الإشعارات فعلياً");
+      else toast.error("فشل جزء من الاختبار — راجع التقرير");
       await refreshAll();
     } finally {
       setTesting(false);

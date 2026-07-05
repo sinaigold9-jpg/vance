@@ -181,7 +181,8 @@ export const AdminNotificationsTab = () => {
         if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
         if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
         const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
-        toast[ok ? "success" : "error"](["تم حفظ الرسالة الخاصة داخلياً", ...externalResults].join("\n"));
+        const message = ["تم حفظ الرسالة الخاصة داخلياً", ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       } else if (targetType === "all") {
         const notifications = users.map(user => ({
           user_id: user.id,
@@ -198,7 +199,8 @@ export const AdminNotificationsTab = () => {
         if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
         if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
         const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
-        toast[ok ? "success" : "error"]([`تم حفظ الإشعار داخلياً إلى ${users.length} مستخدم`, ...externalResults].join("\n"));
+        const message = [`تم حفظ الإشعار داخلياً إلى ${users.length} مستخدم`, ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       } else {
         const { error } = await supabase.from("notifications").insert({
           user_id: targetUser,
@@ -214,7 +216,8 @@ export const AdminNotificationsTab = () => {
         if (alsoSendPush) tasks.push(invokeExternal("send-push", "Push"));
         if (alsoSendTelegram) tasks.push(invokeExternal("broadcast-telegram", "Telegram"));
         const ok = tasks.length ? (await Promise.all(tasks)).every(Boolean) : true;
-        toast[ok ? "success" : "error"](["تم حفظ الإشعار داخلياً", ...externalResults].join("\n"));
+        const message = ["تم حفظ الإشعار داخلياً", ...externalResults].join("\n");
+        if (ok) toast.success(message); else toast.error(message);
       }
 
       setNotifTitle("");

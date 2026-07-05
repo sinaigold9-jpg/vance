@@ -98,7 +98,8 @@ export const AdminExternalMessagesTab = () => {
       }
 
       setLastResult(results.join("\n"));
-      toast[allOk ? "success" : "error"](allOk ? "تم الإرسال فعلياً" : "لم تكتمل كل قنوات الإرسال — راجع التقرير");
+      if (allOk) toast.success("تم الإرسال فعلياً");
+      else toast.error("لم تكتمل كل قنوات الإرسال — راجع التقرير");
     } catch (e: any) {
       toast.error(e?.message || "فشل الإرسال");
     } finally {
