@@ -12,7 +12,7 @@ import {
   Trophy,
   Tag,
   HelpCircle,
-  Sparkles,
+  Gamepad2,
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
 
@@ -42,7 +42,7 @@ const gridItems: GridItem[] = [
   { id: "sponsor", icon: Tag, label: "ممول", description: "إنشاء صفحة ممول", gradient: "from-orange-500 to-amber-500" },
   { id: "support", icon: HeadphonesIcon, label: "الدعم", description: "تواصل معنا للمساعدة", gradient: "from-indigo-500 to-blue-600" },
   { id: "faq", icon: HelpCircle, label: "الأسئلة الشائعة", description: "دليل استخدام التطبيق", gradient: "from-teal-500 to-cyan-500" },
-  { id: "updates", icon: Sparkles, label: "الجديد", description: "آخر التحديثات والمزايا", gradient: "from-fuchsia-500 to-pink-500" },
+  { id: "games", icon: Gamepad2, label: "مركز الألعاب", description: "العب واستمتع بجوائز", gradient: "from-fuchsia-500 to-purple-600" },
 ];
 
 export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
@@ -63,7 +63,7 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
               onClick={() => onTabChange(item.id)}
               className={`
                 relative flex flex-col items-center justify-center p-4 md:p-6
-                rounded-2xl border transition-all duration-300 card-hover
+                rounded-3xl border transition-all duration-300 card-hover
                 ${isActive
                   ? "bg-primary/10 border-primary/50 shadow-lg shadow-primary/15"
                   : "bg-card/60 border-border/30 hover:border-primary/20 hover:bg-card/80"
@@ -72,11 +72,11 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
             >
               {/* Subtle glow for active */}
               {isActive && (
-                <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-sm" />
+                <div className="absolute inset-0 rounded-3xl bg-primary/5 blur-sm" />
               )}
               <div
                 className={`
-                  relative w-14 h-14 md:w-16 md:h-16 rounded-2xl mb-2 md:mb-3
+                  relative w-14 h-14 md:w-16 md:h-16 rounded-full mb-2 md:mb-3
                   flex items-center justify-center
                   bg-gradient-to-br ${item.gradient}
                   shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)]
@@ -86,9 +86,9 @@ export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
                 `}
               >
                 {/* Inner border highlight */}
-                <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/30" />
+                <div className="pointer-events-none absolute inset-0 rounded-full border border-white/30" />
                 {/* Glossy top shine */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
                 {/* Sparkle */}
                 <motion.span
                   className="pointer-events-none absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white shadow-[0_0_8px_2px_rgba(255,255,255,0.9)]"
