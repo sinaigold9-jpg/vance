@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Home, Package, Gift, Users, Wallet, Calculator, HeadphonesIcon, Sparkles } from "lucide-react";
+import { Home, Package, Gift, Users, Wallet, Calculator, HeadphonesIcon, Gamepad2 } from "lucide-react";
 
 interface NavigationProps {
   activeTab: string;
@@ -10,7 +10,7 @@ const tabs = [
   { id: "home", icon: Home, label: "الرئيسية" },
   { id: "packages", icon: Package, label: "الباقات" },
   { id: "earnings", icon: Calculator, label: "الأرباح" },
-  { id: "updates", icon: Sparkles, label: "الجديد" },
+  { id: "games", icon: Gamepad2, label: "الألعاب" },
   { id: "tasks", icon: Gift, label: "المهام" },
   { id: "wallet", icon: Wallet, label: "المحفظة" },
   { id: "team", icon: Users, label: "الفريق" },

@@ -30,6 +30,7 @@ import { PromotionBanner } from "@/components/PromotionBanner";
 import { FloatingLuckyWheel } from "@/components/FloatingLuckyWheel";
 import { FAQ } from "@/components/FAQ";
 import { UpdatesFeed } from "@/components/UpdatesFeed";
+import { GamesCenter } from "@/pages/GamesCenter";
 import { WithdrawalHistory } from "@/components/WithdrawalHistory";
 import { PointsConverter } from "@/components/PointsConverter";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
@@ -91,6 +92,7 @@ const pathToTab: Record<string, string> = {
   "/app/support": "support",
   "/app/faq": "faq",
   "/app/updates": "updates",
+  "/app/games": "games",
 };
 
 const tabToPath: Record<string, string> = {
@@ -108,6 +110,7 @@ const tabToPath: Record<string, string> = {
   support: "/app/support",
   faq: "/app/faq",
   updates: "/app/updates",
+  games: "/app/games",
 };
 
 const Index = () => {
@@ -577,6 +580,12 @@ const Index = () => {
             <UpdatesFeed />
           </motion.div>
         );
+      case "games":
+        return (
+          <motion.div key="games" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <GamesCenter onBack={() => handleTabChange("home")} />
+          </motion.div>
+        );
       default:
         return null;
     }
@@ -608,9 +617,12 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-              <img src={appIcon} alt="Advance" className="w-10 h-10 rounded-xl" />
-              <div>
-                <h1 className="text-lg font-bold text-foreground">Advance</h1>
+              <img src={appIcon} alt="A Pro" className="w-10 h-10 rounded-full ring-2 ring-primary/30" />
+              <div className="leading-tight">
+                <h1 className="text-lg font-black text-foreground">
+                  A <span className="text-gradient-gold">Pro</span>
+                </h1>
+                <p className="text-[10px] text-muted-foreground -mt-0.5">Advance</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

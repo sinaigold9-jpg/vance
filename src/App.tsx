@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/app/support" element={<Index />} />
               <Route path="/app/faq" element={<Index />} />
              <Route path="/app/updates" element={<Index />} />
+              <Route path="/app/games" element={<Index />} />
               <Route path="/app/contest/:id" element={<ContestPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />

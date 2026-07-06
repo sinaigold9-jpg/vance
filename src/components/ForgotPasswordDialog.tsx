@@ -42,30 +42,52 @@ export const ForgotPasswordDialog = ({ isOpen, onClose }: Props) => {
       const { data, error } = await supabase.functions.invoke("request-password-reset", {
         body: { email: email.trim() },
       });
-      if (error) throw error;
-      if ((data as any)?.error === "telegram_not_linked") {
-        toast.error((data as any).message || "تليجرام غير مربوط");
+      // Surface the real error message from the edge function
+      const payload: any = data ?? (error && "context" in (error as any)
+        ? await ((error as any).context?.json?.().catch(() => null))
+        : null);
+      if (error && !payload) {
+        toast.error((error as any).message || "تعذر الاتصال بالخادم");
         setLoading(false);
         return;
       }
-      if ((data as any)?.error === "rate_limited") {
-        toast.error((data as any).message);
+      if (payload?.error) {
+        toast.error(payload.message || "تعذر إرسال الرمز");
         setLoading(false);
         return;
       }
       toast.success("تم إرسال رمز التحقق عبر تليجرام");
       setCountdown(60);
       setStep("otp");
-    } catch (e) {
-      toast.error("تعذر إرسال الرمز");
+    } catch (e: any) {
+      toast.error(e?.message || "تعذر إرسال الرمز");
     } finally {
       setLoading(false);
     }
   };
 
-  const verifyAndContinue = () => {
+  const verifyAndContinue = async () => {
     if (code.length !== 6) return;
-    setStep("password");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-reset-code", {
+        body: { email: email.trim(), code },
+      });
+      const payload: any = data ?? (error && "context" in (error as any)
+        ? await ((error as any).context?.json?.().catch(() => null))
+        : null);
+      if (payload?.success) {
+        setStep("password");
+      } else {
+        toast.error(payload?.message || "رمز غير صحيح");
+        setCode("");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "تعذر التحقق من الرمز");
+      setCode("");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
