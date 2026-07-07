@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
-import { Home, Package, Gift, Users, Wallet, Calculator, HeadphonesIcon, Gamepad2 } from "lucide-react";
+import { Package, Gift, Users, Wallet, Calculator, HeadphonesIcon, Gamepad2 } from "lucide-react";
+import { useHiddenIcons } from "@/lib/hiddenIcons";
 
 interface NavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const tabs = [
-  { id: "home", icon: Home, label: "الرئيسية" },
+const allTabs = [
   { id: "packages", icon: Package, label: "الباقات" },
   { id: "earnings", icon: Calculator, label: "الأرباح" },
   { id: "games", icon: Gamepad2, label: "الألعاب" },
@@ -18,6 +18,8 @@ const tabs = [
 ];
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
+  const hidden = useHiddenIcons();
+  const tabs = allTabs.filter(t => !hidden.includes(t.id));
   return (
     <motion.nav
       initial={{ y: 100 }}

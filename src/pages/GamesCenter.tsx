@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Gamepad2, Loader2, ArrowRight } from "lucide-react";
+import { Gamepad2, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { GAMES } from "@/components/games/registry";
@@ -47,7 +47,7 @@ export const GamesCenter = ({ onBack }: Props) => {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <PageHeader title="مركز الألعاب" subtitle="العب واستمتع بالفعاليات الجديدة" onBack={onBack} />
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         {GAMES.map((g, i) => {
           const isEnabled = enabled[g.id] !== false;
           return (
@@ -55,34 +55,39 @@ export const GamesCenter = ({ onBack }: Props) => {
               key={g.id}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ scale: isEnabled ? 1.02 : 1 }}
-              whileTap={{ scale: isEnabled ? 0.98 : 1 }}
+              transition={{ delay: i * 0.05, type: "spring", stiffness: 200 }}
+              whileHover={{ scale: isEnabled ? 1.04 : 1, y: isEnabled ? -3 : 0 }}
+              whileTap={{ scale: isEnabled ? 0.96 : 1 }}
               disabled={!isEnabled}
               onClick={() => isEnabled && setActiveGameId(g.id)}
-              className={`relative overflow-hidden text-right rounded-3xl border p-5 flex items-center gap-4 transition-all ${
+              className={`relative flex flex-col items-center justify-center p-4 md:p-6 rounded-3xl border transition-all duration-300 ${
                 isEnabled
-                  ? `bg-gradient-to-br ${g.gradient} border-white/10 shadow-xl hover:shadow-2xl`
+                  ? "bg-card/60 border-border/30 hover:border-primary/30 hover:bg-card/80"
                   : "bg-muted/40 border-border opacity-60 cursor-not-allowed"
               }`}
             >
-              <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur border-2 border-white/25 flex items-center justify-center text-4xl shrink-0">
-                {g.emoji}
+              <div
+                className={`relative w-14 h-14 md:w-16 md:h-16 rounded-full mb-2 md:mb-3 flex items-center justify-center bg-gradient-to-br ${g.gradient} shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)] ring-2 ring-white/25 ring-offset-2 ring-offset-background/40 overflow-hidden`}
+              >
+                <div className="pointer-events-none absolute inset-0 rounded-full border border-white/30" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
+                <span className="text-3xl md:text-4xl">{g.emoji}</span>
               </div>
-              <div className="flex-1 text-white">
-                <h3 className="text-xl font-black">{g.title}</h3>
-                <p className="text-sm text-white/80 mt-1">{g.description}</p>
-                {!isEnabled && <p className="text-xs text-yellow-200 mt-2">⏸ متوقفة مؤقتًا</p>}
-              </div>
-              {isEnabled && <ArrowRight className="w-6 h-6 text-white/70" />}
+              <span className="text-sm md:text-base font-bold mb-1 text-foreground">{g.title}</span>
+              <span className="text-[10px] md:text-xs text-muted-foreground text-center hidden md:block">
+                {g.description}
+              </span>
+              {!isEnabled && (
+                <span className="text-[10px] text-amber-500 mt-1">⏸ متوقفة</span>
+              )}
             </motion.button>
           );
         })}
+      </div>
 
-        <div className="rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">
-          <Gamepad2 className="w-8 h-8 mx-auto mb-2 opacity-60" />
-          <p className="text-sm">المزيد من الألعاب قريبًا 🎮</p>
-        </div>
+      <div className="rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground mt-4">
+        <Gamepad2 className="w-8 h-8 mx-auto mb-2 opacity-60" />
+        <p className="text-sm">المزيد من الألعاب قريبًا 🎮</p>
       </div>
     </motion.div>
   );

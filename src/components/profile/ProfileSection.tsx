@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { ProfileSettings } from "./ProfileSettings";
+import { MembershipCard } from "./MembershipCard";
+import { supabase } from "@/integrations/supabase/client";
+import appIcon from "@/assets/app-icon.png";
 import { 
   User, Mail, Phone, CreditCard, 
   Gift, Crown, Clock, Lock, Shield, Settings
@@ -31,7 +33,32 @@ interface ProfileSectionProps {
 export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
   const { user, isAdmin, isStaff, staffRole } = useAuth();
   const navigate = useNavigate();
-  const [showSettings, setShowSettings] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
+  const [badge, setBadge] = useState<{ name: string; icon: string; color: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("avatar_url, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      setAvatarUrl((p as any)?.avatar_url ?? null);
+      setCreatedAt((p as any)?.created_at ?? null);
+
+      const { data: ub } = await supabase
+        .from("user_badges")
+        .select("badge_id, badges(name, icon, color)")
+        .eq("user_id", user.id)
+        .order("granted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const b = (ub as any)?.badges;
+      if (b) setBadge({ name: b.name, icon: b.icon, color: b.color });
+    })();
+  }, [user]);
 
   const getAccountTypeBadge = (type: string) => {
     switch (type) {
@@ -50,6 +77,16 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
 
   return (
     <div className="space-y-6">
+      {/* Digital membership card */}
+      <MembershipCard
+        fullName={userProfile.full_name}
+        membershipId={userProfile.membership_id}
+        accountType={userProfile.account_type}
+        avatarUrl={avatarUrl}
+        badge={badge}
+        joinedAt={createdAt}
+      />
+
       {/* Main Profile Card */}
       <Card className="border-border/50">
         <CardHeader>
@@ -61,7 +98,7 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowSettings(true)}
+              onClick={() => navigate("/settings")}
               className="rounded-full"
             >
               <Settings className="w-5 h-5" />
@@ -72,13 +109,21 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
           {/* Profile Info */}
           <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20">
+              <AvatarImage src={avatarUrl || appIcon} alt={userProfile.full_name} className="object-cover" />
               <AvatarFallback className="bg-gradient-gold text-primary-foreground text-2xl">
                 {userProfile.full_name.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="text-xl font-bold">{userProfile.full_name}</h3>
-              {getAccountTypeBadge(userProfile.account_type)}
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                {getAccountTypeBadge(userProfile.account_type)}
+                {badge && (
+                  <Badge style={{ backgroundColor: badge.color + "22", color: badge.color, borderColor: badge.color + "55" }} className="gap-1 border">
+                    <span>{badge.icon}</span> {badge.name}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -156,8 +201,6 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
           إصدار التطبيق: <span className="font-mono font-bold text-foreground">{CURRENT_VERSION}</span>
         </p>
       </div>
-      {/* Settings Dialog */}
-      <ProfileSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 };

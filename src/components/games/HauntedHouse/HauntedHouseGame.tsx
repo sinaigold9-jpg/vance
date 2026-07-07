@@ -21,6 +21,18 @@ interface ActiveGhost {
 }
 
 const TUTORIAL_FLAG = "haunted_house_tutorial_seen_v1";
+const REAL_GHOST_LIFESPAN_MS = 1100; // real ghost visible for 1.1s
+const FAKE_GHOST_LIFESPAN_MS = 700;  // fake ghost slightly shorter
+
+// Shuffled copy of spots so each round has different placement
+const shuffle = <T,>(arr: T[]): T[] => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 
 export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
   const [config, setConfig] = useState<HauntedHouseConfig>(DEFAULT_HAUNTED_CONFIG);
@@ -30,6 +42,7 @@ export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
   const [timeLeft, setTimeLeft] = useState(90);
   const [caught, setCaught] = useState(0);
   const [ghosts, setGhosts] = useState<ActiveGhost[]>([]);
+  const [spots, setSpots] = useState(() => shuffle(GHOST_SPOTS));
   const idRef = useRef(0);
   const spawnTimerRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
@@ -73,6 +86,7 @@ export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
     setCaught(0);
     setGhosts([]);
     setTimeLeft(config.duration_seconds);
+    setSpots(shuffle(GHOST_SPOTS));
     setStatus("playing");
   }, [config.duration_seconds]);
 
@@ -108,13 +122,13 @@ export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
       const chosen = new Set<number>();
       const newOnes: ActiveGhost[] = [];
       for (let i = 0; i < spawnCount; i++) {
-        let idx = Math.floor(Math.random() * GHOST_SPOTS.length);
+        let idx = Math.floor(Math.random() * spots.length);
         let guard = 0;
-        while (chosen.has(idx) && guard++ < 10) idx = Math.floor(Math.random() * GHOST_SPOTS.length);
+        while (chosen.has(idx) && guard++ < 10) idx = Math.floor(Math.random() * spots.length);
         chosen.add(idx);
         const isFake = config.fake_ghosts_enabled && spawnCount === 2 && i === 1;
-        // lifespan shrinks with progress: 950ms → 400ms
-        const lifespan = Math.max(380, 950 - progress * 550);
+        // Fixed lifespan: real = 1.1s, fake = 0.7s (per product spec)
+        const lifespan = isFake ? FAKE_GHOST_LIFESPAN_MS : REAL_GHOST_LIFESPAN_MS;
         newOnes.push({
           id: ++idRef.current,
           spotIdx: idx,
@@ -214,7 +228,7 @@ export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
       {/* Ghosts */}
       <AnimatePresence>
         {status === "playing" && ghosts.map(g => {
-          const spot = GHOST_SPOTS[g.spotIdx];
+          const spot = spots[g.spotIdx];
           return (
             <motion.button
               key={g.id}

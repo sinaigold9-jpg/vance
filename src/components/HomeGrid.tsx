@@ -15,6 +15,7 @@ import {
   Gamepad2,
 } from "lucide-react";
 import type { FC, SVGProps } from "react";
+import { useHiddenIcons } from "@/lib/hiddenIcons";
 
 interface HomeGridProps {
   onTabChange: (tab: string) => void;
@@ -46,10 +47,12 @@ const gridItems: GridItem[] = [
 ];
 
 export const HomeGrid = ({ onTabChange, activeTab }: HomeGridProps) => {
+  const hidden = useHiddenIcons();
+  const items = gridItems.filter(i => !hidden.includes(i.id));
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3 md:gap-4">
-        {gridItems.map((item, index) => {
+        {items.map((item, index) => {
           const isActive = activeTab === item.id;
           const IconComponent = item.icon;
           return (

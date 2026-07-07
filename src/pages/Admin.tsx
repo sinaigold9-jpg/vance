@@ -40,8 +40,9 @@ import { AdminExternalMessagesTab } from "@/components/admin/AdminExternalMessag
 import { AdminNotificationDiagnosticsTab } from "@/components/admin/AdminNotificationDiagnosticsTab";
 import { AdminAppIssuesTab } from "@/components/admin/AdminAppIssuesTab";
 import { AdminGamesTab } from "@/components/admin/AdminGamesTab";
+import { AdminBadgesTab } from "@/components/admin/AdminBadgesTab";
 import { Sparkles } from "lucide-react";
-import { Tag, Send, Gamepad2 } from "lucide-react";
+import { Tag, Send, Gamepad2, Award } from "lucide-react";
 
 // All admin tabs definition
 const ALL_TABS = [
@@ -71,6 +72,7 @@ const ALL_TABS = [
   { key: "external-messages", label: "الرسائل الخارجية", icon: Send },
   { key: "app-issues", label: "الأخطاء والثغرات", icon: Bug },
   { key: "games", label: "الألعاب", icon: Gamepad2 },
+  { key: "badges", label: "الأوسمة", icon: Award },
 ];
 
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
@@ -100,6 +102,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   "external-messages": AdminExternalMessagesTab,
   "app-issues": AdminAppIssuesTab,
   games: AdminGamesTab,
+  badges: AdminBadgesTab,
 };
 
 const Admin = () => {
