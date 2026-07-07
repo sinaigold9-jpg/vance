@@ -143,25 +143,31 @@ const Settings = () => {
 
         <Separator />
 
-        {/* Existing account settings — embed via a wrapper page */}
-        <SettingsAccountEmbed />
+        {/* Account settings (notifications, data saver, battery, change requests) */}
+        <AccountSettingsSection />
       </motion.div>
     </div>
   );
 };
 
-// Render ProfileSettings inline instead of as a modal by mounting it open with a no-op close
-const SettingsAccountEmbed = () => {
-  const [open, setOpen] = useState(true);
+const AccountSettingsSection = () => {
+  const [open, setOpen] = useState(false);
   return (
-    <>
-      <ProfileSettings isOpen={open} onClose={() => setOpen(true)} />
-      {!open && (
-        <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">إعدادات الحساب</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          الإشعارات، توفير البيانات، تحسين البطارية، وطلبات تعديل بيانات الحساب.
+        </p>
+        <Button className="w-full" variant="outline" onClick={() => setOpen(true)}>
+          <ArrowRight className="w-4 h-4 ml-2" />
           فتح إعدادات الحساب
         </Button>
-      )}
-    </>
+        <ProfileSettings isOpen={open} onClose={() => setOpen(false)} />
+      </CardContent>
+    </Card>
   );
 };
 
