@@ -553,7 +553,16 @@ const Index = () => {
         return (
           <motion.div key="offers" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="العروض والمسابقات" subtitle="ترقبوا المفاجآت" onBack={() => handleTabChange("home")} />
-            <OffersPage />
+            {trialExpired ? (
+              <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
+                <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">انتهت فترة التجربة</h3>
+                <p className="text-muted-foreground mb-4">قم بترقية باقتك للوصول إلى العروض والمسابقات</p>
+                <Button onClick={() => handleTabChange("packages")}>عرض الباقات</Button>
+              </div>
+            ) : (
+              <OffersPage />
+            )}
           </motion.div>
         );
       case "sponsor":
@@ -583,7 +592,19 @@ const Index = () => {
       case "games":
         return (
           <motion.div key="games" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <GamesCenter onBack={() => handleTabChange("home")} />
+            {trialExpired ? (
+              <div className="space-y-6">
+                <PageHeader title="مركز الألعاب" subtitle="ترقب المزيد" onBack={() => handleTabChange("home")} />
+                <div className="bg-gradient-card rounded-2xl p-8 text-center border border-border">
+                  <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
+                  <h3 className="text-xl font-bold mb-2">انتهت فترة التجربة</h3>
+                  <p className="text-muted-foreground mb-4">قم بترقية باقتك للعب في مركز الألعاب</p>
+                  <Button onClick={() => handleTabChange("packages")}>عرض الباقات</Button>
+                </div>
+              </div>
+            ) : (
+              <GamesCenter onBack={() => handleTabChange("home")} />
+            )}
           </motion.div>
         );
       default:
