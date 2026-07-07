@@ -550,6 +550,36 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -1495,6 +1525,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
+          avatar_url: string | null
           balance: number
           contest_discount_percent: number | null
           contest_discount_until: string | null
@@ -1521,6 +1552,7 @@ export type Database = {
           telegram_chat_id: number | null
           temp_vip_type: string | null
           temp_vip_until: string | null
+          theme_preference: string | null
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
@@ -1528,6 +1560,7 @@ export type Database = {
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"]
+          avatar_url?: string | null
           balance?: number
           contest_discount_percent?: number | null
           contest_discount_until?: string | null
@@ -1554,6 +1587,7 @@ export type Database = {
           telegram_chat_id?: number | null
           temp_vip_type?: string | null
           temp_vip_until?: string | null
+          theme_preference?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1561,6 +1595,7 @@ export type Database = {
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"]
+          avatar_url?: string | null
           balance?: number
           contest_discount_percent?: number | null
           contest_discount_until?: string | null
@@ -1587,6 +1622,7 @@ export type Database = {
           telegram_chat_id?: number | null
           temp_vip_type?: string | null
           temp_vip_until?: string | null
+          theme_preference?: string | null
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1927,6 +1963,38 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
