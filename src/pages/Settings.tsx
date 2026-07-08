@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Monitor, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
+import { Sun, Moon, Monitor, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2, Info } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { useTheme, type ThemeMode } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { CURRENT_VERSION } from "@/lib/appVersion";
+import { CURRENT_VERSION, CURRENT_VERSION_CODE, setSeenVersionCode } from "@/lib/appVersion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
@@ -41,9 +41,17 @@ const Settings = () => {
         .maybeSingle();
       if (error) throw error;
       const latest = data?.version || CURRENT_VERSION;
-      const upToDate = latest === CURRENT_VERSION;
+      const latestCode = data?.version_code || CURRENT_VERSION_CODE;
+      const upToDate = latestCode <= CURRENT_VERSION_CODE;
       setVersionInfo({ latest, upToDate });
-      toast.success(upToDate ? "أنت تستخدم أحدث إصدار" : `يتوفر إصدار جديد: ${latest}`);
+      if (upToDate) {
+        toast.success("أنت تستخدم أحدث إصدار");
+      } else {
+        toast.success(`يتوفر إصدار جديد: ${latest} — سيتم فتح شاشة التحديث`);
+        // Reset the "seen" flag so UpdateGate shows the update screen again
+        setSeenVersionCode(CURRENT_VERSION_CODE - 1);
+        setTimeout(() => window.location.reload(), 800);
+      }
     } catch {
       toast.error("تعذّر التحقق من الإصدار");
     } finally {
@@ -138,6 +146,22 @@ const Settings = () => {
               <ExternalLink className="w-4 h-4 text-primary" />
               فتح سياسة الخصوصية
             </a>
+          </CardContent>
+        </Card>
+
+        {/* About Us */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2"><Info className="w-4 h-4" /> عنا</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              تعرّف على تطبيق Advance، رؤيتنا، وخدماتنا.
+            </p>
+            <Button className="w-full" variant="outline" onClick={() => navigate("/about")}>
+              <ArrowRight className="w-4 h-4 ml-2" />
+              فتح صفحة "عنا"
+            </Button>
           </CardContent>
         </Card>
 
