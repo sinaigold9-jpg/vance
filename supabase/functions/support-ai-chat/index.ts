@@ -1,22 +1,117 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-const SYSTEM_PROMPT = `أنت "مساعد Advance" — مساعد ذكاء اصطناعي للدعم الفني في تطبيق Advance فقط.
+// Build a live snapshot of the app so the AI stays in sync with new content/features.
+const buildAppContext = async () => {
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const admin = createClient(url, key);
 
-تعليمات صارمة:
-- أجب فقط عن أسئلة تخص تطبيق Advance (الباقات، المهام، السحب، الإيداع، الإحالات، عجلة الحظ، المسابقات، الإعلانات، النقاط، الترقية، الأمان).
-- إذا سُئلت عن أي موضوع عام خارج التطبيق، اعتذر بأدب وذكّر المستخدم أنك مخصص لدعم Advance فقط.
-- استخدم العربية الفصحى المبسطة.
-- أجب باختصار (سطرين إلى أربعة).
-- إذا لم تعرف الإجابة، اطلب من المستخدم ترك رسالة للإدارة عبر زر "ترك رسالة للدعم".
+  const [pkgsR, versionR, settingsR, gamesR, offersR, aboutR] = await Promise.all([
+    admin.from("packages").select("name, price, task_reward, daily_tasks, daily_earnings, min_withdrawal, has_daily_wheel, account_type, is_active").eq("is_active", true).order("price"),
+    admin.from("app_versions").select("version, title, description, features").eq("is_active", true).eq("status", "published").order("version_code", { ascending: false }).limit(1).maybeSingle(),
+    admin.from("app_settings").select("key, value, is_active"),
+    admin.from("app_settings").select("key, value, is_active").like("key", "game_%"),
+    admin.from("offers_contests").select("title, description, is_active").eq("is_active", true).limit(5),
+    admin.from("app_settings").select("value").eq("key", "about_us").maybeSingle(),
+  ]);
 
-معلومات أساسية:
-- الباقات: المبتدئ (تجربة 7 أيام مجانية، رصيد افتتاحي 50 جنيه)، VIP1 (500 ج)، VIP2 (850 ج)، VIP3 (1500 ج).
-- 3 مهام يومية، تتجدد الساعة 1 صباحاً بتوقيت القاهرة.
+  const packages = (pkgsR.data || []).map((p) =>
+    `• ${p.name} (${p.account_type}) — سعر: ${p.price} ج، مكافأة المهمة: ${p.task_reward} ج، عدد المهام: ${p.daily_tasks}، أرباح يومية: ${p.daily_earnings} ج، حد السحب: ${p.min_withdrawal} ج، عجلة حظ: ${p.has_daily_wheel ? "نعم" : "لا"}`
+  ).join("\n");
+
+  const latestVersion = versionR.data
+    ? `آخر إصدار: v${versionR.data.version} — ${versionR.data.title}\n${versionR.data.description || ""}`
+    : "";
+
+  const settingsMap: Record<string, { active: boolean; value: string }> = {};
+  (settingsR.data || []).forEach((s: { key: string; is_active: boolean | null; value: string | null }) => {
+    settingsMap[s.key] = { active: s.is_active !== false, value: s.value || "" };
+  });
+
+  const featureFlags = [
+    ["tasks_enabled", "المهام"],
+    ["lucky_wheel_enabled", "عجلة الحظ"],
+    ["referral_enabled", "الإحالات"],
+    ["team_enabled", "الفريق"],
+    ["wallet_enabled", "المحفظة"],
+    ["ads_enabled", "الإعلانات"],
+    ["offers_enabled", "العروض"],
+    ["chat_enabled", "الدردشة"],
+    ["deposits_enabled", "الإيداعات"],
+    ["withdrawals_enabled", "السحوبات"],
+  ].map(([k, label]) => `${label}: ${settingsMap[k]?.active === false ? "متوقفة حالياً" : "مفعّلة"}`).join("، ");
+
+  const hiddenIcons = (() => {
+    try {
+      const v = settingsMap["hidden_home_icons"]?.value;
+      if (!v) return [];
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed?.ids) ? parsed.ids : [];
+    } catch { return []; }
+  })();
+
+  const games: string[] = [];
+  (gamesR.data || []).forEach((s: { key: string; value: string | null; is_active: boolean | null }) => {
+    if (s.is_active === false) return;
+    if (s.key === "game_haunted_house") {
+      let dur = 60;
+      try { dur = JSON.parse(s.value || "{}").duration_seconds || 60; } catch { /* ignore */ }
+      games.push(`بيت الأشباح — أمسك الأشباح خلال ${dur} ثانية`);
+    }
+  });
+
+  const offers = (offersR.data || []).map((o) => `• ${o.title}${o.description ? ` — ${o.description}` : ""}`).join("\n");
+
+  const aboutText = (aboutR.data as { value?: string } | null)?.value || "";
+
+  return `
+📱 معلومات التطبيق الحية (تُقرأ من قاعدة البيانات لحظياً):
+
+الاسم الرسمي: Advance (اختصار: A Pro).
+${aboutText ? `\nنبذة: ${aboutText}\n` : ""}
+
+الباقات المتاحة الآن:
+${packages || "(لا يوجد)"}
+
+الميزات: ${featureFlags}
+الأيقونات المخفية حالياً من الشاشة الرئيسية: ${hiddenIcons.length ? hiddenIcons.join(", ") : "لا شيء"}
+
+مركز الألعاب — الألعاب المتاحة:
+${games.length ? games.map((g) => `• ${g}`).join("\n") : "لا توجد ألعاب مفعّلة الآن"}
+
+العروض والمسابقات النشطة:
+${offers || "(لا يوجد نشط)"}
+
+${latestVersion}
+
+معلومات ثابتة مساندة:
 - بوابات الدفع: فودافون كاش، We، أورنج موني، اتصالات. رقم الإيداع/الترقية: 01080048591.
+- 3 مهام يومية تتجدد الساعة 1 صباحاً بتوقيت القاهرة.
 - السحب يُخصم فوراً ويُراجَع خلال 24 ساعة.
-- النقاط: كل 1000 نقطة = 165 جنيه.
-- إحالات: 9 أرقام، 5 جنيه للمحيل.
-- بوت تيليجرام: @Advance0bot لتفعيل الحساب وOTP.`;
+- كل 1000 نقطة = 165 جنيه.
+- الإحالات: 9 أرقام، 5 جنيه للمحيل.
+- بوت تيليجرام: @Advance0bot لتفعيل الحساب وOTP.
+`.trim();
+};
+
+const SYSTEM_PROMPT_BASE = `أنت "مساعد Advance" — مساعد ذكاء اصطناعي للدعم الفني في تطبيق Advance.
+
+تعليمات:
+- أجب فقط عن أسئلة تخص التطبيق. اعتذر بأدب لأي موضوع خارجي.
+- استخدم العربية الفصحى المبسطة، أجوبة قصيرة (2-4 أسطر).
+- استفد من قسم "معلومات التطبيق الحية" أدناه في كل إجابة. إذا سأل المستخدم عن ميزة أو لعبة موجودة فيه، أكّد أنها متوفرة واشرحها.
+- إذا كانت الميزة/اللعبة/العرض غير مذكور في المعلومات الحية، قل بوضوح إنه غير متوفر حالياً.
+- بعد ردك النصي، أعد أيضاً حقلًا اسمه \`suggestions\` كمصفوفة JSON تحتوي 2-4 عناصر { "label": "...", "action": "..." } تناسب سياق سؤال المستخدم فقط.
+
+قيم action المسموحة:
+- navigate:/app/packages | navigate:/app/games | navigate:/app/wallet | navigate:/app/tasks | navigate:/app/team | navigate:/app/offers | navigate:/app/profile | navigate:/app/support | navigate:/settings | navigate:/about
+- ask: (يليها نص سؤال جاهز لإرساله للمساعد)
+- ticket (فتح نموذج ترك رسالة للإدارة)
+
+صيغة الرد النهائية: JSON صالح فقط بهذا الشكل:
+{ "reply": "نص الرد", "suggestions": [ { "label": "...", "action": "..." } ] }
+لا تكتب أي شيء خارج هذا الـ JSON.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -32,12 +127,19 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
+    const appContext = await buildAppContext().catch((e) => {
+      console.error("context build failed:", e);
+      return "";
+    });
+    const systemContent = `${SYSTEM_PROMPT_BASE}\n\n${appContext}`;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages.slice(-12)],
+        response_format: { type: "json_object" },
+        messages: [{ role: "system", content: systemContent }, ...messages.slice(-12)],
       }),
     });
 
@@ -60,8 +162,24 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content ?? "عذراً، لم أتمكن من الرد.";
-    return new Response(JSON.stringify({ reply }), {
+    const raw = data?.choices?.[0]?.message?.content ?? "";
+    let reply = "عذراً، لم أتمكن من الرد.";
+    let suggestions: Array<{ label: string; action: string }> = [];
+    try {
+      const parsed = JSON.parse(raw);
+      reply = typeof parsed?.reply === "string" ? parsed.reply : raw;
+      if (Array.isArray(parsed?.suggestions)) {
+        suggestions = parsed.suggestions
+          .filter((s: unknown): s is { label: string; action: string } =>
+            !!s && typeof (s as { label?: unknown }).label === "string" &&
+            typeof (s as { action?: unknown }).action === "string"
+          )
+          .slice(0, 4);
+      }
+    } catch {
+      reply = raw || reply;
+    }
+    return new Response(JSON.stringify({ reply, suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

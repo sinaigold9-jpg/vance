@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ChatSection } from "./ChatSection";
 
@@ -30,6 +31,7 @@ interface UserProfile {
 }
 
 export const SupportSection = () => {
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [ticketType, setTicketType] = useState<string>("");
   const [rating, setRating] = useState<number>(0);
@@ -40,22 +42,38 @@ export const SupportSection = () => {
   const [showTicketForm, setShowTicketForm] = useState(false);
   // AI chat state
   const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
-    { role: "assistant", content: "أهلاً بك! أنا مساعد Advance. اسألني عن أي شيء يخص التطبيق (الباقات، السحب، المهام، الترقية، ...)." },
+    { role: "assistant", content: "أهلاً بك! أنا مساعد Advance. اسألني عن أي شيء يخص التطبيق (الباقات، السحب، المهام، الألعاب، ...)." },
   ]);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; action: string }>>([]);
   const [aiInput, setAiInput] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const { user } = useAuth();
 
   const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
 
-  const suggestedQuestions = [
-    "كيف أسحب أرباحي؟",
-    "ما الفرق بين الباقات؟",
-    "كيف أرقّي حسابي إلى VIP؟",
-    "كيف أكسب نقاط أكثر؟",
-    "متى تتجدد المهام اليومية؟",
-    "كيف أفعّل بوت التليجرام؟",
+  // Initial static suggestions shown before the first AI reply.
+  const initialSuggestions: Array<{ label: string; action: string }> = [
+    { label: "الباقات", action: "ask:ما الفرق بين الباقات؟" },
+    { label: "المهام اليومية", action: "ask:متى تتجدد المهام اليومية؟" },
+    { label: "الألعاب", action: "ask:ما الألعاب المتاحة في التطبيق؟" },
+    { label: "السحب", action: "ask:كيف أسحب أرباحي؟" },
   ];
+
+  const handleSuggestion = (action: string) => {
+    if (action.startsWith("navigate:")) {
+      const path = action.slice("navigate:".length);
+      navigate(path);
+      return;
+    }
+    if (action.startsWith("ask:")) {
+      sendAi(action.slice("ask:".length));
+      return;
+    }
+    if (action === "ticket") {
+      setActiveTab("ticket");
+      setShowTicketForm(true);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -82,13 +100,18 @@ export const SupportSection = () => {
     setAiMessages(newMsgs);
     setAiInput("");
     setAiLoading(true);
+    setSuggestions([]);
     try {
       const { data, error } = await supabase.functions.invoke("support-ai-chat", {
         body: { messages: newMsgs.map(({ role, content }) => ({ role, content })) },
       });
       if (error) throw error;
-      const reply = (data as any)?.reply || (data as any)?.error || "حدث خطأ.";
+      const reply = (data as { reply?: string; error?: string })?.reply
+        || (data as { error?: string })?.error
+        || "حدث خطأ.";
+      const nextSuggestions = (data as { suggestions?: Array<{ label: string; action: string }> })?.suggestions || [];
       setAiMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      setSuggestions(nextSuggestions);
     } catch (e: any) {
       setAiMessages((prev) => [...prev, { role: "assistant", content: "تعذر الاتصال بالخدمة. حاول لاحقاً أو اترك رسالة للدعم." }]);
     } finally {
@@ -225,16 +248,16 @@ export const SupportSection = () => {
                 </div>
               )}
             </div>
-            {/* Suggested questions */}
+            {/* Dynamic suggestions from AI (or initial defaults) */}
             <div className="pt-3 flex flex-wrap gap-2">
-              {suggestedQuestions.map((q) => (
+              {(suggestions.length > 0 ? suggestions : initialSuggestions).map((s, i) => (
                 <button
-                  key={q}
-                  onClick={() => sendAi(q)}
+                  key={`${s.action}-${i}`}
+                  onClick={() => handleSuggestion(s.action)}
                   disabled={aiLoading}
                   className="text-xs px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 transition disabled:opacity-50"
                 >
-                  {q}
+                  {s.label}
                 </button>
               ))}
             </div>

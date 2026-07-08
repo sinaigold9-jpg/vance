@@ -39,7 +39,7 @@ export const HauntedHouseGame = ({ onExit, onWin, onLose }: GameProps) => {
   const [configLoaded, setConfigLoaded] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [status, setStatus] = useState<"idle" | "playing" | "win" | "lose">("idle");
-  const [timeLeft, setTimeLeft] = useState(90);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [caught, setCaught] = useState(0);
   const [ghosts, setGhosts] = useState<ActiveGhost[]>([]);
   const [spots, setSpots] = useState(() => shuffle(GHOST_SPOTS));
