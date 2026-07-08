@@ -637,7 +637,6 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
               <img src={appIcon} alt="A Pro" className="w-10 h-10 rounded-full ring-2 ring-primary/30" />
               <div className="leading-tight">
                 <h1 className="text-lg font-black text-foreground">
@@ -647,7 +646,8 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {user && activeTab === "home" && <NotificationBell />}
+              {user && <NotificationBell />}
+              <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
           </div>
         </div>
