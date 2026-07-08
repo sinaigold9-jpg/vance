@@ -14,6 +14,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ContestPage = lazy(() => import("./pages/ContestPage"));
 const Settings = lazy(() => import("./pages/Settings"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
              <Route path="/app/updates" element={<Index />} />
               <Route path="/app/games" element={<Index />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/about" element={<AboutUs />} />
               <Route path="/app/contest/:id" element={<ContestPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
