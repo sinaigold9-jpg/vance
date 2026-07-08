@@ -42,7 +42,7 @@ export interface HauntedHouseConfig {
 export const DEFAULT_HAUNTED_CONFIG: HauntedHouseConfig = {
   enabled: true,
   target_ghosts: 5,
-  duration_seconds: 90,
+  duration_seconds: 60,
   spawn_speed_multiplier: 1,
   fake_ghosts_enabled: true,
   tutorial_enabled: true,
