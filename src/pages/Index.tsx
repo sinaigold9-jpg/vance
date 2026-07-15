@@ -311,7 +311,7 @@ const Index = () => {
         >
           <Lock className="w-16 h-16 text-destructive mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-4 text-destructive">حسابك موقوف</h1>
-          <p className="text-muted-foreground mb-6">تم إيقاف حسابك من قبل الإدارة. يرجى التواصل مع الدعم الفني لمزيد من المعلومات.</p>
+          <p className="text-muted-foreground mb-6">تم إيقاف حسابك من قبل الإدارة. يرجى التواصل مع الدعم الفني لمزيد من المعلومات.</[...]
           <Button variant="outline" onClick={() => signOut()}>تسجيل الخروج</Button>
         </motion.div>
       </div>
@@ -442,7 +442,7 @@ const Index = () => {
               </div>
             ) : (
               <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} />
-            )}
+            )
           </motion.div>
         );
       case "team":
@@ -495,7 +495,17 @@ const Index = () => {
               </div>
             </div>
             <WithdrawalHistory />
-            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 1 : 2} />
+            <EarningMethods
+              accountType={accountType}
+              referralCode={referralCode}
+              membershipId={membershipId}
+              referralEarnings={accountType === "beginner" ? 5 : 8}
+              shareEarnings={accountType === "beginner" ? 1 : 2}
+              teamEarnings={0}
+              totalReferrals={0}
+              totalShares={0}
+              teamMembers={0}
+            />
           </motion.div>
         );
       case "support":
@@ -645,7 +655,7 @@ const Index = () => {
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       <PermissionsRequest />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
-      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} />}
+      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
       {user && showPointsConverter && (
         <PointsConverter
           isOpen={showPointsConverter}
