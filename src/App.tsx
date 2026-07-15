@@ -1,64 +1,91 @@
-import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import Landing from "./pages/Landing";
-import { UpdateGate } from "@/components/UpdateGate";
+import { useState } from 'react'
+import './App.css'
 
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Admin = lazy(() => import("./pages/Admin"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const ContestPage = lazy(() => import("./pages/ContestPage"));
-const Settings = lazy(() => import("./pages/Settings"));
-const AboutUs = lazy(() => import("./pages/AboutUs"));
+type NavItem = {
+  id: string
+  label: string
+  icon: string
+}
 
-const queryClient = new QueryClient();
+const navItems: NavItem[] = [
+  { id: 'home', label: 'الرئيسية', icon: '🏠' },
+  { id: 'search', label: 'البحث', icon: '🔍' },
+  { id: 'favorites', label: 'المفضلة', icon: '⭐' },
+  { id: 'settings', label: 'الإعدادات', icon: '⚙️' },
+  { id: 'profile', label: 'الملف الشخصي', icon: '👤' },
+]
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <UpdateGate>
-              <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/app" element={<Index />} />
-              <Route path="/app/tasks" element={<Index />} />
-              <Route path="/app/wheel" element={<Index />} />
-              <Route path="/app/wallet" element={<Index />} />
-              <Route path="/app/team" element={<Index />} />
-              <Route path="/app/packages" element={<Index />} />
-              <Route path="/app/earnings" element={<Index />} />
-              <Route path="/app/ads" element={<Index />} />
-              <Route path="/app/offers" element={<Index />} />
-              <Route path="/app/profile" element={<Index />} />
-              <Route path="/app/sponsor" element={<Index />} />
-              <Route path="/app/support" element={<Index />} />
-              <Route path="/app/faq" element={<Index />} />
-             <Route path="/app/updates" element={<Index />} />
-              <Route path="/app/games" element={<Index />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/app/contest/:id" element={<ContestPage />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/landing" element={<Landing />} />
-              
-              <Route path="*" element={<NotFound />} />
-              </Routes>
-            </UpdateGate>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  const [active, setActive] = useState('home')
+  const [toast, setToast] = useState<string | null>(null)
 
-export default App;
+  const showToast = (message: string) => {
+    setToast(message)
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'تطبيقي',
+      text: 'جرّب تطبيقي الرائع!',
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {
+        // user cancelled — no action needed
+      }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareData.url)
+        showToast('تم نسخ رابط التطبيق إلى الحافظة')
+      } catch {
+        showToast('تعذّر نسخ الرابط')
+      }
+    } else {
+      showToast('مشاركة الرابط غير مدعومة على هذا الجهاز')
+    }
+  }
+
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <span className="logo">✦</span>
+          <h1 className="brand">تطبيقي</h1>
+        </div>
+
+        <nav className="nav">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-item ${active === item.id ? 'active' : ''}`}
+              onClick={() => setActive(item.id)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          ))}
+
+          <div className="nav-divider" />
+
+          <button className="nav-item share-item" onClick={handleShare}>
+            <span className="nav-icon">📤</span>
+            <span className="nav-label">مشاركة التطبيق</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main className="content">
+        <h2>مرحبًا بك في {navItems.find((n) => n.id === active)?.label}</h2>
+        <p>هذه صفحة تجريبية تحتوي على قائمة جانبية مع زر مشاركة التطبيق.</p>
+      </main>
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  )
+}
+
+export default App

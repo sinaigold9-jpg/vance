@@ -1,13 +1,10 @@
-import { createRoot } from "react-dom/client";
-import { HelmetProvider } from "react-helmet-async";
-import App from "./App.tsx";
-import "./index.css";
-import { setupGlobalErrorReporting } from "@/lib/errorReporting";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-setupGlobalErrorReporting();
-
-createRoot(document.getElementById("root")!).render(
-  <HelmetProvider>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <App />
-  </HelmetProvider>
-);
+  </StrictMode>,
+)
