@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, LogOut, Share2 } from "lucide-react";
+import { Menu, X, LogOut, Share2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,20 @@ export const AppSidebar = ({ activeTab, onTabChange }: AppSidebarProps) => {
     setIsOpen(false);
   };
 
+  const handleDownloadClick = () => {
+    navigate("/download");
+    setIsOpen(false);
+  };
+
+  const menuItems = [
+    {
+      label: "تحميل التطبيق",
+      icon: Download,
+      onClick: handleDownloadClick,
+      show: true,
+    },
+  ];
+
   return (
     <>
       {/* Menu Button */}
@@ -81,7 +95,7 @@ export const AppSidebar = ({ activeTab, onTabChange }: AppSidebarProps) => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-72 bg-card border-l border-border z-50 shadow-xl"
+            className="fixed top-0 right-0 h-full w-72 bg-card border-l border-border z-50 shadow-xl flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -95,8 +109,28 @@ export const AppSidebar = ({ activeTab, onTabChange }: AppSidebarProps) => {
               </Button>
             </div>
 
+            {/* Menu Items */}
+            <div className="flex-1 p-4 space-y-2">
+              {menuItems.map((item, index) => {
+                const IconComponent = item.icon;
+                return (
+                  item.show && (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      className="w-full justify-start gap-2 text-right"
+                      onClick={item.onClick}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                      {item.label}
+                    </Button>
+                  )
+                );
+              })}
+            </div>
+
             {/* Footer with Share + Logout */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border space-y-2">
+            <div className="p-4 border-t border-border space-y-2">
               {user && (
                 <Button
                   variant="outline"
