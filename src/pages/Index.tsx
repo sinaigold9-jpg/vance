@@ -93,6 +93,7 @@ const pathToTab: Record<string, string> = {
   "/app/faq": "faq",
   "/app/updates": "updates",
   "/app/games": "games",
+  "/app/download": "download",
 };
 
 const tabToPath: Record<string, string> = {
@@ -111,6 +112,7 @@ const tabToPath: Record<string, string> = {
   faq: "/app/faq",
   updates: "/app/updates",
   games: "/app/games",
+  download: "/app/download",
 };
 
 const Index = () => {
@@ -133,7 +135,7 @@ const Index = () => {
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showBalanceReveal, setShowBalanceReveal] = useState(false);
-  const [isBalanceRevealed, setIsBalanceRevealed] = useState(true); // Always show balance now
+  const [isBalanceRevealed, setIsBalanceRevealed] = useState(true);
   const [showPointsConverter, setShowPointsConverter] = useState(false);
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
   const [withdrawalPin, setWithdrawalPin] = useState<string | null>(null);
@@ -165,9 +167,7 @@ const Index = () => {
     fetchPackages();
     if (user) {
       fetchUserProfile();
-      // Track user activity
       supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", user.id).then(() => {});
-      // Register push notifications
       registerPushNotifications(user.id).catch(console.error);
       if (searchParams.get("onboarding") === "true") {
         setShowOnboarding(true);
@@ -204,7 +204,6 @@ const Index = () => {
       setUserProfile({ full_name: data.full_name, email: data.email, phone: data.phone });
       setDisabledFeatures((data.disabled_features as Record<string, boolean> | null) || {});
       
-      // Check if profile needs completion (for social login users)
       if (!data.full_name || data.full_name === "" || !data.phone || data.phone === "") {
         setShowProfileCompletion(true);
       }
@@ -273,7 +272,6 @@ const Index = () => {
 
   useEffect(() => {
     if (isAppBlocked) {
-      // Don't redirect, we'll show a blocked screen
       return;
     }
     const featureKey = tabFeatureMap[activeTab];
@@ -283,13 +281,10 @@ const Index = () => {
     }
   }, [activeTab, disabledFeatures, location.pathname, navigate, isAppBlocked]);
 
-  // Points to EGP conversion
   const pointsToEgp = (pts: number) => Math.floor(pts / 1000) * 165;
 
-  // Owner bypass: never lock out the project owner
   const isOwner = user?.email === OWNER_EMAIL;
 
-  // Check if app is disabled
   if (!appSettings.appEnabled && !isOwner) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -306,7 +301,6 @@ const Index = () => {
     );
   }
 
-  // Check if user's app access is blocked by admin
   if (isAppBlocked && !isOwner) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -339,26 +333,28 @@ const Index = () => {
               </motion.div>
             )}
             
-            {/* Promotion Banner */}
             <PromotionBanner />
-
-            {/* Active Contest Banner */}
             <ContestBanner location="home" />
-
-            {/* Active Offers Preview on Home */}
             <HomeOffersPreview onViewAll={() => handleTabChange("offers")} />
-            
             <SocialLinks />
-
-            {/* Email Subscription */}
             <EmailSubscription />
             
-            {/* Navigation Grid */}
             <div className="pt-4">
               <h2 className="text-lg font-bold text-foreground mb-4">الأقسام</h2>
               <HomeGrid activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-
+          </motion.div>
+        );
+      case "download":
+        return (
+          <motion.div key="download" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="تحميل التطبيق" subtitle="استمتع بتجربة أفضل مع Advance" onBack={() => handleTabChange("home")} />
+            <div className="space-y-6">
+              <div className="bg-gradient-card rounded-2xl border border-border/50 p-8 space-y-6">
+                <h2 className="text-2xl font-bold text-foreground">اختر طريقة التحميل</h2>
+                <p className="text-muted-foreground">حمل التطبيق على جهازك للحصول على أفضل تجربة</p>
+              </div>
+            </div>
           </motion.div>
         );
       case "packages": {
@@ -445,7 +441,7 @@ const Index = () => {
                 <Button onClick={() => handleTabChange("packages")} className="bg-gradient-gold text-primary-foreground">ترقية الباقة</Button>
               </div>
             ) : (
-              <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} trialExpired={trialExpired} />
+              <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} />
             )}
           </motion.div>
         );
@@ -460,17 +456,7 @@ const Index = () => {
         return (
           <motion.div key="wallet" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
             <PageHeader title="المحفظة" subtitle="إيداع وسحب الأموال" onBack={() => handleTabChange("home")} />
-            
-            {/* Balance Card - Moved here from home */}
-            <BalanceCard 
-              balance={balance} 
-              todayEarnings={todayEarnings} 
-              accountType={accountType} 
-              onRevealClick={() => {}} 
-              isRevealed={true} 
-            />
-            
-            {/* Points Section - Without value display */}
+            <BalanceCard balance={balance} todayEarnings={todayEarnings} accountType={accountType} onRevealClick={() => {}} isRevealed={true} />
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -496,7 +482,6 @@ const Index = () => {
                 </Button>
               )}
             </div>
-            
             <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-6">
               <div className="text-center mb-6">
                 <p className="text-muted-foreground text-sm">رصيدك الحالي</p>
@@ -509,17 +494,14 @@ const Index = () => {
                 <Button variant="outline" onClick={handleDeposit} className="flex-1 h-12">إيداع</Button>
               </div>
             </div>
-            
-            {/* Withdrawal History */}
             <WithdrawalHistory />
-            
-            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 2 : 5} teamEarnings={6} totalReferrals={5} totalShares={12} teamMembers={2} />
+            <EarningMethods accountType={accountType} referralCode={referralCode} membershipId={membershipId} referralEarnings={accountType === "beginner" ? 5 : 8} shareEarnings={accountType === "beginner" ? 1 : 2} />
           </motion.div>
         );
       case "support":
         return (
           <motion.div key="support" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمساعدة" onBack={() => handleTabChange("home")} />
+            <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمسا��دة" onBack={() => handleTabChange("home")} />
             <SupportSection />
           </motion.div>
         );
@@ -569,10 +551,7 @@ const Index = () => {
         return (
           <motion.div key="sponsor" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="ممول" subtitle="إنشاء صفحة ممول وإدارة إعلاناتك" onBack={() => handleTabChange("home")} />
-            <SponsorPage 
-              userBalance={balance}
-              onNavigateToAds={() => handleTabChange("ads")}
-            />
+            <SponsorPage userBalance={balance} onNavigateToAds={() => handleTabChange("ads")} />
           </motion.div>
         );
       case "faq":
@@ -621,7 +600,6 @@ const Index = () => {
       return;
     }
 
-    // Update URL
     const path = tabToPath[tab] || "/app";
     navigate(path);
     setActiveTab(tab);
@@ -632,7 +610,6 @@ const Index = () => {
   return (
     <TelegramVerificationGate botUsername={botUsername}>
     <div className="min-h-screen pb-8">
-      
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -659,7 +636,6 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
-      {/* Footer - below floating wheel */}
       <div className="max-w-4xl mx-auto px-4 pb-6">
         <div className="text-center py-4 border-t border-border/30">
           <p className="text-xs text-muted-foreground">جميع الحقوق محفوظة لـ Advance©2025</p>
@@ -669,7 +645,7 @@ const Index = () => {
       <DepositDialog isOpen={showDepositDialog} onClose={() => setShowDepositDialog(false)} userProfile={userProfile} />
       <PermissionsRequest />
       {user && <WithdrawalPinSetup isOpen={showPinSetup} onClose={() => setShowPinSetup(false)} userId={user.id} onSuccess={() => { fetchUserProfile(); }} />}
-      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} accountType={accountType} trialEndDate={trialEndDate} />}
+      {user && <WithdrawalDialog isOpen={showWithdrawDialog} onClose={() => setShowWithdrawDialog(false)} userId={user.id} balance={balance} minWithdraw={currentPackage?.min_withdrawal || 500} withdrawalPin={withdrawalPin} onWithdraw={handleWithdraw} />}
       {user && showPointsConverter && (
         <PointsConverter
           isOpen={showPointsConverter}
