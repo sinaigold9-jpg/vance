@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Menu, X, Home, Package, Gift, Users, Wallet, 
+  Menu, X, Home, Package, Gift, Users, Wallet, Download,
   Settings, LogOut, Shield, ChevronLeft 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "home", icon: Home, label: "الرئيسية" },
+  { id: "download", icon: Download, label: "تحميل التطبيق" },
   { id: "packages", icon: Package, label: "الباقات" },
   { id: "tasks", icon: Gift, label: "المهام" },
   { id: "team", icon: Users, label: "الفريق" },
