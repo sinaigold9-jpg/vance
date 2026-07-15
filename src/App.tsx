@@ -11,6 +11,7 @@ import Settings from "@/pages/Settings";
 import AboutUs from "@/pages/AboutUs";
 import Admin from "@/pages/Admin";
 import ContestPage from "@/pages/ContestPage";
+import Download from "@/pages/Download";
 import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -23,6 +24,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/download" element={<Download />} />
               <Route
                 path="/app"
                 element={
