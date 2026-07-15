@@ -156,7 +156,7 @@ const DownloadPage = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="w-4 h-4 text-primary" />
-                  <span>يعمل دون اتصال إنترن�� (جزئياً)</span>
+                  <span>يعمل دون اتصال إنترنت (جزئياً)</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -245,20 +245,84 @@ const DownloadPage = () => {
           </div>
         </motion.div>
 
-        {/* Support Section */}
+        {/* Advantages Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
+          className="bg-card rounded-2xl border border-border/50 p-8 space-y-6"
+        >
+          <h2 className="text-2xl font-bold text-foreground">مميزات تطبيق Advance</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <h3 className="font-bold text-foreground">🚀 الأداء</h3>
+              <p className="text-sm text-muted-foreground">تطبيق سريع وخفيف الوزن يعمل بكفاءة عالية</p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-bold text-foreground">🔒 الأمان</h3>
+              <p className="text-sm text-muted-foreground">بيانات آمنة وتشفير قوي للحفاظ على خصوصيتك</p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-bold text-foreground">📱 التوافق</h3>
+              <p className="text-sm text-muted-foreground">يعمل على جميع الأجهزة والأنظمة الحديثة</p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-bold text-foreground">⚡ السرعة</h3>
+              <p className="text-sm text-muted-foreground">تحميل فوري وتصفح بدون تأخير</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Support Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
           className="bg-card rounded-2xl border border-border/50 p-8 text-center space-y-4"
         >
           <h2 className="text-2xl font-bold text-foreground">هل تحتاج إلى مساعدة؟</h2>
           <p className="text-muted-foreground">
             إذا واجهت أي مشاكل في التحميل أو التثبيت، تواصل معنا مباشرة
           </p>
-          <Button variant="outline" onClick={() => navigate("/app/support")}>
-            التواصل مع الدعم الفني
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="outline" onClick={() => navigate("/app/support")}>
+              التواصل مع الدعم الفني
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open("https://t.me/AdvanceAppBot", "_blank")}
+            >
+              التواصل عبر تيليجرام
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Requirements Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl border border-primary/20 p-8 space-y-4"
+        >
+          <h2 className="text-2xl font-bold text-foreground">المتطلبات</h2>
+          <ul className="space-y-2 text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+              متصفح حديث (Chrome, Firefox, Safari, Edge)
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+              اتصال إنترنت
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+              تفعيل JavaScript
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+              الحد الأدنى من مساحة التخزين (50 ميجابايت)
+            </li>
+          </ul>
         </motion.div>
       </div>
     </div>
