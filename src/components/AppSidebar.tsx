@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AppSidebarProps {
@@ -19,6 +20,32 @@ export const AppSidebar = ({ activeTab, onTabChange }: AppSidebarProps) => {
     await signOut();
     setIsOpen(false);
     navigate("/");
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: "Advance - A Pro",
+      text: "جرّب تطبيق Advance - A Pro | منصة المهام والأرباح",
+      url: window.location.origin,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // user cancelled — no action needed
+      }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("تم نسخ رابط التطبيق إلى الحافظة");
+      } catch {
+        toast.error("تعذّر نسخ الرابط");
+      }
+    } else {
+      toast.error("مشاركة الرابط غير مدعومة على هذا الجهاز");
+    }
+    setIsOpen(false);
   };
 
   return (
@@ -68,8 +95,18 @@ export const AppSidebar = ({ activeTab, onTabChange }: AppSidebarProps) => {
               </Button>
             </div>
 
-            {/* Footer with Logout only */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+            {/* Footer with Share + Logout */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border space-y-2">
+              {user && (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-4 h-4" />
+                  مشاركة التطبيق
+                </Button>
+              )}
               {user && (
                 <Button
                   variant="destructive"
