@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { MembershipCard } from "./MembershipCard";
 import { supabase } from "@/integrations/supabase/client";
-import appIcon from "@/assets/app-icon.png";
+const appIcon = "/placeholder.svg";
 import { 
   User, Mail, Phone, CreditCard, 
   Gift, Crown, Clock, Lock, Shield, Settings

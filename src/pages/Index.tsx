@@ -44,7 +44,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPushNotifications } from "@/lib/pushNotifications";
-import appIcon from "@/assets/app-icon.png";
+const appIcon = "/placeholder.svg";
 import { toast } from "sonner";
 import { PermissionsRequest } from "@/components/PermissionsRequest";
 import { CURRENT_VERSION } from "@/lib/appVersion";
@@ -311,7 +311,7 @@ const Index = () => {
         >
           <Lock className="w-16 h-16 text-destructive mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-4 text-destructive">حسابك موقوف</h1>
-          <p className="text-muted-foreground mb-6">تم إيقاف حسابك من قبل الإدارة. يرجى التواصل مع الدعم الفني لمزيد من المعلومات.</[...]
+          <p className="text-muted-foreground mb-6">تم إيقاف حسابك من قبل الإدارة. يرجى التواصل مع الدعم الفني لمزيد من المعلومات.</p>
           <Button variant="outline" onClick={() => signOut()}>تسجيل الخروج</Button>
         </motion.div>
       </div>
@@ -442,7 +442,7 @@ const Index = () => {
               </div>
             ) : (
               <LuckyWheel prizes={[3, 5, 1, 10]} canSpin={canSpinWheel && !trialExpired && !disabledFeatures.wheel} onSpin={handleSpinWheel} accountType={accountType} luckyWheelUsed={luckyWheelUsed} />
-            )
+            )}
           </motion.div>
         );
       case "team":

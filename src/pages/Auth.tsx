@@ -10,7 +10,7 @@ import { z } from "zod";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { PrivacyPolicyModal } from "@/components/PrivacyPolicyModal";
-import appIcon from "@/assets/app-icon.png";
+const appIcon = "/placeholder.svg";
 import { lovable } from "@/integrations/lovable/index";
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
 

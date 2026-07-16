@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Crown, Star } from "lucide-react";
-import appIcon from "@/assets/app-icon.png";
+const appIcon = "/placeholder.svg";
 
 interface MembershipCardProps {
   fullName: string;

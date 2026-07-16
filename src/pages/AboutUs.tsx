@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Info, Loader2 } from "lucide-react";
+import { Info, Loader as Loader2 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
-import appIcon from "@/assets/app-icon.png";
+const appIcon = "/placeholder.svg";
 
 const AboutUs = () => {
   const [content, setContent] = useState<string>("");
