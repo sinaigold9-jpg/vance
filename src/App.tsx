@@ -14,6 +14,7 @@ import ContestPage from "@/pages/ContestPage";
 import Download from "@/pages/Download";
 import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthProvider } from "@/hooks/useAuth";
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <TooltipProvider>
           <BrowserRouter>
+            <AuthProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
@@ -53,6 +55,7 @@ const App = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </AuthProvider>
           </BrowserRouter>
           <Toaster />
           <SonnerToaster />
