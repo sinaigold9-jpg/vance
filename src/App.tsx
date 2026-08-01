@@ -44,6 +44,14 @@ const App = () => {
                 }
               />
               <Route
+                path="/app/*"
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/settings"
                 element={
                   <ProtectedRoute>
