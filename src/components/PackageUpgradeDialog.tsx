@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Loader2, User, Mail, Phone, IdCard, Upload, CreditCard, Copy, Tag, Check } from "lucide-react";
+import { CheckCircle, Loader2, User, Mail, Phone, IdCard, Upload, CreditCard, Copy, Tag, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,9 +26,13 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
   const [discountAmount, setDiscountAmount] = useState(0);
   const [checkingCode, setCheckingCode] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [cashbackBalance, setCashbackBalance] = useState(0);
+  const [useCashback, setUseCashback] = useState(false);
   const { user } = useAuth();
 
   const finalPrice = Math.max(0, packagePrice - discountAmount);
+  const cashbackApplied = useCashback ? Math.min(cashbackBalance, finalPrice) : 0;
+  const amountDue = Math.max(0, finalPrice - cashbackApplied);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -38,13 +42,17 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
       setDiscountInput("");
       setAppliedCode(null);
       setDiscountAmount(0);
+      setUseCashback(false);
     }
   }, [isOpen, user]);
 
   const fetchUserProfile = async () => {
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("full_name, email, phone, membership_id").eq("id", user.id).maybeSingle();
-    if (data) setUserProfile(data);
+    const { data } = await supabase.from("profiles").select("full_name, email, phone, membership_id, cashback_balance").eq("id", user.id).maybeSingle();
+    if (data) {
+      setUserProfile(data);
+      setCashbackBalance(Number((data as { cashback_balance?: number }).cashback_balance || 0));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,17 +106,26 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
 
   const handleSubmit = async () => {
     if (!user) { toast({ title: "خطأ", description: "يرجى تسجيل الدخول", variant: "destructive" }); return; }
-    if (!receiptFile) { toast({ title: "خطأ", description: "يرجى رفع إيصال الدفع", variant: "destructive" }); return; }
+    if (amountDue > 0 && !receiptFile) { toast({ title: "خطأ", description: "يرجى رفع إيصال الدفع", variant: "destructive" }); return; }
 
     setUploading(true);
     try {
-      // Upload receipt
-      const fileExt = receiptFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receiptFile);
-      if (uploadError) throw uploadError;
+      let publicUrl: string | null = null;
+      if (receiptFile) {
+        const fileExt = receiptFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receiptFile);
+        if (uploadError) throw uploadError;
+        publicUrl = supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
+      }
 
-      const { data: { publicUrl } } = supabase.storage.from('receipts').getPublicUrl(fileName);
+      if (cashbackApplied > 0) {
+        const { error: cbError } = await supabase.rpc("spend_cashback", {
+          _amount: cashbackApplied,
+          _note: `ترقية إلى ${packageName}`,
+        });
+        if (cbError) throw cbError;
+      }
 
       const { data: profile } = await supabase.from("profiles").select("account_type").eq("id", user.id).single();
 
@@ -117,12 +134,12 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
         current_package: profile?.account_type || 'beginner',
         requested_package: targetAccountType as "beginner" | "vip1" | "vip2" | "vip3",
         receipt_url: publicUrl,
-        amount: finalPrice,
+        amount: amountDue,
         discount_code: appliedCode,
         discount_amount: discountAmount,
       }]);
 
-      await supabase.from("activity_logs").insert({ user_id: user.id, action: "طلب ترقية باقة", details: { package: packageName, base_price: packagePrice, discount_code: appliedCode, discount_amount: discountAmount, final_price: finalPrice }, amount: finalPrice });
+      await supabase.from("activity_logs").insert({ user_id: user.id, action: "طلب ترقية باقة", details: { package: packageName, base_price: packagePrice, discount_code: appliedCode, discount_amount: discountAmount, cashback_used: cashbackApplied, final_price: amountDue }, amount: amountDue });
 
       setSuccess(true);
     } catch (error) {
@@ -220,9 +237,29 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
             )}
             <div className="flex justify-between items-center pt-1">
               <span className="text-muted-foreground">المبلغ المطلوب</span>
-              <span className="text-3xl font-black text-gradient-gold">{finalPrice} جنيه</span>
+              <span className="text-3xl font-black text-gradient-gold">{amountDue} جنيه</span>
             </div>
+            {cashbackApplied > 0 && (
+              <div className="flex justify-between text-sm text-emerald"><span>مخصوم من الكاش باك</span><span>-{cashbackApplied} جنيه</span></div>
+            )}
           </div>
+
+          {cashbackBalance > 0 && (
+            <button
+              type="button"
+              onClick={() => setUseCashback((v) => !v)}
+              className={`w-full p-3 rounded-xl border text-right transition ${useCashback ? "bg-emerald/10 border-emerald/40" : "bg-muted/30 border-border"}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Gift className="w-4 h-4 text-primary" />
+                  استخدام رصيد الكاش باك ({cashbackBalance} جنيه)
+                </span>
+                {useCashback && <Check className="w-4 h-4 text-emerald" />}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">رصيد الكاش باك يُستخدم لشراء الباقات فقط.</p>
+            </button>
+          )}
 
           <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
             <div className="flex items-center gap-2 mb-2">
@@ -248,7 +285,7 @@ export const PackageUpgradeDialog = ({ isOpen, onClose, packageName, packagePric
             {receiptFile && <p className="text-xs text-emerald">✓ تم اختيار: {receiptFile.name}</p>}
           </div>
 
-          <Button onClick={handleSubmit} disabled={uploading || !receiptFile} className="w-full bg-gradient-gold text-primary-foreground h-12 text-lg">
+          <Button onClick={handleSubmit} disabled={uploading || (amountDue > 0 && !receiptFile)} className="w-full bg-gradient-gold text-primary-foreground h-12 text-lg">
             {uploading ? <><Loader2 className="w-5 h-5 animate-spin ml-2" />جاري الإرسال...</> : "إرسال طلب الترقية"}
           </Button>
           <p className="text-[11px] text-muted-foreground text-center">ستتم مراجعة الإيصال خلال دقائق وتفعيل الباقة تلقائياً عند القبول.</p>
