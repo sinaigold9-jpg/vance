@@ -7,13 +7,17 @@ const buildAppContext = async () => {
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
-  const [pkgsR, versionR, settingsR, gamesR, offersR, aboutR] = await Promise.all([
+  const [pkgsR, versionR, settingsR, gamesR, offersR, aboutR, tiersR, cbOffersR, updatesR, contestsR] = await Promise.all([
     admin.from("packages").select("name, price, task_reward, daily_tasks, daily_earnings, min_withdrawal, has_daily_wheel, account_type, is_active").eq("is_active", true).order("price"),
     admin.from("app_versions").select("version, title, description, features").eq("is_active", true).eq("status", "published").order("version_code", { ascending: false }).limit(1).maybeSingle(),
     admin.from("app_settings").select("key, value, is_active"),
     admin.from("app_settings").select("key, value, is_active").like("key", "game_%"),
     admin.from("offers_contests").select("title, description, is_active").eq("is_active", true).limit(5),
     admin.from("app_settings").select("value").eq("key", "about_us").maybeSingle(),
+    admin.from("cashback_tiers").select("title, min_amount, max_amount, percentage").eq("is_active", true).order("min_amount"),
+    admin.from("cashback_offers").select("title, percentage, min_amount, max_amount, ends_at").eq("is_active", true),
+    admin.from("update_posts").select("title, content").eq("is_active", true).order("display_order").limit(5),
+    admin.from("contests").select("title, subtitle, ends_at").eq("is_active", true).limit(5),
   ]);
 
   const packages = (pkgsR.data || []).map((p) =>
@@ -63,6 +67,19 @@ const buildAppContext = async () => {
 
   const offers = (offersR.data || []).map((o) => `• ${o.title}${o.description ? ` — ${o.description}` : ""}`).join("\n");
 
+  const cashbackTiers = (tiersR.data || []).map((t) =>
+    `• ${t.title}: شحن ${t.min_amount}${t.max_amount ? ` - ${t.max_amount}` : " فأكثر"} جنيه → كاش باك ${t.percentage}%`
+  ).join("\n");
+
+  const now = Date.now();
+  const cashbackOffers = (cbOffersR.data || [])
+    .filter((o) => new Date(o.ends_at).getTime() > now)
+    .map((o) => `• ${o.title} — ${o.percentage}% على شحن من ${o.min_amount}${o.max_amount ? ` إلى ${o.max_amount}` : " فأكثر"} جنيه (ينتهي ${new Date(o.ends_at).toLocaleString("ar-EG")})`)
+    .join("\n");
+
+  const updates = (updatesR.data || []).map((u) => `• ${u.title}: ${String(u.content || "").slice(0, 160)}`).join("\n");
+  const contests = (contestsR.data || []).map((c) => `• ${c.title}${c.subtitle ? ` — ${c.subtitle}` : ""}`).join("\n");
+
   const aboutText = (aboutR.data as { value?: string } | null)?.value || "";
 
   return `
@@ -82,6 +99,17 @@ ${games.length ? games.map((g) => `• ${g}`).join("\n") : "لا توجد ألع
 
 العروض والمسابقات النشطة:
 ${offers || "(لا يوجد نشط)"}
+${contests ? `\nالمسابقات الحالية:\n${contests}` : ""}
+
+نظام الكاش باك (موجود ومفعّل في التطبيق — داخل المحفظة → زر الكاش باك، أو /app/cashback):
+- يُحسب الكاش باك تلقائياً بعد اعتماد الإدارة لطلب الشحن (الإيداع) فقط، ولا يُحتسب للطلبات المرفوضة أو أكثر من مرة.
+- رصيد الكاش باك يُستخدم لشراء الباقات فقط، ولا يمكن سحبه نقداً أو تحويله.
+شرائح الكاش باك الحالية:
+${cashbackTiers || "(لا توجد شرائح مفعّلة)"}
+${cashbackOffers ? `عروض كاش باك خاصة سارية:\n${cashbackOffers}` : ""}
+
+آخر التحديثات المنشورة في قسم "الجديد":
+${updates || "(لا يوجد)"}
 
 ${latestVersion}
 
@@ -105,7 +133,7 @@ const SYSTEM_PROMPT_BASE = `أنت "مساعد Advance" — مساعد ذكاء 
 - بعد ردك النصي، أعد أيضاً حقلًا اسمه \`suggestions\` كمصفوفة JSON تحتوي 2-4 عناصر { "label": "...", "action": "..." } تناسب سياق سؤال المستخدم فقط.
 
 قيم action المسموحة:
-- navigate:/app/packages | navigate:/app/games | navigate:/app/wallet | navigate:/app/tasks | navigate:/app/team | navigate:/app/offers | navigate:/app/profile | navigate:/app/support | navigate:/settings | navigate:/about
+- navigate:/app/packages | navigate:/app/games | navigate:/app/wallet | navigate:/app/cashback | navigate:/app/tasks | navigate:/app/team | navigate:/app/offers | navigate:/app/profile | navigate:/app/support | navigate:/settings | navigate:/about
 - ask: (يليها نص سؤال جاهز لإرساله للمساعد)
 - ticket (فتح نموذج ترك رسالة للإدارة)
 
@@ -137,7 +165,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3.6-flash",
         response_format: { type: "json_object" },
         messages: [{ role: "system", content: systemContent }, ...messages.slice(-12)],
       }),
