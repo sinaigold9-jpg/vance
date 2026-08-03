@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ChatSection } from "./ChatSection";
+import { AIAssistant } from "./support/AIAssistant";
 
 interface UserProfile {
   full_name: string;
@@ -40,40 +41,10 @@ export const SupportSection = () => {
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("ai");
   const [showTicketForm, setShowTicketForm] = useState(false);
-  // AI chat state
-  const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
-    { role: "assistant", content: "أهلاً بك! أنا مساعد Advance. اسألني عن أي شيء يخص التطبيق (الباقات، السحب، المهام، الألعاب، ...)." },
-  ]);
-  const [suggestions, setSuggestions] = useState<Array<{ label: string; action: string }>>([]);
-  const [aiInput, setAiInput] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const { user } = useAuth();
 
   const canAccessLiveChat = userProfile && ["vip1", "vip2", "vip3"].includes(userProfile.account_type);
-
-  // Initial static suggestions shown before the first AI reply.
-  const initialSuggestions: Array<{ label: string; action: string }> = [
-    { label: "الباقات", action: "ask:ما الفرق بين الباقات؟" },
-    { label: "المهام اليومية", action: "ask:متى تتجدد المهام اليومية؟" },
-    { label: "الألعاب", action: "ask:ما الألعاب المتاحة في التطبيق؟" },
-    { label: "السحب", action: "ask:كيف أسحب أرباحي؟" },
-  ];
-
-  const handleSuggestion = (action: string) => {
-    if (action.startsWith("navigate:")) {
-      const path = action.slice("navigate:".length);
-      navigate(path);
-      return;
-    }
-    if (action.startsWith("ask:")) {
-      sendAi(action.slice("ask:".length));
-      return;
-    }
-    if (action === "ticket") {
-      setActiveTab("ticket");
-      setShowTicketForm(true);
-    }
-  };
 
   useEffect(() => {
     if (user) {
@@ -90,32 +61,6 @@ export const SupportSection = () => {
       .maybeSingle();
     if (data) {
       setUserProfile(data);
-    }
-  };
-
-  const sendAi = async (override?: string) => {
-    const text = (override ?? aiInput).trim();
-    if (!text || aiLoading) return;
-    const newMsgs = [...aiMessages, { role: "user" as const, content: text }];
-    setAiMessages(newMsgs);
-    setAiInput("");
-    setAiLoading(true);
-    setSuggestions([]);
-    try {
-      const { data, error } = await supabase.functions.invoke("support-ai-chat", {
-        body: { messages: newMsgs.map(({ role, content }) => ({ role, content })) },
-      });
-      if (error) throw error;
-      const reply = (data as { reply?: string; error?: string })?.reply
-        || (data as { error?: string })?.error
-        || "حدث خطأ.";
-      const nextSuggestions = (data as { suggestions?: Array<{ label: string; action: string }> })?.suggestions || [];
-      setAiMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-      setSuggestions(nextSuggestions);
-    } catch (e: any) {
-      setAiMessages((prev) => [...prev, { role: "assistant", content: "تعذر الاتصال بالخدمة. حاول لاحقاً أو اترك رسالة للدعم." }]);
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -225,61 +170,18 @@ export const SupportSection = () => {
 
         {/* AI Assistant */}
         <TabsContent value="ai" className="mt-4">
-          <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-3 flex flex-col h-[60vh] min-h-[420px]">
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {aiMessages.map((m, i) => (
-                <div key={i} className={`flex gap-2 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === "user" ? "bg-primary/20 text-primary" : "bg-gradient-gold text-primary-foreground"}`}>
-                    {m.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  <div className={`rounded-2xl px-3.5 py-2.5 max-w-[80%] text-sm leading-relaxed whitespace-pre-line ${m.role === "user" ? "bg-primary/10 text-foreground" : "bg-muted/60 text-foreground"}`}>
-                    {m.content}
-                  </div>
-                </div>
-              ))}
-              {aiLoading && (
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center"><Bot className="w-4 h-4 text-primary-foreground" /></div>
-                  <div className="bg-muted/60 rounded-2xl px-4 py-2.5 text-sm flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:120ms]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:240ms]" />
-                  </div>
-                </div>
-              )}
+          <div className="bg-gradient-card rounded-2xl shadow-card border border-border/50 p-8 text-center space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold">
+              <Bot className="w-8 h-8 text-primary-foreground" />
             </div>
-            {/* Dynamic suggestions from AI (or initial defaults) */}
-            <div className="pt-3 flex flex-wrap gap-2">
-              {(suggestions.length > 0 ? suggestions : initialSuggestions).map((s, i) => (
-                <button
-                  key={`${s.action}-${i}`}
-                  onClick={() => handleSuggestion(s.action)}
-                  disabled={aiLoading}
-                  className="text-xs px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 transition disabled:opacity-50"
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <div className="pt-3 mt-3 border-t border-border/40 flex gap-2">
-              <Input
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") sendAi(); }}
-                placeholder="اكتب سؤالك هنا..."
-                disabled={aiLoading}
-                className="flex-1"
-              />
-              <Button onClick={() => sendAi()} disabled={aiLoading || !aiInput.trim()} className="bg-gradient-gold text-primary-foreground">
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-            <button
-              onClick={() => setActiveTab("ticket")}
-              className="mt-2 text-xs text-amber-300 hover:text-amber-200 self-center"
-            >
-              لم تجد ما تبحث عنه؟ اترك رسالة للدعم →
-            </button>
+            <h3 className="text-lg font-black">مساعد Advance الذكي</h3>
+            <p className="text-sm text-muted-foreground">
+              واجهة ملء الشاشة مع سجل محادثات، ردود سريعة، واقتراحات ذكية — ويعرف كل ميزات التطبيق وتحديثاته أولاً بأول.
+            </p>
+            <Button onClick={() => setAiOpen(true)} className="bg-gradient-gold text-primary-foreground h-12 px-8">
+              <Sparkles className="w-4 h-4 ml-2" />
+              فتح المساعد الذكي
+            </Button>
           </div>
         </TabsContent>
 
@@ -449,6 +351,11 @@ export const SupportSection = () => {
           )}
         </TabsContent>
       </Tabs>
+      <AIAssistant
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onOpenTicket={() => { setActiveTab("ticket"); setShowTicketForm(true); }}
+      />
     </motion.div>
   );
 };

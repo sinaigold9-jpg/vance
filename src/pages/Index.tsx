@@ -37,9 +37,11 @@ import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { InstallPWA } from "@/components/InstallPWA";
 import { EmailSubscription } from "@/components/EmailSubscription";
 import { TelegramVerificationGate } from "@/components/TelegramVerificationGate";
+import { CashbackPage } from "@/components/cashback/CashbackPage";
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { AlertTriangle, Lock, Coins } from "lucide-react";
+import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +84,7 @@ const pathToTab: Record<string, string> = {
   "/app/tasks": "tasks",
   "/app/wheel": "wheel",
   "/app/wallet": "wallet",
+  "/app/cashback": "cashback",
   "/app/team": "team",
   "/app/packages": "packages",
   "/app/earnings": "earnings",
@@ -101,6 +104,7 @@ const tabToPath: Record<string, string> = {
   tasks: "/app/tasks",
   wheel: "/app/wheel",
   wallet: "/app/wallet",
+  cashback: "/app/cashback",
   team: "/app/team",
   packages: "/app/packages",
   earnings: "/app/earnings",
@@ -493,6 +497,14 @@ const Index = () => {
                 <Button onClick={handleOpenWithdraw} className="flex-1 h-12 bg-gradient-gold text-primary-foreground">سحب</Button>
                 <Button variant="outline" onClick={handleDeposit} className="flex-1 h-12">إيداع</Button>
               </div>
+              <Button
+                onClick={() => handleTabChange("cashback")}
+                variant="outline"
+                className="w-full h-12 mt-3 border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <Gift className="w-4 h-4 ml-2" />
+                الكاش باك
+              </Button>
             </div>
             <WithdrawalHistory />
             <EarningMethods
@@ -506,6 +518,13 @@ const Index = () => {
               totalShares={0}
               teamMembers={0}
             />
+          </motion.div>
+        );
+      case "cashback":
+        return (
+          <motion.div key="cashback" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <PageHeader title="الكاش باك" subtitle="استرداد نقدي على كل عملية شحن" onBack={() => handleTabChange("wallet")} />
+            <CashbackPage />
           </motion.div>
         );
       case "support":
