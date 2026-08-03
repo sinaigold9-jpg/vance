@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ChatSection } from "./ChatSection";
+import { AIAssistant } from "./support/AIAssistant";
 
 interface UserProfile {
   full_name: string;
@@ -40,6 +41,7 @@ export const SupportSection = () => {
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("ai");
   const [showTicketForm, setShowTicketForm] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   // AI chat state
   const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
     { role: "assistant", content: "أهلاً بك! أنا مساعد Advance. اسألني عن أي شيء يخص التطبيق (الباقات، السحب، المهام، الألعاب، ...)." },
