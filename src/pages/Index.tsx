@@ -520,7 +520,6 @@ const Index = () => {
             />
           </motion.div>
         );
-      case "support":
       case "cashback":
         return (
           <motion.div key="cashback" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
@@ -528,6 +527,7 @@ const Index = () => {
             <CashbackPage />
           </motion.div>
         );
+      case "support":
         return (
           <motion.div key="support" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             <PageHeader title="الدعم الفني" subtitle="تواصل معنا للمسا��دة" onBack={() => handleTabChange("home")} />
