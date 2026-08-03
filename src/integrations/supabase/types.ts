@@ -580,6 +580,205 @@ export type Database = {
         }
         Relationships: []
       }
+      cashback_badges: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cashback_offers: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          display_order: number
+          ends_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          max_amount: number | null
+          min_amount: number
+          percentage: number
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          ends_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number
+          percentage?: number
+          starts_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          ends_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number
+          percentage?: number
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cashback_tiers: {
+        Row: {
+          badge_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          max_amount: number | null
+          min_amount: number
+          percentage: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          badge_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number
+          percentage?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          badge_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number
+          percentage?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_tiers_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "cashback_badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cashback_transactions: {
+        Row: {
+          amount: number
+          base_amount: number
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          offer_id: string | null
+          percentage: number
+          source_transaction_id: string | null
+          tier_id: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          base_amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          offer_id?: string | null
+          percentage?: number
+          source_transaction_id?: string | null
+          tier_id?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          offer_id?: string | null
+          percentage?: number
+          source_transaction_id?: string | null
+          tier_id?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_transactions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "cashback_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_transactions_source_transaction_id_fkey"
+            columns: ["source_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_transactions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "cashback_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashback_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -1527,6 +1726,7 @@ export type Database = {
           account_type: Database["public"]["Enums"]["account_type"]
           avatar_url: string | null
           balance: number
+          cashback_balance: number
           contest_discount_percent: number | null
           contest_discount_until: string | null
           created_at: string
@@ -1553,6 +1753,7 @@ export type Database = {
           temp_vip_type: string | null
           temp_vip_until: string | null
           theme_preference: string | null
+          total_cashback_earned: number
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
@@ -1562,6 +1763,7 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
           balance?: number
+          cashback_balance?: number
           contest_discount_percent?: number | null
           contest_discount_until?: string | null
           created_at?: string
@@ -1588,6 +1790,7 @@ export type Database = {
           temp_vip_type?: string | null
           temp_vip_until?: string | null
           theme_preference?: string | null
+          total_cashback_earned?: number
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -1597,6 +1800,7 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"]
           avatar_url?: string | null
           balance?: number
+          cashback_balance?: number
           contest_discount_percent?: number | null
           contest_discount_until?: string | null
           created_at?: string
@@ -1623,6 +1827,7 @@ export type Database = {
           temp_vip_type?: string | null
           temp_vip_until?: string | null
           theme_preference?: string | null
+          total_cashback_earned?: number
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
@@ -2047,6 +2252,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      spend_cashback: {
+        Args: { _amount: number; _note?: string }
+        Returns: number
       }
     }
     Enums: {
