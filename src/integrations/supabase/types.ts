@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_verifications: {
+        Row: {
+          created_at: string
+          device_info: Json
+          duplicate_flag: boolean
+          duplicate_of: string | null
+          face_signature: string | null
+          id: string
+          image_path: string
+          liveness_score: number
+          quality_score: number
+          rejection_reason: string | null
+          retry_allowed: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reward_granted: boolean
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json
+          duplicate_flag?: boolean
+          duplicate_of?: string | null
+          face_signature?: string | null
+          id?: string
+          image_path: string
+          liveness_score?: number
+          quality_score?: number
+          rejection_reason?: string | null
+          retry_allowed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reward_granted?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json
+          duplicate_flag?: boolean
+          duplicate_of?: string | null
+          face_signature?: string | null
+          id?: string
+          image_path?: string
+          liveness_score?: number
+          quality_score?: number
+          rejection_reason?: string | null
+          retry_allowed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reward_granted?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           action: string
@@ -1757,6 +1825,8 @@ export type Database = {
           total_earnings: number
           trial_end_date: string | null
           updated_at: string
+          verification_reward_claimed: boolean
+          verified_at: string | null
           withdrawal_pin: string | null
         }
         Insert: {
@@ -1794,6 +1864,8 @@ export type Database = {
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
+          verification_reward_claimed?: boolean
+          verified_at?: string | null
           withdrawal_pin?: string | null
         }
         Update: {
@@ -1831,6 +1903,8 @@ export type Database = {
           total_earnings?: number
           trial_end_date?: string | null
           updated_at?: string
+          verification_reward_claimed?: boolean
+          verified_at?: string | null
           withdrawal_pin?: string | null
         }
         Relationships: [
@@ -2252,6 +2326,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      review_account_verification: {
+        Args: {
+          _allow_retry?: boolean
+          _decision: string
+          _reason?: string
+          _request_id: string
+        }
+        Returns: Json
       }
       spend_cashback: {
         Args: { _amount: number; _note?: string }
