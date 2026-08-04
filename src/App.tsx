@@ -12,9 +12,11 @@ import AboutUs from "@/pages/AboutUs";
 import Admin from "@/pages/Admin";
 import ContestPage from "@/pages/ContestPage";
 import Download from "@/pages/Download";
+import AccountVerification from "@/pages/AccountVerification";
 import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AppUpdateWatcher } from "@/components/AppUpdateWatcher";
 
 const App = () => {
   return (
@@ -59,10 +61,19 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/verification"
+                element={
+                  <ProtectedRoute>
+                    <AccountVerification />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <AppUpdateWatcher />
             </AuthProvider>
           </BrowserRouter>
           <Toaster />
