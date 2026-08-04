@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 const appIcon = "/placeholder.svg";
 import { 
   User, Mail, Phone, CreditCard, 
-  Gift, Crown, Clock, Lock, Shield, Settings
+  Gift, Crown, Clock, Lock, Shield, Settings, BadgeCheck
 } from "lucide-react";
 import { CURRENT_VERSION } from "@/lib/appVersion";
 
@@ -36,17 +36,19 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [badge, setBadge] = useState<{ name: string; icon: string; color: string } | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data: p } = await supabase
         .from("profiles")
-        .select("avatar_url, created_at")
+        .select("avatar_url, created_at, is_verified")
         .eq("id", user.id)
         .maybeSingle();
       setAvatarUrl((p as any)?.avatar_url ?? null);
       setCreatedAt((p as any)?.created_at ?? null);
+      setIsVerified(Boolean((p as any)?.is_verified));
 
       const { data: ub } = await supabase
         .from("user_badges")
@@ -118,6 +120,11 @@ export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: Prof
               <h3 className="text-xl font-bold">{userProfile.full_name}</h3>
               <div className="flex items-center gap-2 flex-wrap mt-1">
                 {getAccountTypeBadge(userProfile.account_type)}
+                {isVerified && (
+                  <Badge className="gap-1 bg-emerald-500/15 text-emerald-500 border-emerald-400/40">
+                    <BadgeCheck className="w-3 h-3" /> موثق
+                  </Badge>
+                )}
                 {badge && (
                   <Badge style={{ backgroundColor: badge.color + "22", color: badge.color, borderColor: badge.color + "55" }} className="gap-1 border">
                     <span>{badge.icon}</span> {badge.name}
