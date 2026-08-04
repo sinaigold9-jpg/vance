@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Monitor, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2, Info } from "lucide-react";
+import { Sun, Moon, Monitor, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2, Info, BadgeCheck } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { useTheme, type ThemeMode } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { CURRENT_VERSION, CURRENT_VERSION_CODE, setSeenVersionCode } from "@/lib/appVersion";
+import { useLatestVersion } from "@/hooks/useLatestVersion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
@@ -20,6 +21,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { mode, setMode } = useTheme();
+  const latest = useLatestVersion();
   const [checking, setChecking] = useState(false);
   const [versionInfo, setVersionInfo] = useState<{ latest: string; upToDate: boolean } | null>(null);
 
@@ -115,8 +117,11 @@ const Settings = () => {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">الإصدار الحالي</span>
-              <span className="font-mono font-bold">{CURRENT_VERSION}</span>
+              <span className="font-mono font-bold">{latest.loading ? CURRENT_VERSION : latest.version}</span>
             </div>
+            {latest.title && (
+              <p className="text-xs text-muted-foreground">{latest.title}</p>
+            )}
             <Button onClick={checkForUpdate} disabled={checking} variant="outline" className="w-full">
               {checking ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" /> جاري التحقق...</> : "التحقق من وجود إصدار جديد"}
             </Button>
@@ -125,6 +130,22 @@ const Settings = () => {
                 {versionInfo.upToDate ? "أنت تستخدم أحدث إصدار متوفر." : `يتوفر إصدار أحدث: ${versionInfo.latest}`}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Account verification */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2"><BadgeCheck className="w-4 h-4" /> توثيق الحساب</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              وثّق حسابك بالتحقق من الوجه عبر الكاميرا واحصل على 50 جنيه كاش باك مرة واحدة.
+            </p>
+            <Button className="w-full" variant="outline" onClick={() => navigate("/verification")}>
+              <ArrowRight className="w-4 h-4 ml-2" />
+              فتح توثيق الحساب
+            </Button>
           </CardContent>
         </Card>
 
