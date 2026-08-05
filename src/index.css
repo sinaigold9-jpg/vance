@@ -6,6 +6,37 @@
 
 @layer base {
   :root {
+    --background: 40 30% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 43 74% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 25% 92%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 40 20% 93%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 43 60% 88%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 15% 86%;
+    --input: 40 15% 86%;
+    --ring: 43 74% 42%;
+    --radius: 0.75rem;
+    --gold: 43 74% 45%;
+    --gold-light: 43 74% 55%;
+    --gold-dark: 43 74% 35%;
+    --emerald: 152 63% 38%;
+    --vip1: 152 63% 38%;
+    --vip2: 199 89% 42%;
+    --vip3: 271 76% 48%;
+    --beginner: 0 0% 45%;
+  }
+
+  .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
     --card: 222 47% 15%;
@@ -36,11 +67,6 @@
     --beginner: 0 0% 50%;
   }
 }
-
-@layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
     font-family: "Tajawal", sans-serif;
