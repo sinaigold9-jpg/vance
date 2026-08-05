@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Power, Settings, Save, AlertTriangle, CheckCircle, Briefcase, Target, Users, Share2, Globe, Wallet, Megaphone, Gift, MessageCircle, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Power, Settings, Save, AlertTriangle, CheckCircle, Briefcase, Target, Users, Share2, Globe, Wallet, Gift, MessageCircle, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,6 @@ const settingsConfig = [
   { key: "referral_enabled", label: "نظام الإحالة", icon: Share2, messageKey: "referral_disabled_message" },
   { key: "team_enabled", label: "نظام الفريق والرتب", icon: Users, messageKey: "team_disabled_message" },
   { key: "wallet_enabled", label: "المحفظة", icon: Wallet, messageKey: "wallet_disabled_message" },
-  { key: "ads_enabled", label: "نظام الإعلانات", icon: Megaphone, messageKey: "ads_disabled_message" },
   { key: "offers_enabled", label: "العروض والمسابقات", icon: Gift, messageKey: "offers_disabled_message" },
   { key: "chat_enabled", label: "الدردشة والدعم", icon: MessageCircle, messageKey: "chat_disabled_message" },
   { key: "deposits_enabled", label: "الإيداعات", icon: ArrowDownToLine, messageKey: "deposits_disabled_message" },

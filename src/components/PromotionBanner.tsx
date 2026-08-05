@@ -117,10 +117,8 @@ export const PromotionBanner = ({ location = "home" }: PromotionBannerProps) => 
       "/team",
       "/packages",
       "/earnings",
-      "/ads",
       "/offers",
       "/profile",
-      "/sponsor",
       "/support",
       "/faq",
     ]);

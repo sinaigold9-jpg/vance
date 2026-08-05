@@ -19,9 +19,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { BotWidget } from "@/components/BotWidget";
 import { BalanceReveal } from "@/components/BalanceReveal";
 import { EarningsInfo } from "@/components/EarningsInfo";
-import { AdsPage } from "@/components/ads/AdsPage";
 import { ProfileSection } from "@/components/profile/ProfileSection";
-import { SponsorPage } from "@/components/profile/SponsorPage";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { OffersPage } from "@/components/OffersPage";
 import { HomeOffersPreview } from "@/components/HomeOffersPreview";
@@ -88,10 +86,8 @@ const pathToTab: Record<string, string> = {
   "/app/team": "team",
   "/app/packages": "packages",
   "/app/earnings": "earnings",
-  "/app/ads": "ads",
   "/app/offers": "offers",
   "/app/profile": "profile",
-  "/app/sponsor": "sponsor",
   "/app/support": "support",
   "/app/faq": "faq",
   "/app/updates": "updates",
@@ -108,10 +104,8 @@ const tabToPath: Record<string, string> = {
   team: "/app/team",
   packages: "/app/packages",
   earnings: "/app/earnings",
-  ads: "/app/ads",
   offers: "/app/offers",
   profile: "/app/profile",
-  sponsor: "/app/sponsor",
   support: "/app/support",
   faq: "/app/faq",
   updates: "/app/updates",
@@ -271,7 +265,6 @@ const Index = () => {
     tasks: "tasks",
     wallet: "wallet",
     team: "team",
-    ads: "ads",
   };
 
   useEffect(() => {
@@ -534,13 +527,6 @@ const Index = () => {
             <SupportSection />
           </motion.div>
         );
-      case "ads":
-        return (
-          <motion.div key="ads" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="الإعلانات" subtitle="تصفح وأنشئ إعلاناتك" onBack={() => handleTabChange("home")} />
-            <AdsPage userBalance={balance} />
-          </motion.div>
-        );
       case "profile":
         return (
           <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
@@ -555,7 +541,6 @@ const Index = () => {
                   total_earnings: todayEarnings
                 }} 
                 onRefresh={fetchUserProfile}
-                onNavigateToAds={() => handleTabChange("ads")}
               />
             )}
           </motion.div>
@@ -574,13 +559,6 @@ const Index = () => {
             ) : (
               <OffersPage />
             )}
-          </motion.div>
-        );
-      case "sponsor":
-        return (
-          <motion.div key="sponsor" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <PageHeader title="ممول" subtitle="إنشاء صفحة ممول وإدارة إعلاناتك" onBack={() => handleTabChange("home")} />
-            <SponsorPage userBalance={balance} onNavigateToAds={() => handleTabChange("ads")} />
           </motion.div>
         );
       case "faq":

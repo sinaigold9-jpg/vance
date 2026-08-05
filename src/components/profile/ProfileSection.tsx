@@ -27,10 +27,9 @@ interface ProfileSectionProps {
     total_earnings: number;
   } | null;
   onRefresh: () => void;
-  onNavigateToAds?: () => void;
 }
 
-export const ProfileSection = ({ userProfile, onRefresh, onNavigateToAds }: ProfileSectionProps) => {
+export const ProfileSection = ({ userProfile, onRefresh }: ProfileSectionProps) => {
   const { user, isAdmin, isStaff, staffRole } = useAuth();
   const navigate = useNavigate();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

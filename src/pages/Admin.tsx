@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
-  Megaphone, Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
+  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
 } from "lucide-react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ import { AdminSupportTab } from "@/components/admin/AdminSupportTab";
 import { AdminBotSettingsTab } from "@/components/admin/AdminBotSettingsTab";
 import { AdminAppSettingsTab } from "@/components/admin/AdminAppSettingsTab";
 import { AdminChatTab } from "@/components/admin/AdminChatTab";
-import { AdminAdsTab } from "@/components/admin/AdminAdsTab";
 import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
 import { AdminPromotionsTab } from "@/components/admin/AdminPromotionsTab";
 import { AdminExportTab } from "@/components/admin/AdminExportTab";
@@ -53,7 +52,6 @@ const ALL_TABS = [
   { key: "upgrades", label: "الترقيات", icon: FileUp },
   { key: "transactions", label: "المعاملات", icon: DollarSign },
   { key: "packages", label: "الباقات", icon: Package },
-  { key: "ads", label: "الإعلانات", icon: Megaphone },
   { key: "notifications", label: "الإشعارات", icon: Bell },
   { key: "notification-diagnostics", label: "تشخيص الإشعارات", icon: Stethoscope },
   { key: "promotions", label: "العروض", icon: Gift },
@@ -86,7 +84,6 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   upgrades: AdminUpgradeRequestsTab,
   transactions: AdminTransactionsTab,
   packages: AdminPackagesTab,
-  ads: AdminAdsTab,
   notifications: AdminNotificationsTab,
   "notification-diagnostics": AdminNotificationDiagnosticsTab,
   promotions: AdminPromotionsTab,

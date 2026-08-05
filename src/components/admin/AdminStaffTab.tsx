@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { 
   UserPlus, Shield, Trash2, Edit, Search, 
-  Users, DollarSign, Package, Megaphone, Bell, Gift, 
+  Users, DollarSign, Package, Bell, Gift, 
   HeadphonesIcon, MessageCircle, Bot, Power, Clock, 
   Key, Mail, FileUp, Edit3
 } from "lucide-react";
@@ -34,7 +34,6 @@ const PERMISSION_TABS = [
   { key: "upgrades", label: "الترقيات", icon: FileUp },
   { key: "transactions", label: "المعاملات", icon: DollarSign },
   { key: "packages", label: "الباقات", icon: Package },
-  { key: "ads", label: "الإعلانات", icon: Megaphone },
   { key: "notifications", label: "الإشعارات", icon: Bell },
   { key: "promotions", label: "العروض", icon: Gift },
   { key: "support", label: "الدعم", icon: HeadphonesIcon },
@@ -52,7 +51,6 @@ const PERMISSION_TABS = [
 const ROLE_PRESETS = [
   { title: "مدير", permissions: PERMISSION_TABS.map(t => t.key) },
   { title: "رئيس قسم العروض", permissions: ["promotions", "offers-contests", "notifications"] },
-  { title: "مسؤول الإعلانات", permissions: ["ads", "notifications"] },
   { title: "مسؤول الدعم الفني", permissions: ["support", "chat", "notifications"] },
   { title: "مسؤول المعاملات", permissions: ["transactions", "upgrades"] },
   { title: "مسؤول المستخدمين", permissions: ["users", "change-requests"] },
