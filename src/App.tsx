@@ -17,6 +17,7 @@ import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppUpdateWatcher } from "@/components/AppUpdateWatcher";
+import { WhatsNew } from "@/components/WhatsNew";
 
 const App = () => {
   return (
@@ -80,6 +81,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AppUpdateWatcher />
+            <WhatsNew />
             </AuthProvider>
           </BrowserRouter>
           <Toaster />
