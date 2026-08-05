@@ -8,6 +8,14 @@ export interface FrameStats {
   rightLuma: number;
   upperLuma: number;
   data: Uint8ClampedArray; // downsampled grayscale (GRID x GRID)
+  rMean: number;
+  gMean: number;
+  bMean: number;
+  saturation: number;      // mean chroma spread 0..255
+  skinRatio: number;       // 0..1 fraction of skin-like pixels in the centre
+  borderContrast: number;  // bright rectangular frame cue (phone-screen replay)
+  eyeBandContrast: number; // horizontal contrast in the eye band (glasses cue)
+  mouthVariance: number;   // texture in the lower face (mask cue)
 }
 
 export const GRID = 32;
