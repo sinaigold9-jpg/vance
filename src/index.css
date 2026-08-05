@@ -67,6 +67,11 @@
     --beginner: 0 0% 50%;
   }
 }
+
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: "Tajawal", sans-serif;
