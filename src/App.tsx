@@ -21,7 +21,13 @@ import { AppUpdateWatcher } from "@/components/AppUpdateWatcher";
 const App = () => {
   return (
     <HelmetProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        storageKey="advance_theme_pref"
+        disableTransitionOnChange
+      >
         <TooltipProvider>
           <BrowserRouter>
             <AuthProvider>
