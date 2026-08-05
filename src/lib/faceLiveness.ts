@@ -8,6 +8,14 @@ export interface FrameStats {
   rightLuma: number;
   upperLuma: number;
   data: Uint8ClampedArray; // downsampled grayscale (GRID x GRID)
+  rMean: number;
+  gMean: number;
+  bMean: number;
+  saturation: number;      // mean chroma spread 0..255
+  skinRatio: number;       // 0..1 fraction of skin-like pixels in the centre
+  borderContrast: number;  // bright rectangular frame cue (phone-screen replay)
+  eyeBandContrast: number; // horizontal contrast in the eye band (glasses cue)
+  mouthVariance: number;   // texture in the lower face (mask cue)
 }
 
 export const GRID = 32;
@@ -34,12 +42,23 @@ export const analyzeFrame = (
 
   const gray = new Uint8ClampedArray(GRID * GRID);
   let sum = 0;
+  let rSum = 0, gSum = 0, bSum = 0, satSum = 0;
+  let skin = 0, centre = 0;
   for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const r = d[i], g0 = d[i + 1], b = d[i + 2];
     const g = toGray(d, i);
     gray[p] = g;
     sum += g;
+    rSum += r; gSum += g0; bSum += b;
+    satSum += Math.max(r, g0, b) - Math.min(r, g0, b);
+    const x = p % GRID, y = (p / GRID) | 0;
+    if (x > GRID * 0.2 && x < GRID * 0.8 && y > GRID * 0.15 && y < GRID * 0.85) {
+      centre++;
+      if (r > 70 && r > g0 && g0 > b && r - g0 > 10 && r - b > 18) skin++;
+    }
   }
   const brightness = sum / gray.length;
+  const px = gray.length;
 
   // Laplacian variance = sharpness / focus
   let lapSum = 0;
@@ -67,6 +86,38 @@ export const analyzeFrame = (
     }
   }
   const half = (GRID * GRID) / 2;
+
+  // outer ring vs inner region — a phone/monitor replay usually shows a bezel frame
+  let ring = 0, ringN = 0, inner = 0, innerN = 0;
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const v = gray[y * GRID + x];
+      const edge = x < 3 || y < 3 || x >= GRID - 3 || y >= GRID - 3;
+      if (edge) { ring += v; ringN++; } else { inner += v; innerN++; }
+    }
+  }
+  const borderContrast = Math.abs(ring / ringN - inner / innerN);
+
+  // eye band (upper third) row contrast — glasses create a strong dark horizontal band
+  const rowMeans: number[] = [];
+  for (let y = Math.round(GRID * 0.25); y < Math.round(GRID * 0.5); y++) {
+    let s2 = 0;
+    for (let x = 0; x < GRID; x++) s2 += gray[y * GRID + x];
+    rowMeans.push(s2 / GRID);
+  }
+  const rowAvg = rowMeans.reduce((a, b) => a + b, 0) / rowMeans.length;
+  const eyeBandContrast = Math.max(...rowMeans.map((m) => Math.abs(m - rowAvg)));
+
+  // lower face texture — a mask flattens it
+  let mSum = 0, mSq = 0, mN = 0;
+  for (let y = Math.round(GRID * 0.6); y < Math.round(GRID * 0.92); y++) {
+    for (let x = Math.round(GRID * 0.25); x < Math.round(GRID * 0.75); x++) {
+      const v = gray[y * GRID + x];
+      mSum += v; mSq += v * v; mN++;
+    }
+  }
+  const mouthVariance = mSq / mN - (mSum / mN) ** 2;
+
   return {
     brightness,
     sharpness,
@@ -74,6 +125,14 @@ export const analyzeFrame = (
     rightLuma: right / half,
     upperLuma: upper / half,
     data: gray,
+    rMean: rSum / px,
+    gMean: gSum / px,
+    bMean: bSum / px,
+    saturation: satSum / px,
+    skinRatio: centre ? skin / centre : 0,
+    borderContrast,
+    eyeBandContrast,
+    mouthVariance,
   };
 };
 
@@ -92,6 +151,25 @@ export const qualityScore = (s: FrameStats, motion: number) => {
   const focus = Math.max(0, Math.min(100, (s.sharpness / 220) * 100));
   const stability = Math.max(0, 100 - motion * 4);
   return Math.round(light * 0.35 + focus * 0.4 + stability * 0.25);
+};
+
+export interface FaceIssue { code: string; message: string }
+
+/**
+ * Presentation-attack + occlusion heuristics.
+ * Returns the blocking issue (if any) for the current frame.
+ */
+export const inspectFace = (s: FrameStats, motion: number): FaceIssue | null => {
+  if (s.brightness < 55) return { code: "dark", message: "الإضاءة ضعيفة، اتجه لمكان أكثر إضاءة" };
+  if (s.brightness > 225) return { code: "bright", message: "الإضاءة قوية جداً، ابتعد عن مصدر الضوء" };
+  if (s.sharpness < 25) return { code: "blur", message: "الصورة غير واضحة، ثبّت الكاميرا" };
+  if (s.skinRatio < 0.12) return { code: "noface", message: "ضع وجهك بالكامل داخل الدائرة" };
+  if (s.saturation < 14) return { code: "screen", message: "لا يُسمح بتصوير صورة أو شاشة، استخدم وجهك مباشرة" };
+  if (s.borderContrast > 62) return { code: "screen", message: "تم رصد إطار شاشة/صورة مطبوعة، استخدم وجهك مباشرة" };
+  if (motion < 0.25) return { code: "static", message: "صورة ثابتة تماماً، تأكد أنك أمام الكاميرا مباشرة" };
+  if (s.eyeBandContrast > 46) return { code: "glasses", message: "من فضلك أزل النظارة واكشف عينيك" };
+  if (s.mouthVariance < 28) return { code: "mask", message: "أزل الكمامة أو أي شيء يغطي وجهك" };
+  return null;
 };
 
 /** Perceptual average-hash of the captured face, used only to detect the same face reused across accounts. */

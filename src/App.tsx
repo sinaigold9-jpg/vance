@@ -17,11 +17,18 @@ import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppUpdateWatcher } from "@/components/AppUpdateWatcher";
+import { WhatsNew } from "@/components/WhatsNew";
 
 const App = () => {
   return (
     <HelmetProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        storageKey="advance_theme_pref"
+        disableTransitionOnChange
+      >
         <TooltipProvider>
           <BrowserRouter>
             <AuthProvider>
@@ -74,6 +81,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AppUpdateWatcher />
+            <WhatsNew />
             </AuthProvider>
           </BrowserRouter>
           <Toaster />
