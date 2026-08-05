@@ -237,18 +237,40 @@ const UpdateScreen = ({ version, onLater }: { version: AppVersion; onLater?: () 
           )}
 
           {updating && (
-            <div className="space-y-2 pt-2">
-              <Progress value={progress.percent} className="h-2" />
-              <div className="flex items-center justify-between text-xs text-white/70 font-mono">
-                <span>
-                  {formatBytes(progress.loadedBytes)} / {formatBytes(progress.totalBytes)}
-                </span>
-                <span>{formatSpeed(progress.speedBps)}</span>
-                <span>{progress.percent.toFixed(1)}%</span>
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <div className="relative w-36 h-36">
+                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="10" />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="52"
+                    fill="none"
+                    stroke="url(#updGrad)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 52}
+                    strokeDashoffset={2 * Math.PI * 52 * (1 - Math.min(progress.percent, 100) / 100)}
+                    style={{ transition: "stroke-dashoffset 200ms linear" }}
+                  />
+                  <defs>
+                    <linearGradient id="updGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#fcd34d" />
+                      <stop offset="100%" stopColor="#f59e0b" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-extrabold text-white font-mono">
+                    {progress.percent.toFixed(0)}%
+                  </span>
+                  <span className="text-[10px] text-white/60 font-mono">{formatSpeed(progress.speedBps)}</span>
+                </div>
               </div>
-              <p className="text-xs text-center text-white/60">
-                جاري تحميل ملفات التحديث...
-              </p>
+              <div className="text-xs text-white/70 font-mono">
+                {formatBytes(progress.loadedBytes)} / {formatBytes(progress.totalBytes)}
+              </div>
+              <p className="text-xs text-center text-white/60">جاري تحميل ملفات التحديث...</p>
             </div>
           )}
         </div>
