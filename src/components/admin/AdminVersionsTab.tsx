@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Image as ImageIcon, X, Loader2, Radar, Send, EyeOff } from "lucide-react";
+import { Plus, Trash2, Edit, Image as ImageIcon, X, Loader2, Radar, Send, EyeOff, Sparkles, Wrench } from "lucide-react";
 
 interface Feature {
   label: string;
@@ -25,6 +25,8 @@ interface VersionRow {
   title: string;
   description: string | null;
   features: Feature[];
+  fixes: string[];
+  future_notes: string | null;
   images: string[];
   is_mandatory: boolean;
   target_audience: string;
@@ -44,6 +46,8 @@ const empty: Omit<VersionRow, "id" | "release_date"> = {
   title: "",
   description: "",
   features: [],
+  fixes: [],
+  future_notes: "",
   images: [],
   is_mandatory: true,
   target_audience: "all",
@@ -73,6 +77,8 @@ export const AdminVersionsTab = () => {
           ...r,
           update_label: r.update_label ?? "",
           features: Array.isArray(r.features) ? r.features : [],
+          fixes: Array.isArray(r.fixes) ? r.fixes.map((f: any) => (typeof f === "string" ? f : String(f?.label ?? ""))) : [],
+          future_notes: r.future_notes ?? "",
           images: Array.isArray(r.images) ? r.images : [],
         }))
       );
@@ -97,6 +103,8 @@ export const AdminVersionsTab = () => {
       title: r.title,
       description: r.description || "",
       features: r.features,
+      fixes: r.fixes || [],
+      future_notes: r.future_notes || "",
       images: r.images,
       is_mandatory: r.is_mandatory,
       target_audience: r.target_audience,
@@ -117,6 +125,8 @@ export const AdminVersionsTab = () => {
       title: form.title,
       description: form.description || null,
       features: form.features as any,
+      fixes: form.fixes as any,
+      future_notes: form.future_notes?.trim() || null,
       images: form.images,
       is_mandatory: form.is_mandatory,
       target_audience: form.target_audience,
@@ -134,6 +144,28 @@ export const AdminVersionsTab = () => {
       setOpen(false);
       fetchRows();
     }
+  };
+
+  const [aiBusy, setAiBusy] = useState<"desc" | "future" | null>(null);
+
+  const runAi = async (mode: "description" | "future_notes") => {
+    setAiBusy(mode === "description" ? "desc" : "future");
+    const { data, error } = await supabase.functions.invoke("generate-version-notes", {
+      body: {
+        mode,
+        features: form.features.map((f) => [f.label, f.description].filter(Boolean).join(" - ")),
+        fixes: form.fixes,
+        raw: mode === "future_notes" ? form.future_notes : form.description,
+      },
+    });
+    setAiBusy(null);
+    if (error || !data?.text) {
+      toast.error(data?.error || "تعذّر توليد النص بالذكاء الاصطناعي");
+      return;
+    }
+    if (mode === "description") setForm((f) => ({ ...f, description: data.text }));
+    else setForm((f) => ({ ...f, future_notes: data.text }));
+    toast.success("تم توليد النص");
   };
 
   const remove = async (id: string) => {
@@ -305,8 +337,14 @@ export const AdminVersionsTab = () => {
           </div>
 
           <div>
-            <Label>الوصف</Label>
-            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <div className="flex items-center justify-between mb-1">
+              <Label>الوصف</Label>
+              <Button size="sm" variant="outline" className="gap-1" disabled={aiBusy !== null} onClick={() => runAi("description")}>
+                {aiBusy === "desc" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                تحسين بالذكاء الاصطناعي
+              </Button>
+            </div>
+            <Textarea rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -381,6 +419,49 @@ export const AdminVersionsTab = () => {
                 </div>
               </Card>
             ))}
+          </div>
+
+          {/* Fixes editor */}
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1"><Wrench className="w-3.5 h-3.5" /> الإصلاحات</Label>
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => setForm({ ...form, fixes: [...form.fixes, ""] })}>
+                <Plus className="w-3 h-3" /> إضافة إصلاح
+              </Button>
+            </div>
+            {form.fixes.map((fx, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  placeholder="مثال: إصلاح مشكلة تفعيل الإشعارات"
+                  value={fx}
+                  onChange={(e) => {
+                    const next = [...form.fixes];
+                    next[i] = e.target.value;
+                    setForm({ ...form, fixes: next });
+                  }}
+                />
+                <Button variant="ghost" size="icon" onClick={() => setForm({ ...form, fixes: form.fixes.filter((_, idx) => idx !== i) })}>
+                  <X className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* Future notes */}
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center justify-between">
+              <Label>وصف التحديثات المستقبلية</Label>
+              <Button size="sm" variant="outline" className="gap-1" disabled={aiBusy !== null} onClick={() => runAi("future_notes")}>
+                {aiBusy === "future" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                تحسين بالذكاء الاصطناعي
+              </Button>
+            </div>
+            <Textarea
+              rows={4}
+              value={form.future_notes || ""}
+              onChange={(e) => setForm({ ...form, future_notes: e.target.value })}
+              placeholder="ما الذي نعمل عليه في الإصدارات القادمة..."
+            />
           </div>
 
           {/* Images */}
