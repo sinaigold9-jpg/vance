@@ -49,7 +49,6 @@ const FEATURE_LIST = [
   { key: "wheel", label: "عجلة الحظ" },
   { key: "wallet", label: "المحفظة" },
   { key: "team", label: "الفريق" },
-  { key: "ads", label: "الإعلانات" },
   { key: "withdrawal", label: "السحب" },
 ];
 
