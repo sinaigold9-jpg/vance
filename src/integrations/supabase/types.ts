@@ -1506,6 +1506,7 @@ export type Database = {
           last_wheel_spin: string | null
           lucky_wheel_used: boolean
           membership_id: string | null
+          new_device_notifications: boolean
           phone: string | null
           points: number | null
           referral_code: string | null
@@ -1545,6 +1546,7 @@ export type Database = {
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
           membership_id?: string | null
+          new_device_notifications?: boolean
           phone?: string | null
           points?: number | null
           referral_code?: string | null
@@ -1584,6 +1586,7 @@ export type Database = {
           last_wheel_spin?: string | null
           lucky_wheel_used?: boolean
           membership_id?: string | null
+          new_device_notifications?: boolean
           phone?: string | null
           points?: number | null
           referral_code?: string | null
@@ -1970,6 +1973,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_devices: {
+        Row: {
+          app_version: string | null
+          browser: string | null
+          browser_version: string | null
+          created_at: string
+          device_id: string
+          device_name: string
+          device_type: string
+          first_seen_at: string
+          id: string
+          is_trusted: boolean
+          last_active_at: string
+          metadata: Json
+          os: string | null
+          os_version: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          browser?: string | null
+          browser_version?: string | null
+          created_at?: string
+          device_id: string
+          device_name?: string
+          device_type?: string
+          first_seen_at?: string
+          id?: string
+          is_trusted?: boolean
+          last_active_at?: string
+          metadata?: Json
+          os?: string | null
+          os_version?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          browser?: string | null
+          browser_version?: string | null
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          device_type?: string
+          first_seen_at?: string
+          id?: string
+          is_trusted?: boolean
+          last_active_at?: string
+          metadata?: Json
+          os?: string | null
+          os_version?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
