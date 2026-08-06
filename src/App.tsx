@@ -13,25 +13,33 @@ import Admin from "@/pages/Admin";
 import ContestPage from "@/pages/ContestPage";
 import Download from "@/pages/Download";
 import AccountVerification from "@/pages/AccountVerification";
+import TrustedDevices from "@/pages/TrustedDevices";
 import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppUpdateWatcher } from "@/components/AppUpdateWatcher";
 import { WhatsNew } from "@/components/WhatsNew";
+import { useDeviceRegistration } from "@/hooks/useDeviceRegistration";
+
+const DeviceRegistrar = () => {
+  useDeviceRegistration();
+  return null;
+};
 
 const App = () => {
   return (
     <HelmetProvider>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
+        defaultTheme="dark"
+        enableSystem={false}
         storageKey="advance_theme_pref"
         disableTransitionOnChange
       >
         <TooltipProvider>
           <BrowserRouter>
             <AuthProvider>
+            <DeviceRegistrar />
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
@@ -73,6 +81,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AccountVerification />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings/devices"
+                element={
+                  <ProtectedRoute>
+                    <TrustedDevices />
                   </ProtectedRoute>
                 }
               />
