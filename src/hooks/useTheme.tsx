@@ -3,19 +3,19 @@ import { useTheme as useNextTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type ThemeMode = "light" | "dark" | "system";
+export type ThemeMode = "light" | "dark";
 
-const VALID: ThemeMode[] = ["light", "dark", "system"];
+const VALID: ThemeMode[] = ["light", "dark"];
 
 /**
- * Single source of truth for light / dark / system.
- * next-themes owns the DOM class + localStorage + OS listener,
+ * Single source of truth for light / dark.
+ * next-themes owns the DOM class + localStorage,
  * we only mirror the choice to the user profile so it follows the account.
  */
 export const useTheme = () => {
   const { user } = useAuth();
   const { theme, setTheme, resolvedTheme } = useNextTheme();
-  const mode = (VALID.includes(theme as ThemeMode) ? theme : "system") as ThemeMode;
+  const mode = (VALID.includes(theme as ThemeMode) ? theme : "dark") as ThemeMode;
 
   // Pull the saved preference once the user is known
   useEffect(() => {
