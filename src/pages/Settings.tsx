@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Monitor, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2, Info, BadgeCheck } from "lucide-react";
+import { Sun, Moon, Shield, RefreshCw, ArrowRight, ExternalLink, Loader2, CheckCircle2, Info, BadgeCheck, Smartphone } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { useTheme, type ThemeMode } from "@/hooks/useTheme";
@@ -64,7 +64,6 @@ const Settings = () => {
   const themeOptions: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
     { id: "light", label: "فاتح", icon: Sun },
     { id: "dark", label: "داكن", icon: Moon },
-    { id: "system", label: "تلقائي", icon: Monitor },
   ];
 
   return (
@@ -85,7 +84,7 @@ const Settings = () => {
             <CardTitle className="text-base flex items-center gap-2"><Sun className="w-4 h-4" /> المظهر</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {themeOptions.map(o => {
                 const active = mode === o.id;
                 return (
@@ -134,6 +133,21 @@ const Settings = () => {
         </Card>
 
         {/* Account verification */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2"><Smartphone className="w-4 h-4" /> الأجهزة الموثوقة</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              إدارة الأجهزة المرتبطة بحسابك، وإزالة أي جهاز، والتحكم في إشعارات تسجيل الدخول من جهاز جديد.
+            </p>
+            <Button className="w-full" variant="outline" onClick={() => navigate("/settings/devices")}>
+              <ArrowRight className="w-4 h-4 ml-2" />
+              فتح الأجهزة الموثوقة
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2"><BadgeCheck className="w-4 h-4" /> توثيق الحساب</CardTitle>

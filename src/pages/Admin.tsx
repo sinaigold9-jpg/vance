@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
-  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
+  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope, Search, PanelLeft
 } from "lucide-react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -127,6 +129,14 @@ const Admin = () => {
     : ALL_TABS.filter(tab => staffPermissions.includes(tab.key)); // Staff sees only permitted tabs
 
   const [activeTab, setActiveTab] = useState("");
+  const [search, setSearch] = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const filteredTabs = useMemo(() => {
+    const q = search.trim();
+    if (!q) return visibleTabs;
+    return visibleTabs.filter(t => t.label.includes(q) || t.key.includes(q.toLowerCase()));
+  }, [search, visibleTabs]);
 
   useEffect(() => {
     if (visibleTabs.length > 0 && !activeTab) {
@@ -198,6 +208,46 @@ const Admin = () => {
     return null;
   }
 
+  const ActiveComponent = activeTab ? TAB_COMPONENTS[activeTab] : null;
+  const activeMeta = visibleTabs.find(t => t.key === activeTab);
+
+  const NavList = () => (
+    <div className="space-y-1">
+      {filteredTabs.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-6">لا توجد نتائج</p>
+      )}
+      {filteredTabs.map(tab => {
+        const active = tab.key === activeTab;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => { setActiveTab(tab.key); setMobileNavOpen(false); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-right ${
+              active
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                : "hover:bg-muted text-foreground/80"
+            }`}
+          >
+            <tab.icon className="w-4 h-4 shrink-0" />
+            <span className="truncate">{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const SearchBox = () => (
+    <div className="relative">
+      <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="بحث سريع في الأقسام..."
+        className="pr-9"
+      />
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <SEO title="لوحة التحكم" path="/admin" noIndex />
@@ -205,7 +255,17 @@ const Admin = () => {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <BackButton to="/" label="العودة للتطبيق" />
+            <div className="flex items-center gap-2">
+              <BackButton to="/" label="العودة للتطبيق" />
+              <Button
+                variant="outline"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setMobileNavOpen(true)}
+              >
+                <PanelLeft className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="text-center">
               <h1 className="text-xl font-bold">لوحة التحكم</h1>
               {isStaff && !isAdmin && (
@@ -222,7 +282,26 @@ const Admin = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6 items-start">
+        {/* Sidebar */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-24 bg-card border border-border rounded-2xl p-3 gap-3">
+          {SearchBox()}
+          <ScrollArea className="h-[calc(100vh-14rem)] pl-1">
+            {NavList()}
+          </ScrollArea>
+        </aside>
+
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <SheetContent side="right" className="w-72 p-4 flex flex-col gap-3">
+            <h2 className="font-bold text-lg">الأقسام</h2>
+            {SearchBox()}
+            <ScrollArea className="flex-1 -mx-1 px-1">
+              {NavList()}
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+
+        <main className="flex-1 min-w-0">
         {/* Stats Cards - Only for admin */}
         {isAdmin && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -295,28 +374,17 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Tabs */}
-        {visibleTabs.length > 0 && activeTab && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full flex-wrap h-auto gap-2 bg-muted/50 p-2 rounded-xl">
-              {visibleTabs.map(tab => (
-                <TabsTrigger key={tab.key} value={tab.key} className="flex-1 min-w-[80px]">
-                  <tab.icon className="w-4 h-4 ml-1" />
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {visibleTabs.map(tab => {
-              const Component = TAB_COMPONENTS[tab.key];
-              return Component ? (
-                <TabsContent key={tab.key} value={tab.key} className="mt-6">
-                  <Component />
-                </TabsContent>
-              ) : null;
-            })}
-          </Tabs>
+        {/* Active section */}
+        {ActiveComponent && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-3">
+              {activeMeta && <activeMeta.icon className="w-5 h-5 text-primary" />}
+              <h2 className="font-bold">{activeMeta?.label}</h2>
+            </div>
+            <ActiveComponent />
+          </div>
         )}
+        </main>
       </div>
     </div>
   );
