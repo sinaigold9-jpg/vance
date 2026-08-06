@@ -282,7 +282,26 @@ const Admin = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6 items-start">
+        {/* Sidebar */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-24 bg-card border border-border rounded-2xl p-3 gap-3">
+          {SearchBox()}
+          <ScrollArea className="h-[calc(100vh-14rem)] pl-1">
+            {NavList()}
+          </ScrollArea>
+        </aside>
+
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <SheetContent side="right" className="w-72 p-4 flex flex-col gap-3">
+            <h2 className="font-bold text-lg">الأقسام</h2>
+            {SearchBox()}
+            <ScrollArea className="flex-1 -mx-1 px-1">
+              {NavList()}
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+
+        <main className="flex-1 min-w-0">
         {/* Stats Cards - Only for admin */}
         {isAdmin && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -355,28 +374,17 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Tabs */}
-        {visibleTabs.length > 0 && activeTab && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full flex-wrap h-auto gap-2 bg-muted/50 p-2 rounded-xl">
-              {visibleTabs.map(tab => (
-                <TabsTrigger key={tab.key} value={tab.key} className="flex-1 min-w-[80px]">
-                  <tab.icon className="w-4 h-4 ml-1" />
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {visibleTabs.map(tab => {
-              const Component = TAB_COMPONENTS[tab.key];
-              return Component ? (
-                <TabsContent key={tab.key} value={tab.key} className="mt-6">
-                  <Component />
-                </TabsContent>
-              ) : null;
-            })}
-          </Tabs>
+        {/* Active section */}
+        {ActiveComponent && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-3">
+              {activeMeta && <activeMeta.icon className="w-5 h-5 text-primary" />}
+              <h2 className="font-bold">{activeMeta?.label}</h2>
+            </div>
+            <ActiveComponent />
+          </div>
         )}
+        </main>
       </div>
     </div>
   );
