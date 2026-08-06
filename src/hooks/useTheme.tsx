@@ -27,8 +27,10 @@ export const useTheme = () => {
         .select("theme_preference")
         .eq("id", user.id)
         .maybeSingle();
-      const saved = data?.theme_preference as ThemeMode | undefined;
-      if (!cancelled && saved && VALID.includes(saved) && saved !== theme) {
+      const raw = data?.theme_preference as string | undefined;
+      // legacy "system" preference collapses to dark
+      const saved = (raw === "light" ? "light" : raw ? "dark" : undefined) as ThemeMode | undefined;
+      if (!cancelled && saved && saved !== theme) {
         setTheme(saved);
       }
     })();
