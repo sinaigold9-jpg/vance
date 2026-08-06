@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
-  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope
+  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope, Search, PanelLeft, X
 } from "lucide-react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
