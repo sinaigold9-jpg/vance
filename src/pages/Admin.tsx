@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Users, DollarSign, Package, 
   ArrowUpDown, Clock, RefreshCw, FileUp, HeadphonesIcon, Bot, Power, MessageCircle,
-  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope, Search, PanelLeft, X
+  Bell, Gift, Key, Edit, Mail, Shield, Rocket, Bug, Stethoscope, Search, PanelLeft
 } from "lucide-react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
