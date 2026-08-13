@@ -56,6 +56,7 @@ const detectBrowser = (ua: string): { browser: string | null; version: string | 
   if (/Firefox\//.test(ua)) return { browser: "Firefox", version: match(ua, /Firefox\/([\d.]+)/) };
   if (/Chrome\//.test(ua)) return { browser: "Chrome", version: match(ua, /Chrome\/([\d.]+)/) };
   if (/Safari\//.test(ua)) return { browser: "Safari", version: match(ua, /Version\/([\d.]+)/) };
+  if (/MSIE|Trident\//.test(ua)) return { browser: "Internet Explorer", version: match(ua, /(?:MSIE |rv:)([\d.]+)/) };
   return { browser: null, version: null };
 };
 
