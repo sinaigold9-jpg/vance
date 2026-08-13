@@ -15,7 +15,7 @@ export const getSeenVersionCode = (): number => {
   }
 };
 
-export const setSeenVersionCode = (code: number) => {
+export const setSeenVersionCode = (code: number): void => {
   try {
     localStorage.setItem(LS_KEY, String(code));
   } catch {
@@ -32,7 +32,7 @@ export const getDownloadedVersionCode = (): number => {
   }
 };
 
-export const setDownloadedVersionCode = (code: number) => {
+export const setDownloadedVersionCode = (code: number): void => {
   try {
     localStorage.setItem(LS_DOWNLOADED_KEY, String(code));
   } catch {
@@ -54,7 +54,7 @@ export interface UpdateManifest {
   assets: UpdateAsset[];
 }
 
-const cacheBust = (url: string) => {
+const cacheBust = (url: string): string => {
   const u = new URL(url, window.location.origin);
   u.searchParams.set("_v", String(Date.now()));
   return u.toString();
@@ -102,7 +102,7 @@ export const measureUpdateManifest = async (): Promise<UpdateManifest> => {
   const sizes = await Promise.all(assetUrls.map(headSize));
   const assets: UpdateAsset[] = [
     { url: indexUrl, bytes: indexBytes },
-    ...assetUrls.map((url, i) => ({ url, bytes: sizes[i] })),
+    ...assetUrls.map((url, i) => ({ url, bytes: sizes[i] ?? 0 })),
   ];
   const totalBytes = assets.reduce((s, a) => s + a.bytes, 0);
   return { totalBytes, assets };
@@ -122,12 +122,12 @@ export const downloadUpdate = async (
   manifest: UpdateManifest,
   onProgress: (p: DownloadProgress) => void,
   signal?: AbortSignal,
-) => {
+): Promise<void> => {
   const start = performance.now();
   let loaded = 0;
   const total = manifest.totalBytes || 1;
 
-  const emit = () => {
+  const emit = (): void => {
     const elapsed = Math.max((performance.now() - start) / 1000, 0.001);
     onProgress({
       loadedBytes: loaded,
@@ -175,7 +175,7 @@ export const formatBytes = (bytes: number): string => {
 
 export const formatSpeed = (bps: number): string => `${formatBytes(bps)}/s`;
 
-export const performAppUpdate = async () => {
+export const performAppUpdate = async (): Promise<void> => {
   try {
     if ("caches" in window) {
       const keys = await caches.keys();
