@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2, Plus, Search, X, Award, UserPlus, UserMinus, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { isAllowedEmoji, sanitizeEmoji, ALLOWED_EMOJIS } from "@/lib/emojis";
 
 interface Badge {
   id: string;
@@ -49,17 +48,10 @@ export const AdminBadgesTab = () => {
 
   const createBadge = async () => {
     if (!form.name.trim()) { toast.error("الاسم مطلوب"); return; }
-
-    // Validate emoji against allowed list
-    if (!isAllowedEmoji(form.icon)) {
-      toast.error(`الإيموجي غير مسموح. استخدم أحد الإيموجيات التالية: ${ALLOWED_EMOJIS.join(" ")}`);
-      return;
-    }
-
     setSaving(true);
     const { error } = await supabase.from("badges").insert({
       name: form.name.trim(),
-      icon: sanitizeEmoji(form.icon),
+      icon: form.icon || "🏅",
       color: form.color || "#FFD700",
       description: form.description.trim() || null,
     });
@@ -132,7 +124,6 @@ export const AdminBadgesTab = () => {
           <div className="space-y-1">
             <Label className="text-xs">الأيقونة (Emoji)</Label>
             <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="🏅" />
-            <p className="text-[10px] text-muted-foreground">مسموح: {ALLOWED_EMOJIS.join(" ")}</p>
           </div>
           <div className="space-y-1 md:col-span-2">
             <Label className="text-xs">الاسم</Label>
@@ -169,7 +160,7 @@ export const AdminBadgesTab = () => {
                 <div key={b.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-card">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: b.color + "22", color: b.color }}>
-                      {sanitizeEmoji(b.icon)}
+                      {b.icon}
                     </div>
                     <div>
                       <p className="font-bold text-sm">{b.name}</p>
@@ -242,7 +233,7 @@ export const AdminBadgesTab = () => {
                         className="gap-1 border cursor-pointer"
                         onClick={() => revokeBadge(ub.id)}
                       >
-                        <span>{sanitizeEmoji(ub.badge.icon)}</span> {ub.badge.name}
+                        <span>{ub.badge.icon}</span> {ub.badge.name}
                         <UserMinus className="w-3 h-3 mr-1" />
                       </BadgeUI>
                     ))}
@@ -255,7 +246,7 @@ export const AdminBadgesTab = () => {
                 <div className="flex flex-wrap gap-2">
                   {badges.filter(b => !userBadges.some(ub => ub.badge.id === b.id)).map(b => (
                     <Button key={b.id} variant="outline" size="sm" onClick={() => grantBadge(b.id)}>
-                      <span className="ml-1">{sanitizeEmoji(b.icon)}</span> {b.name}
+                      <span className="ml-1">{b.icon}</span> {b.name}
                     </Button>
                   ))}
                 </div>
