@@ -1,38 +1,4 @@
-import { motion } from "framer-motion";
-import { Crown, Star } from "lucide-react";
-const appIcon = "/placeholder.svg";
-
-interface MembershipCardProps {
-  fullName: string;
-  membershipId: string;
-  accountType: string;
-  avatarUrl?: string | null;
-  badge?: { name: string; icon: string; color: string } | null;
-  joinedAt?: string | null;
-}
-
-const packageLabel = (t: string) => {
-  switch (t) {
-    case "vip3": return "VIP 3";
-    case "vip2": return "VIP 2";
-    case "vip1": return "VIP 1";
-    default: return "الباقة المجانية";
-  }
-};
-
-export const MembershipCard = ({
-  fullName,
-  membershipId,
-  accountType,
-  avatarUrl,
-  badge,
-  joinedAt,
-}: MembershipCardProps) => {
-  const joined = joinedAt
-    ? new Date(joinedAt).toLocaleDateString("ar-EG", { year: "numeric", month: "long" })
-    : "—";
-
-  return (
+    return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -81,25 +47,3 @@ export const MembershipCard = ({
         </div>
       </div>
 
-      {/* ID */}
-      <div className="relative font-mono text-xl tracking-[0.3em] font-bold drop-shadow mb-4" dir="ltr">
-        {membershipId.replace(/(\d{3})(?=\d)/g, "$1 ")}
-      </div>
-
-      {/* Footer */}
-      <div className="relative flex items-end justify-between text-xs">
-        <div>
-          <p className="opacity-80 text-[10px] uppercase tracking-widest">Member Since</p>
-          <p className="font-bold">{joined}</p>
-        </div>
-        <div className="text-left">
-          <p className="opacity-80 text-[10px] uppercase tracking-widest">Plan</p>
-          <p className="font-bold flex items-center gap-1 justify-end">
-            <Star className="w-3 h-3" />
-            {packageLabel(accountType)}
-          </p>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
