@@ -331,7 +331,7 @@ export const AdminChatTab = () => {
                       >
                         <div className="flex items-center gap-2 mb-1">
                           {msg.is_from_admin ? (
-                            <Headphones className="w-3 h-3" />
+                            <img src="/ai-support-avatar.png" alt="AI" className="w-4 h-4 rounded-full object-cover" />
                           ) : (
                             <User className="w-3 h-3" />
                           )}
