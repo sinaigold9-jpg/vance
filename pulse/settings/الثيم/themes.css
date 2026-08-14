@@ -1,0 +1,258 @@
+/* ============================================================
+   THEMES.CSS
+   نظام ثيمات (Light / Dark) لتطبيق ويب تقدمي (PWA)
+   مستوحى من تدرج أخضر ناعم (نعناعي إلى أخضر غابة) مع رسومات خطية خفيفة
+
+   طريقة الاستخدام:
+   حدد data-theme يساوي light أو dark على عنصر html الجذري
+   بدون تحديد data-theme، هيتبع النظام تفضيل الجهاز تلقائيًا
+   ============================================================ */
+
+/* ---------- 1) الباليتة الأساسية (Raw Palette) ---------- */
+:root {
+  /* عائلة الأخضر — مأخوذة من تدرج الصورة */
+  --mint-100: #E7F3E4;
+  --mint-200: #CFE7CA;
+  --sage-300: #A9D0A5;
+  --sage-500: #7FAE81;
+  --sage-600: #5F9463;
+  --sage-700: #47764C;
+  --forest-800: #2B4A31;
+  --forest-900: #17281C;
+
+  /* محايدات دافئة (خلفيات / نصوص) */
+  --cream-50: #F8FAF5;
+  --cream-100: #F0F5EC;
+  --ink-700: #2B342C;
+  --ink-900: #131A14;
+
+  /* لون مكمّل دافئ */
+  --gold-400: #D9B979;
+  --gold-600: #B4923F;
+
+  /* حالات دلالية */
+  --success-500: #4C9A5B;
+  --warning-500: #D9A441;
+  --danger-500:  #C1584A;
+  --info-500:    #4C89A6;
+
+  --gradient-hero: linear-gradient(135deg, var(--mint-200) 0%, var(--sage-600) 100%);
+}
+
+:root,
+[data-theme="light"] {
+  --bg-base: var(--cream-50);
+  --bg-surface: #FFFFFF;
+  --bg-elevated: var(--mint-100);
+  --bg-inverse: var(--forest-900);
+
+  --text-primary: var(--ink-900);
+  --text-secondary: #4B5A4D;
+  --text-muted: #7B8A7D;
+  --text-inverse: var(--cream-50);
+
+  --border-subtle: #DCE7D8;
+  --border-strong: var(--sage-500);
+
+  --accent: var(--sage-600);
+  --accent-hover: var(--sage-700);
+  --accent-contrast: #FFFFFF;
+
+  --accent-secondary: var(--gold-400);
+  --accent-secondary-hover: var(--gold-600);
+
+  --shadow-color: 140 30% 20%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.08);
+  --shadow-md: 0 4px 12px hsl(var(--shadow-color) / 0.12);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg-base: var(--forest-900);
+  --bg-surface: #1E3324;
+  --bg-elevated: var(--forest-800);
+  --bg-inverse: var(--cream-50);
+
+  --text-primary: var(--cream-50);
+  --text-secondary: #C3D2C2;
+  --text-muted: #8FA391;
+  --text-inverse: var(--ink-900);
+
+  --border-subtle: #2E4634;
+  --border-strong: var(--sage-500);
+
+  --accent: var(--sage-300);
+  --accent-hover: var(--mint-200);
+  --accent-contrast: var(--ink-900);
+
+  --accent-secondary: var(--gold-400);
+  --accent-secondary-hover: var(--gold-600);
+
+  --shadow-color: 140 40% 2%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.4);
+  --shadow-md: 0 4px 16px hsl(var(--shadow-color) / 0.55);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg-base: var(--forest-900);
+    --bg-surface: #1E3324;
+    --bg-elevated: var(--forest-800);
+    --bg-inverse: var(--cream-50);
+    --text-primary: var(--cream-50);
+    --text-secondary: #C3D2C2;
+    --text-muted: #8FA391;
+    --text-inverse: var(--ink-900);
+    --border-subtle: #2E4634;
+    --border-strong: var(--sage-500);
+    --accent: var(--sage-300);
+    --accent-hover: var(--mint-200);
+    --accent-contrast: var(--ink-900);
+    color-scheme: dark;
+  }
+}
+
+:root {
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-full: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --transition-fast: 0.15s ease;
+  --transition-theme: background-color 0.25s ease, color 0.25s ease,
+    border-color 0.25s ease, box-shadow 0.25s ease;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent, #5F9463) 45%, transparent);
+}
+
+.theme-loading * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-theme);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-theme), transform var(--transition-fast);
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.btn-accent:hover { background: var(--accent-hover); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.btn-outline:hover { background: var(--bg-elevated); }
+
+.input {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  transition: var(--transition-theme);
+}
+.input:hover { border-color: var(--border-strong); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-elevated);
+  color: var(--accent-hover);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hero-gradient {
+  background: var(--gradient-hero);
+  color: var(--cream-50);
+}
+
+.theme-toggle {
+  --toggle-w: 52px;
+  --toggle-h: 28px;
+  position: relative;
+  width: var(--toggle-w);
+  height: var(--toggle-h);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition-theme);
+}
+
+.theme-toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(var(--toggle-h) - 6px);
+  height: calc(var(--toggle-h) - 6px);
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+[data-theme="dark"] .theme-toggle::before {
+  transform: translateX(calc(var(--toggle-w) - var(--toggle-h)));
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  font-size: 12px;
+  pointer-events: none;
+}

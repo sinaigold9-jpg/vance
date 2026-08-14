@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>إعدادات — الثيم (معاينة)</title>
+<meta name="theme-color" content="#F8FAF5" />
+
+<!-- منع "الوميض" (FOUC): طبّق الثيم المخزّن قبل ما المتصفح يرسم أي حاجة -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("pwa-theme") ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="stylesheet" href="themes.css" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif; }
+  .container { max-width: 720px; margin: 0 auto; padding: var(--space-4); }
+  .brand { display: flex; align-items: center; gap: var(--space-2); font-weight: 700; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gradient-hero); }
+  .hero { padding: var(--space-6); border-radius: var(--radius-md); margin: var(--space-4) 0; }
+  .hero h1 { margin: 0 0 var(--space-2); font-size: 1.6rem; }
+  .hero p { margin: 0; opacity: 0.9; }
+  .grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr 1fr; margin-top: var(--space-4); }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+  .card { padding: var(--space-4); }
+  .card h3 { margin: 0 0 var(--space-2); }
+  .card p { margin: 0 0 var(--space-3); color: var(--text-secondary); font-size: 0.9rem; }
+  .row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+  footer { text-align: center; padding: var(--space-6); color: var(--text-muted); font-size: 0.85rem; }
+  .settings { margin-top: var(--space-4); }
+  .settings h2 { margin: 0 0 var(--space-3); }
+  .setting-item { display:flex; align-items:center; justify-content:space-between; padding: var(--space-3); border-top:1px solid var(--border-subtle); }
+</style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <span class="brand">
+      <span class="brand-dot"></span>
+      إعدادات
+    </span>
+    <button class="theme-toggle" data-theme-toggle aria-label="تبديل الوضع الداكن">
+      <span class="theme-toggle-icon"><span>☀️</span><span>🌙</span></span>
+    </button>
+  </nav>
+
+  <div class="container">
+
+    <section class="hero hero-gradient">
+      <h1>قسم الثيم</h1>
+      <p>من هنا تقدر تشغّل أو تغيّر وضع الثيم للتطبيق. التفضيل بيتخزن ويتزامن مع نظام التشغيل.</p>
+    </section>
+
+    <div class="settings">
+      <h2>الثيم</h2>
+      <div class="surface setting-item">
+        <div>
+          <strong>الوضع الحالي</strong>
+          <div id="current-theme" style="opacity:0.9; font-size:0.95rem; margin-top:4px;"></div>
+        </div>
+        <div>
+          <button class="btn btn-accent" onclick="ThemeManager.toggle()">تبديل الثيم</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: var(--space-6);">
+      <div class="surface card">
+        <h3>بطاقة عادية</h3>
+        <p>خلفية وحدود وظل بتتغيّر تلقائيًا مع الثيم.</p>
+        <div class="row">
+          <button class="btn btn-accent">إجراء رئيسي</button>
+          <button class="btn btn-outline">إجراء ثانوي</button>
+        </div>
+      </div>
+
+      <div class="surface card">
+        <h3>عنصر إدخال وشارات</h3>
+        <input class="input" type="text" placeholder="اكتب هنا..." />
+        <div class="row" style="margin-top: var(--space-3);">
+          <span class="badge">جديد</span>
+          <span class="badge">مفعّل</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>الثيم الحالي بيتخزّن تلقائيًا ويتزامن مع إعداد نظام التشغيل.</footer>
+
+  <script src="theme-toggle.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var el = document.getElementById('current-theme');
+      function update(){ el.textContent = ThemeManager.current(); }
+      update();
+      ThemeManager.onChange(update);
+    });
+  </script>
+</body>
+</html>
