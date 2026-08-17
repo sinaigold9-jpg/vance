@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -52,9 +52,37 @@ const signInSchema = z.object({
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
+function getFriendlyAuthMessage(err: unknown, ctx?: { source?: string }) {
+  console.error(ctx?.source ? `${ctx.source} authentication error:` : "Authentication error:", err);
+
+  if (!err) return "حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى.";
+  const message = typeof err === "string" ? err : err instanceof Error ? err.message : String(err ?? "");
+
+  const m = message.toLowerCase();
+
+  if (m.includes("invalid login") || m.includes("invalid_credentials") || m.includes("invalid login credentials")) {
+    return "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+  }
+
+  if (m.includes("phone_not_found") || m.includes("phone not found") || m.includes("phone_lookup_failed")) {
+    return "رقم الهاتف أو كلمة المرور غير صحيحة";
+  }
+
+  if (m.includes("invalid path") || m.includes("404") || m.includes("not found")) {
+    return "الخدمة غير متاحة حاليًا، يرجى المحاولة مرة أخرى لاحقًا.";
+  }
+
+  if (m.includes("network") || m.includes("timeout") || m.includes("failed to fetch")) {
+    return "تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.";
+  }
+
+  return "حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى.";
+}
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -125,43 +153,66 @@ const Auth = () => {
 
     if (!clean) return null;
 
-    const { data, error } = await supabase.functions.invoke(
-      "referral-validate",
-      {
-        body: { ref: clean },
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "referral-validate",
+        {
+          body: { ref: clean },
+        }
+      );
+
+      if (error) {
+        console.error("referral-validate invoke error:", error);
+        return null;
       }
-    );
 
-    if (error) return null;
-
-    return data?.referredBy ?? null;
+      return data?.referredBy ?? null;
+    } catch (e) {
+      console.error("referral-validate error:", e);
+      return null;
+    }
   };
 
   const signInWithPhone = async (rawPhone: string, pw: string) => {
     const phoneToSend = normalizePhone(rawPhone) || rawPhone;
 
-    const { data, error } = await supabase.functions.invoke("phone-login", {
-      body: {
-        phone: phoneToSend,
-        password: pw,
-      },
-    });
+    try {
+      const res = await supabase.functions.invoke("phone-login", {
+        body: {
+          phone: phoneToSend,
+          password: pw,
+        },
+      });
 
-    if (error) {
-      throw new Error(error.message);
+      // res may have .error or data with error
+      if ((res as any).error) {
+        console.error("phone-login invoke returned error:", (res as any).error);
+        throw new Error((res as any).error.message || "PHONE_LOGIN_FAILED");
+      }
+
+      const data = (res as any).data ?? (res as any);
+
+      if (!data) {
+        console.error("phone-login: empty response", res);
+        throw new Error("PHONE_LOGIN_FAILED");
+      }
+
+      const access_token = data?.access_token as string | undefined;
+      const refresh_token = data?.refresh_token as string | undefined;
+
+      if (!access_token || !refresh_token) {
+        console.error("phone-login: missing tokens", data);
+        throw new Error("PHONE_LOGIN_FAILED");
+      }
+
+      await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+    } catch (e) {
+      // Throw with original error so caller can map to friendly message
+      throw e;
     }
-
-    const access_token = data?.access_token as string | undefined;
-    const refresh_token = data?.refresh_token as string | undefined;
-
-    if (!access_token || !refresh_token) {
-      throw new Error("تعذر إكمال تسجيل الدخول برقم الهاتف");
-    }
-
-    await supabase.auth.setSession({
-      access_token,
-      refresh_token,
-    });
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
@@ -173,7 +224,8 @@ const Auth = () => {
       });
 
       if (result?.error) {
-        toast.error(`خطأ من Supabase: ${result.error.message}`);
+        const friendly = getFriendlyAuthMessage(result.error, { source: provider });
+        toast.error(friendly);
         return;
       }
 
@@ -182,10 +234,8 @@ const Auth = () => {
         navigate("/app");
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "حدث خطأ في تسجيل الدخول";
-
-      toast.error(`خطأ: ${message}`);
+      const friendly = getFriendlyAuthMessage(error, { source: provider });
+      toast.error(friendly);
     } finally {
       setIsLoading(false);
     }
@@ -224,47 +274,42 @@ const Auth = () => {
           return;
         }
 
-        const isPhoneNumber =
-          /^[+0]/.test(identifier.trim()) ||
-          /^\d{10,15}$/.test(identifier.trim());
-
-        if (isPhoneNumber) {
+        if (loginMethod === "phone") {
+          // Phone login
           try {
             await signInWithPhone(identifier, password);
-
             toast.success("تم تسجيل الدخول بنجاح");
             navigate("/app");
           } catch (err) {
-            const msg =
-              err instanceof Error
-                ? err.message
-                : "حدث خطأ في تسجيل الدخول";
-
-            toast.error(`خطأ من Supabase: ${msg}`);
+            const friendly = getFriendlyAuthMessage(err, { source: "phone" });
+            toast.error(friendly.includes("البريد الإلكتروني") ? "رقم الهاتف أو كلمة المرور غير صحيحة" : friendly);
+          } finally {
+            setIsLoading(false);
           }
 
-          setIsLoading(false);
           return;
         }
 
-        const { error } = await signIn(identifier, password);
-
-        if (error) {
-          if (error.message.includes("Invalid login")) {
-            toast.error(
-              "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            );
-          } else {
-            toast.error(`خطأ من Supabase: ${error.message}`);
+        // Email login
+        try {
+          const { error } = await signIn(identifier, password);
+          if (error) {
+            const friendly = getFriendlyAuthMessage(error, { source: "email" });
+            toast.error(friendly);
+            setIsLoading(false);
+            return;
           }
 
-          setIsLoading(false);
-          return;
+          toast.success("تم تسجيل الدخول بنجاح");
+          navigate("/app");
+        } catch (err) {
+          const friendly = getFriendlyAuthMessage(err, { source: "email" });
+          toast.error(friendly);
         }
 
-        toast.success("تم تسجيل الدخول بنجاح");
-        navigate("/app");
+        setIsLoading(false);
       } else {
+        // Sign up
         const validation = signUpSchema.safeParse({
           fullName,
           email,
@@ -282,45 +327,49 @@ const Auth = () => {
         let referredBy: string | null = null;
 
         if (referralCode.trim()) {
-          referredBy = await validateReferralCode(
-            referralCode.trim()
-          );
+          referredBy = await validateReferralCode(referralCode.trim());
         } else if (referralFromUrl) {
-          referredBy = await validateReferralCode(
-            referralFromUrl
-          );
+          referredBy = await validateReferralCode(referralFromUrl);
         }
 
-        const { error } = await signUp(
-          email,
-          password,
-          fullName,
-          phone,
-          referredBy
-        );
-
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("هذا البريد الإلكتروني مسجل بالفعل");
-          } else {
-            toast.error(`خطأ من Supabase: ${error.message}`);
-          }
-        } else {
-          if (
-            (registeredViaReferral || referralCode.trim()) &&
+        try {
+          const { error } = await signUp(
+            email,
+            password,
+            fullName,
+            phone,
             referredBy
-          ) {
-            toast.success(
-              "تم التسجيل عبر كود الإحالة بنجاح!"
-            );
-          } else {
-            toast.success(
-              "تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية"
-            );
-          }
+          );
 
-          navigate("/app?onboarding=true");
+          if (error) {
+            const friendly = getFriendlyAuthMessage(error, { source: "signup" });
+            if (String(error?.message || "").toLowerCase().includes("already registered")) {
+              toast.error("هذا البريد الإلكتروني مسجل بالفعل");
+            } else {
+              toast.error(friendly);
+            }
+          } else {
+            if (
+              (registeredViaReferral || referralCode.trim()) &&
+              referredBy
+            ) {
+              toast.success(
+                "تم التسجيل عبر كود الإحالة بنجاح!"
+              );
+            } else {
+              toast.success(
+                "تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية"
+              );
+            }
+
+            navigate("/app?onboarding=true");
+          }
+        } catch (err) {
+          const friendly = getFriendlyAuthMessage(err, { source: "signup" });
+          toast.error(friendly);
         }
+
+        setIsLoading(false);
       }
     } catch (error) {
       const message =
@@ -328,7 +377,8 @@ const Auth = () => {
           ? error.message
           : "حدث خطأ غير متوقع";
 
-      toast.error(`خطأ: ${message}`);
+      toast.error("حدث خطأ، يرجى المحاولة مرة أخرى");
+      console.error("Unhandled auth submit error:", error);
     }
 
     setIsLoading(false);
@@ -336,6 +386,25 @@ const Auth = () => {
 
   const inputClass =
     "pr-10 text-right h-12 rounded-lg border-2 border-border bg-muted/30 focus:border-primary focus:bg-background transition-all duration-200";
+
+  const loginMethodTabs = useMemo(() => (
+    <div className="flex gap-2 mb-3" role="tablist">
+      <button
+        type="button"
+        onClick={() => setLoginMethod("email")}
+        className={`px-3 py-2 rounded-md font-bold ${loginMethod === "email" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground"}`}
+      >
+        البريد الإلكتروني
+      </button>
+      <button
+        type="button"
+        onClick={() => setLoginMethod("phone")}
+        className={`px-3 py-2 rounded-md font-bold ${loginMethod === "phone" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground"}`}
+      >
+        رقم الهاتف
+      </button>
+    </div>
+  ), [loginMethod]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-primary/5">
@@ -526,20 +595,24 @@ const Auth = () => {
                   )}
 
                   {isLogin && (
-                    <div className="relative">
-                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <>
+                      {loginMethodTabs}
 
-                      <Input
-                        type="text"
-                        placeholder="البريد الإلكتروني أو رقم الهاتف"
-                        value={identifier}
-                        onChange={(e) =>
-                          setIdentifier(e.target.value)
-                        }
-                        className={inputClass}
-                        dir="ltr"
-                      />
-                    </div>
+                      <div className="relative">
+                        <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+                        <Input
+                          type="text"
+                          placeholder={loginMethod === "email" ? "البريد الإلكتروني" : "رقم الهاتف"}
+                          value={identifier}
+                          onChange={(e) =>
+                            setIdentifier(e.target.value)
+                          }
+                          className={inputClass}
+                          dir="ltr"
+                        />
+                      </div>
+                    </>
                   )}
 
                   <div className="relative">
@@ -636,9 +709,7 @@ const Auth = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <span className="animate-spin">
-                    ⏳
-                  </span>
+                  <span className="animate-spin">⏳</span>
                 ) : (
                   <>
                     {isLogin ? "دخول" : "ابدأ الآن"}
@@ -650,4 +721,28 @@ const Auth = () => {
 
               {isLogin && (
                 <>
-                  <d
+                  <div className="flex items-center justify-center gap-3 mt-3">
+                    <Button variant="outline" onClick={() => handleOAuth("google")}> <Chrome className="w-4 h-4" /> تسجيل بجوجل</Button>
+                    <Button variant="outline" onClick={() => handleOAuth("apple")}> <Apple className="w-4 h-4" /> تسجيل بـ Apple</Button>
+                  </div>
+                </>
+              )}
+
+              {!isLogin && (
+                <div className="text-center text-sm text-muted-foreground">
+                  عند التسجيل تُوافق على سياسة الخصوصية
+                </div>
+              )}
+
+            </form>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <PrivacyPolicyModal open={showPrivacyPolicy} onAccept={handlePrivacyAccept} onClose={() => setShowPrivacyPolicy(false)} />
+      <ForgotPasswordDialog open={showForgot} onClose={() => setShowForgot(false)} />
+    </div>
+  );
+};
+
+export default Auth;
