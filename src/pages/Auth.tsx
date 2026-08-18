@@ -96,25 +96,18 @@ const Auth = () => {
 
   const normalizePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
-
     if (!digits) return "";
-
     if (digits.startsWith("20") && digits.length > 11) {
       const rest = digits.slice(2);
-
       if (rest.length === 11 && rest.startsWith("0")) return rest;
-
       if (rest.length === 10 && rest.startsWith("1")) {
         return `0${rest}`;
       }
-
       return rest;
     }
-
     if (digits.length === 10 && digits.startsWith("1")) {
       return `0${digits}`;
     }
-
     return digits;
   };
 
@@ -122,24 +115,19 @@ const Auth = () => {
     code: string
   ): Promise<string | null> => {
     const clean = code.trim();
-
     if (!clean) return null;
-
     const { data, error } = await supabase.functions.invoke(
       "referral-validate",
       {
         body: { ref: clean },
       }
     );
-
     if (error) return null;
-
     return data?.referredBy ?? null;
   };
 
   const signInWithPhone = async (rawPhone: string, pw: string) => {
     const phoneToSend = normalizePhone(rawPhone) || rawPhone;
-
     const { data, error } = await supabase.functions.invoke("phone-login", {
       body: {
         phone: phoneToSend,
@@ -166,7 +154,6 @@ const Auth = () => {
 
   const handleOAuth = async (provider: "google" | "apple") => {
     setIsLoading(true);
-
     try {
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
@@ -184,21 +171,18 @@ const Auth = () => {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "حدث خطأ في تسجيل الدخول";
-
       toast.error(`خطأ: ${message}`);
-    } fontally {
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleSignupClick = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!privacyAccepted) {
       setShowPrivacyPolicy(true);
       return;
     }
-
     handleSubmit(e);
   };
 
@@ -231,7 +215,6 @@ const Auth = () => {
         if (isPhoneNumber) {
           try {
             await signInWithPhone(identifier, password);
-
             toast.success("تم تسجيل الدخول بنجاح");
             navigate("/app");
           } catch (err) {
@@ -239,10 +222,8 @@ const Auth = () => {
               err instanceof Error
                 ? err.message
                 : "حدث خطأ في تسجيل الدخول";
-
             toast.error(`خطأ من Supabase: ${msg}`);
           }
-
           setIsLoading(false);
           return;
         }
@@ -251,13 +232,10 @@ const Auth = () => {
 
         if (error) {
           if (error.message.includes("Invalid login")) {
-            toast.error(
-              "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            );
+            toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
           } else {
             toast.error(`خطأ من Supabase: ${error.message}`);
           }
-
           setIsLoading(false);
           return;
         }
@@ -280,15 +258,10 @@ const Auth = () => {
         }
 
         let referredBy: string | null = null;
-
         if (referralCode.trim()) {
-          referredBy = await validateReferralCode(
-            referralCode.trim()
-          );
+          referredBy = await validateReferralCode(referralCode.trim());
         } else if (referralFromUrl) {
-          referredBy = await validateReferralCode(
-            referralFromUrl
-          );
+          referredBy = await validateReferralCode(referralFromUrl);
         }
 
         const { error } = await signUp(
@@ -306,28 +279,17 @@ const Auth = () => {
             toast.error(`خطأ من Supabase: ${error.message}`);
           }
         } else {
-          if (
-            (registeredViaReferral || referralCode.trim()) &&
-            referredBy
-          ) {
-            toast.success(
-              "تم التسجيل عبر كود الإحالة بنجاح!"
-            );
+          if ((registeredViaReferral || referralCode.trim()) && referredBy) {
+            toast.success("تم التسجيل عبر كود الإحالة بنجاح!");
           } else {
-            toast.success(
-              "تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية"
-            );
+            toast.success("تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية");
           }
-
           navigate("/app?onboarding=true");
         }
       }
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "حدث خطأ غير متوقع";
-
+        error instanceof Error ? error.message : "حدث خطأ غير متوقع";
       toast.error(`خطأ: ${message}`);
     }
 
@@ -362,7 +324,6 @@ const Auth = () => {
             alt="Advance"
             className="w-20 h-20 mx-auto mb-2 rounded-2xl shadow-gold"
           />
-
           <h1 className="text-2xl font-black text-foreground">
             Advance
           </h1>
@@ -393,7 +354,6 @@ const Auth = () => {
               <LogIn className="w-4 h-4" />
               تسجيل الدخول
             </button>
-
             <button
               type="button"
               className={`flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all duration-200 ${
@@ -412,112 +372,69 @@ const Auth = () => {
             <AnimatePresence mode="wait">
               <motion.p
                 key={isLogin ? "login-sub" : "signup-sub"}
-                initial={{
-                  opacity: 0,
-                  y: -10,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
                 className="text-muted-foreground text-sm text-center mb-5"
               >
-                {isLogin
-                  ? "مرحباً بعودتك!"
-                  : "🎁 7 أيام تجربة مجانية!"}
+                {isLogin ? "مرحباً بعودتك!" : "🎁 7 أيام تجربة مجانية!"}
               </motion.p>
             </AnimatePresence>
 
             <form
-              onSubmit={
-                isLogin ? handleSubmit : handleSignupClick
-              }
+              onSubmit={isLogin ? handleSubmit : handleSignupClick}
               className="space-y-3"
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={
-                    isLogin
-                      ? "login-fields"
-                      : "signup-fields"
-                  }
-                  initial={{
-                    opacity: 0,
-                    x: isLogin ? -20 : 20,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    x: isLogin ? 20 : -20,
-                  }}
-                  transition={{
-                    duration: 0.2,
-                  }}
+                  key={isLogin ? "login-fields" : "signup-fields"}
+                  initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+                  transition={{ duration: 0.2 }}
                   className="space-y-3"
                 >
                   {!isLogin && (
                     <>
                       <div className="relative">
                         <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="text"
                           placeholder="الاسم الكامل"
                           value={fullName}
-                          onChange={(e) =>
-                            setFullName(e.target.value)
-                          }
+                          onChange={(e) => setFullName(e.target.value)}
                           className={inputClass}
                         />
                       </div>
-
                       <div className="relative">
                         <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="tel"
                           placeholder="رقم الهاتف المحمول"
                           value={phone}
-                          onChange={(e) =>
-                            setPhone(e.target.value)
-                          }
+                          onChange={(e) => setPhone(e.target.value)}
                           className={inputClass}
                           dir="ltr"
                         />
                       </div>
-
                       <div className="relative">
                         <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="email"
                           placeholder="البريد الإلكتروني"
                           value={email}
-                          onChange={(e) =>
-                            setEmail(e.target.value)
-                          }
+                          onChange={(e) => setEmail(e.target.value)}
                           className={inputClass}
                           dir="ltr"
                         />
                       </div>
-
                       <div className="relative">
                         <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="text"
                           placeholder="كود الإحالة (اختياري)"
                           value={referralCode}
-                          onChange={(e) =>
-                            setReferralCode(e.target.value)
-                          }
+                          onChange={(e) => setReferralCode(e.target.value)}
                           className={`${inputClass} font-mono`}
                           dir="ltr"
                         />
@@ -528,14 +445,11 @@ const Auth = () => {
                   {isLogin && (
                     <div className="relative">
                       <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                       <Input
                         type="text"
                         placeholder="البريد الإلكتروني أو رقم الهاتف"
                         value={identifier}
-                        onChange={(e) =>
-                          setIdentifier(e.target.value)
-                        }
+                        onChange={(e) => setIdentifier(e.target.value)}
                         className={inputClass}
                         dir="ltr"
                       />
@@ -544,31 +458,17 @@ const Auth = () => {
 
                   <div className="relative">
                     <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                     <Input
-                      type={
-                        showPassword
-                          ? "text"
-                          : "password"
-                      }
+                      type={showPassword ? "text" : "password"}
                       placeholder="كلمة المرور"
                       value={password}
-                      onChange={(e) =>
-                        setPassword(e.target.value)
-                      }
+                      onChange={(e) => setPassword(e.target.value)}
                       className={`${inputClass} pl-10`}
-                      autoComplete={
-                        isLogin
-                          ? "current-password"
-                          : "new-password"
-                      }
+                      autoComplete={isLogin ? "current-password" : "new-password"}
                     />
-
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowPassword(!showPassword)
-                      }
+                      onClick={() => setShowPassword(!showPassword)}
                       className="absolute left-3 top-1/2 -translate-y-1/2"
                     >
                       {showPassword ? (
@@ -582,29 +482,17 @@ const Auth = () => {
                   {!isLogin && (
                     <div className="relative">
                       <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                       <Input
-                        type={
-                          showConfirmPassword
-                            ? "text"
-                            : "password"
-                        }
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder="تأكيد كلمة المرور"
                         value={confirmPassword}
-                        onChange={(e) =>
-                          setConfirmPassword(e.target.value)
-                        }
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`${inputClass} pl-10`}
                         autoComplete="new-password"
                       />
-
                       <button
                         type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(
-                            !showConfirmPassword
-                          )
-                        }
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute left-3 top-1/2 -translate-y-1/2"
                       >
                         {showConfirmPassword ? (
@@ -646,4 +534,46 @@ const Auth = () => {
               </Button>
 
               {isLogin && (
-                <div className="mt-4 pt-4 border-t border-border flex flex-col 
+                <div className="mt-4 pt-4 border-t border-border flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2"
+                    onClick={() => handleOAuth("google")}
+                    disabled={isLoading}
+                  >
+                    <Chrome className="w-4 h-4" />
+                    المتابعة باستخدام Google
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2"
+                    onClick={() => handleOAuth("apple")}
+                    disabled={isLoading}
+                  >
+                    <Apple className="w-4 h-4" />
+                    المتابعة باستخدام Apple
+                  </Button>
+                </div>
+              )}
+            </form>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <PrivacyPolicyModal
+        isOpen={showPrivacyPolicy}
+        onClose={() => setShowPrivacyPolicy(false)}
+        onAccept={handlePrivacyAccept}
+      />
+      
+      <ForgotPasswordDialog
+        isOpen={showForgot}
+        onClose={() => setShowForgot(false)}
+      />
+    </div>
+  );
+};
+
+export default Auth;
