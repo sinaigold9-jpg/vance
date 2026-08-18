@@ -47,15 +47,20 @@ const signUpSchema = z
     path: ["confirmPassword"],
   });
 
-const signInSchema = z.object({
-  identifier: z.string().min(1, "البريد الإلكتروني أو رقم الهاتف مطلوب"),
+const emailLoginSchema = z.object({
+  email: z.string().email("البريد الإلكتروني غير صحيح"),
+  password: z.string().min(1, "كلمة المرور مطلوبة"),
+});
+
+const phoneLoginSchema = z.object({
+  phone: z.string().min(8, "رقم الهاتف غير صحيح"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
-  const [identifier, setIdentifier] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -132,7 +137,10 @@ const Auth = () => {
       }
     );
 
-    if (error) return null;
+    if (error) {
+      console.error("referral-validate failed:", error);
+      return null;
+    }
 
     return data?.referredBy ?? null;
   };
@@ -140,28 +148,65 @@ const Auth = () => {
   const signInWithPhone = async (rawPhone: string, pw: string) => {
     const phoneToSend = normalizePhone(rawPhone) || rawPhone;
 
-    const { data, error } = await supabase.functions.invoke("phone-login", {
-      body: {
-        phone: phoneToSend,
-        password: pw,
-      },
-    });
+    let response: Awaited<ReturnType<typeof supabase.functions.invoke>>;
+
+    try {
+      response = await supabase.functions.invoke("phone-login", {
+        body: {
+          phone: phoneToSend,
+          password: pw,
+        },
+      });
+    } catch (invokeError) {
+      console.error("phone-login invoke failed:", invokeError);
+      throw new Error("NETWORK_ERROR");
+    }
+
+    const { data, error } = response;
 
     if (error) {
-      throw new Error(error.message);
+      console.error("phone-login failed:", error);
+
+      let status: number | undefined;
+
+      if (
+        error &&
+        typeof error === "object" &&
+        "context" in error &&
+        (error as { context?: unknown }).context instanceof Response
+      ) {
+        status = (error as { context: Response }).context.status;
+      }
+
+      if (status === 400 || status === 401 || status === 404) {
+        throw new Error("INVALID_CREDENTIALS");
+      }
+
+      throw new Error("SERVICE_UNAVAILABLE");
+    }
+
+    if (data?.error) {
+      console.error("phone-login returned error:", data.error);
+      throw new Error("INVALID_CREDENTIALS");
     }
 
     const access_token = data?.access_token as string | undefined;
     const refresh_token = data?.refresh_token as string | undefined;
 
     if (!access_token || !refresh_token) {
-      throw new Error("تعذر إكمال تسجيل الدخول برقم الهاتف");
+      console.error("phone-login missing tokens in response:", data);
+      throw new Error("INCOMPLETE_SESSION");
     }
 
-    await supabase.auth.setSession({
+    const { error: sessionError } = await supabase.auth.setSession({
       access_token,
       refresh_token,
     });
+
+    if (sessionError) {
+      console.error("setSession failed:", sessionError);
+      throw new Error("SERVICE_UNAVAILABLE");
+    }
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
@@ -173,7 +218,12 @@ const Auth = () => {
       });
 
       if (result?.error) {
-        toast.error(`خطأ من Supabase: ${result.error.message}`);
+        console.error(`OAuth (${provider}) failed:`, result.error);
+        toast.error(
+          provider === "google"
+            ? "تعذر تسجيل الدخول باستخدام Google"
+            : "تعذر تسجيل الدخول باستخدام Apple"
+        );
         return;
       }
 
@@ -182,10 +232,12 @@ const Auth = () => {
         navigate("/app");
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "حدث خطأ في تسجيل الدخول";
-
-      toast.error(`خطأ: ${message}`);
+      console.error(`OAuth (${provider}) failed:`, error);
+      toast.error(
+        provider === "google"
+          ? "تعذر تسجيل الدخول باستخدام Google"
+          : "تعذر تسجيل الدخول باستخدام Apple"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -213,8 +265,45 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const validation = signInSchema.safeParse({
-          identifier,
+        if (loginMethod === "phone") {
+          const validation = phoneLoginSchema.safeParse({
+            phone,
+            password,
+          });
+
+          if (!validation.success) {
+            toast.error(validation.error.errors[0].message);
+            setIsLoading(false);
+            return;
+          }
+
+          try {
+            await signInWithPhone(phone, password);
+
+            toast.success("تم تسجيل الدخول بنجاح");
+            navigate("/app");
+          } catch (err) {
+            console.error("Phone login failed:", err);
+
+            const code = err instanceof Error ? err.message : "";
+
+            if (code === "INVALID_CREDENTIALS") {
+              toast.error("رقم الهاتف أو كلمة المرور غير صحيحة");
+            } else if (code === "NETWORK_ERROR") {
+              toast.error("تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى.");
+            } else if (code === "SERVICE_UNAVAILABLE") {
+              toast.error("الخدمة غير متاحة حاليًا، يرجى المحاولة لاحقًا.");
+            } else {
+              toast.error("تعذر إكمال تسجيل الدخول برقم الهاتف");
+            }
+          }
+
+          setIsLoading(false);
+          return;
+        }
+
+        const validation = emailLoginSchema.safeParse({
+          email,
           password,
         });
 
@@ -224,38 +313,17 @@ const Auth = () => {
           return;
         }
 
-        const isPhoneNumber =
-          /^[+0]/.test(identifier.trim()) ||
-          /^\d{10,15}$/.test(identifier.trim());
-
-        if (isPhoneNumber) {
-          try {
-            await signInWithPhone(identifier, password);
-
-            toast.success("تم تسجيل الدخول بنجاح");
-            navigate("/app");
-          } catch (err) {
-            const msg =
-              err instanceof Error
-                ? err.message
-                : "حدث خطأ في تسجيل الدخول";
-
-            toast.error(`خطأ من Supabase: ${msg}`);
-          }
-
-          setIsLoading(false);
-          return;
-        }
-
-        const { error } = await signIn(identifier, password);
+        const { error } = await signIn(email, password);
 
         if (error) {
+          console.error("signIn failed:", error);
+
           if (error.message.includes("Invalid login")) {
-            toast.error(
-              "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            );
+            toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
           } else {
-            toast.error(`خطأ من Supabase: ${error.message}`);
+            toast.error(
+              "حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة مرة أخرى."
+            );
           }
 
           setIsLoading(false);
@@ -300,10 +368,14 @@ const Auth = () => {
         );
 
         if (error) {
+          console.error("signUp failed:", error);
+
           if (error.message.includes("already registered")) {
             toast.error("هذا البريد الإلكتروني مسجل بالفعل");
           } else {
-            toast.error(`خطأ من Supabase: ${error.message}`);
+            toast.error(
+              "حدث خطأ أثناء إنشاء الحساب، يرجى المحاولة مرة أخرى."
+            );
           }
         } else {
           if (
@@ -323,12 +395,8 @@ const Auth = () => {
         }
       }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "حدث خطأ غير متوقع";
-
-      toast.error(`خطأ: ${message}`);
+      console.error("Auth submit failed:", error);
+      toast.error("حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.");
     }
 
     setIsLoading(false);
@@ -526,128 +594,50 @@ const Auth = () => {
                   )}
 
                   {isLogin && (
-                    <div className="relative">
-                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <>
+                      <div className="grid grid-cols-2 gap-2 mb-1">
+                        <button
+                          type="button"
+                          onClick={() => setLoginMethod("email")}
+                          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
+                            loginMethod === "email"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          البريد الإلكتروني
+                        </button>
 
-                      <Input
-                        type="text"
-                        placeholder="البريد الإلكتروني أو رقم الهاتف"
-                        value={identifier}
-                        onChange={(e) =>
-                          setIdentifier(e.target.value)
-                        }
-                        className={inputClass}
-                        dir="ltr"
-                      />
-                    </div>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => setLoginMethod("phone")}
+                          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
+                            loginMethod === "phone"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          رقم الهاتف
+                        </button>
+                      </div>
 
-                  <div className="relative">
-                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      {loginMethod === "email" ? (
+                        <div className="relative">
+                          <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
-                    <Input
-                      type={
-                        showPassword
-                          ? "text"
-                          : "password"
-                      }
-                      placeholder="كلمة المرور"
-                      value={password}
-                      onChange={(e) =>
-                        setPassword(e.target.value)
-                      }
-                      className={`${inputClass} pl-10`}
-                      autoComplete={
-                        isLogin
-                          ? "current-password"
-                          : "new-password"
-                      }
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowPassword(!showPassword)
-                      }
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="email"
+                            placeholder="البريد الإلكتروني"
+                            value={email}
+                            onChange={(e) =>
+                              setEmail(e.target.value)
+                            }
+                            className={inputClass}
+                            dir="ltr"
+                          />
+                        </div>
                       ) : (
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  </div>
-
-                  {!isLogin && (
-                    <div className="relative">
-                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
-                      <Input
-                        type={
-                          showConfirmPassword
-                            ? "text"
-                            : "password"
-                        }
-                        placeholder="تأكيد كلمة المرور"
-                        value={confirmPassword}
-                        onChange={(e) =>
-                          setConfirmPassword(e.target.value)
-                        }
-                        className={`${inputClass} pl-10`}
-                        autoComplete="new-password"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(
-                            !showConfirmPassword
-                          )
-                        }
-                        className="absolute left-3 top-1/2 -translate-y-1/2"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-
-              {isLogin && (
-                <div className="text-left">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgot(true)}
-                    className="text-xs text-primary hover:underline font-semibold"
-                  >
-                    نسيت كلمة المرور؟
-                  </button>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-gold text-primary-foreground shadow-gold text-lg font-bold h-12 rounded-lg mt-4"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <span className="animate-spin">
-                    ⏳
-                  </span>
-                ) : (
-                  <>
-                    {isLogin ? "دخول" : "ابدأ الآن"}
-
-                    <ArrowRight className="w-5 h-5 mr-2" />
-                  </>
-                )}
-              </Button>
-
-              {isLogin && (
-                <>
-                  <d
+                        <div className="relative">
+                          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-fore
