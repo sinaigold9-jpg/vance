@@ -13,6 +13,7 @@ import {
   Apple,
   UserPlus,
   LogIn,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,7 +280,6 @@ const Auth = () => {
 
           try {
             await signInWithPhone(phone, password);
-
             toast.success("تم تسجيل الدخول بنجاح");
             navigate("/app");
           } catch (err) {
@@ -350,13 +350,9 @@ const Auth = () => {
         let referredBy: string | null = null;
 
         if (referralCode.trim()) {
-          referredBy = await validateReferralCode(
-            referralCode.trim()
-          );
+          referredBy = await validateReferralCode(referralCode.trim());
         } else if (referralFromUrl) {
-          referredBy = await validateReferralCode(
-            referralFromUrl
-          );
+          referredBy = await validateReferralCode(referralFromUrl);
         }
 
         const { error } = await signUp(
@@ -382,9 +378,7 @@ const Auth = () => {
             (registeredViaReferral || referralCode.trim()) &&
             referredBy
           ) {
-            toast.success(
-              "تم التسجيل عبر كود الإحالة بنجاح!"
-            );
+            toast.success("تم التسجيل عبر كود الإحالة بنجاح!");
           } else {
             toast.success(
               "تم إنشاء حسابك بنجاح! 🎉 لديك 7 أيام تجربة مجانية"
@@ -430,10 +424,7 @@ const Auth = () => {
             alt="Advance"
             className="w-20 h-20 mx-auto mb-2 rounded-2xl shadow-gold"
           />
-
-          <h1 className="text-2xl font-black text-foreground">
-            Advance
-          </h1>
+          <h1 className="text-2xl font-black text-foreground">Advance</h1>
         </motion.div>
 
         <motion.div
@@ -480,82 +471,48 @@ const Auth = () => {
             <AnimatePresence mode="wait">
               <motion.p
                 key={isLogin ? "login-sub" : "signup-sub"}
-                initial={{
-                  opacity: 0,
-                  y: -10,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
                 className="text-muted-foreground text-sm text-center mb-5"
               >
-                {isLogin
-                  ? "مرحباً بعودتك!"
-                  : "🎁 7 أيام تجربة مجانية!"}
+                {isLogin ? "مرحباً بعودتك!" : "🎁 7 أيام تجربة مجانية!"}
               </motion.p>
             </AnimatePresence>
 
             <form
-              onSubmit={
-                isLogin ? handleSubmit : handleSignupClick
-              }
+              onSubmit={isLogin ? handleSubmit : handleSignupClick}
               className="space-y-3"
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={
-                    isLogin
-                      ? "login-fields"
-                      : "signup-fields"
-                  }
-                  initial={{
-                    opacity: 0,
-                    x: isLogin ? -20 : 20,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    x: isLogin ? 20 : -20,
-                  }}
-                  transition={{
-                    duration: 0.2,
-                  }}
+                  key={isLogin ? "login-fields" : "signup-fields"}
+                  initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+                  transition={{ duration: 0.2 }}
                   className="space-y-3"
                 >
                   {!isLogin && (
                     <>
                       <div className="relative">
                         <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="text"
                           placeholder="الاسم الكامل"
                           value={fullName}
-                          onChange={(e) =>
-                            setFullName(e.target.value)
-                          }
+                          onChange={(e) => setFullName(e.target.value)}
                           className={inputClass}
                         />
                       </div>
 
                       <div className="relative">
                         <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="tel"
                           placeholder="رقم الهاتف المحمول"
                           value={phone}
-                          onChange={(e) =>
-                            setPhone(e.target.value)
-                          }
+                          onChange={(e) => setPhone(e.target.value)}
                           className={inputClass}
                           dir="ltr"
                         />
@@ -563,14 +520,11 @@ const Auth = () => {
 
                       <div className="relative">
                         <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="email"
                           placeholder="البريد الإلكتروني"
                           value={email}
-                          onChange={(e) =>
-                            setEmail(e.target.value)
-                          }
+                          onChange={(e) => setEmail(e.target.value)}
                           className={inputClass}
                           dir="ltr"
                         />
@@ -578,14 +532,11 @@ const Auth = () => {
 
                       <div className="relative">
                         <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                         <Input
                           type="text"
                           placeholder="كود الإحالة (اختياري)"
                           value={referralCode}
-                          onChange={(e) =>
-                            setReferralCode(e.target.value)
-                          }
+                          onChange={(e) => setReferralCode(e.target.value)}
                           className={`${inputClass} font-mono`}
                           dir="ltr"
                         />
@@ -626,18 +577,36 @@ const Auth = () => {
                       {loginMethod === "email" ? (
                         <div className="relative">
                           <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
                           <Input
                             type="email"
                             placeholder="البريد الإلكتروني"
                             value={email}
-                            onChange={(e) =>
-                              setEmail(e.target.value)
-                            }
+                            onChange={(e) => setEmail(e.target.value)}
                             className={inputClass}
                             dir="ltr"
                           />
                         </div>
                       ) : (
                         <div className="relative">
-                          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-fore
+                          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="tel"
+                            placeholder="رقم الهاتف المحمول"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className={inputClass}
+                            dir="ltr"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="كلمة المرور"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                     
