@@ -186,7 +186,7 @@ const Auth = () => {
         error instanceof Error ? error.message : "حدث خطأ في تسجيل الدخول";
 
       toast.error(`خطأ: ${message}`);
-    } finally {
+    } fontally {
       setIsLoading(false);
     }
   };
@@ -646,4 +646,4 @@ const Auth = () => {
               </Button>
 
               {isLogin && (
-                <div className="mt-4 pt-4 border-t border-border flex flex-col g
+                <div className="mt-4 pt-4 border-t border-border flex flex-col 
